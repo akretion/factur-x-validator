@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_facturx_analysis_full,Full access on facturx.analysis,model_facturx_analysis,base.group_user,1,1,1,1
+access_facturx_analysis_error_full,Full access on facturx.analysis.error,model_facturx_analysis_error,base.group_user,1,1,1,1

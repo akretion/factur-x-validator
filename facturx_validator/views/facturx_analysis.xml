@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2018 Akretion France (https://www.akretion.com/)
+  @author: Alexis de Lattre <alexis.delattre@akretion.com>
+-->
+<odoo>
+
+<record id="facturx_analysis_form" model="ir.ui.view">
+    <field name="model">facturx.analysis</field>
+    <field name="arch" type="xml">
+        <form string="Factur-X Analysis">
+            <header>
+                <button name="analyse" type="object" string="Analyse" states="draft" class="btn-primary"/>
+                <button name="print_report" type="object" string="Print Report" states="done" class="btn-primary"/>
+                <button name="back_to_draft" type="object" string="Back to Draft" states="done" groups="base.group_system"/>
+                <field name="state" widget="statusbar"/>
+            </header>
+            <sheet>
+                <div class="oe_title">
+                    <label for="name" string="Factur-X Analysis"/>
+                    <h1>
+                        <field name="name"/>
+                    </h1>
+                </div>
+                <group name="top">
+                    <group name="left" col="1">
+                        <group name="left-top">
+                            <field name="title"/>
+                            <field name="partner_id"/>
+                            <field name="date" states="done"/>
+                        </group>
+                        <group name="input" string="Input">
+                            <field name="facturx_file" filename="facturx_filename"/>
+                            <field name="facturx_filename" invisible="1"/>
+                            <label for="facturx_file_size"/>
+                            <div name="facturx_file_size">
+                                <field name="facturx_file_size" class="oe_inline"/>
+                                <label string=" Kb" class="oe_inline"/>
+                            </div>
+                            <field name="facturx_file_sha1"/>
+                        </group>
+                    </group>
+                    <group name="result" string="Results" attrs="{'invisible': [('state', '=', 'draft')]}">
+                        <field name="xmp_file" filename="xmp_filename"/>
+                        <field name="xmp_filename" invisible="1"/>
+                        <field name="xml_file" filename="xml_filename"/>
+                        <field name="xml_filename" invisible="1"/>
+                        <field name="valid"/>
+                        <field name="pdfa3_valid"/>
+                        <field name="xmp_valid"/>
+                        <field name="xml_valid"/>
+                        <field name="xmp_profile"/>
+                        <field name="xml_profile"/>
+                    </group>
+                </group>
+                <group name="errors" string="Errors" attrs="{'invisible': [('state', '=', 'done'), ('valid', '=', True)]}">
+                    <field name="error_ids" nolabel="1">
+                        <tree>
+                            <field name="group"/>
+                            <field name="name"/>
+                            <field name="comment"/>
+                        </tree>
+                    </field>
+                </group>
+            </sheet>
+            <div class="oe_chatter">
+                <field name="message_follower_ids" widget="mail_followers"/>
+                <field name="message_ids" widget="mail_thread"/>
+            </div>
+        </form>
+    </field>
+</record>
+
+<record id="facturx_analysis_tree" model="ir.ui.view">
+    <field name="model">facturx.analysis</field>
+    <field name="arch" type="xml">
+        <tree string="Factur-X Analysis">
+            <field name="name"/>
+            <field name="create_uid"/>
+            <field name="title"/>
+            <field name="partner_id"/>
+            <field name="date"/>
+            <field name="valid"/>
+            <field name="state"/>
+        </tree>
+    </field>
+</record>
+
+<record id="facturx_analysis_search" model="ir.ui.view">
+    <field name="model">facturx.analysis</field>
+    <field name="arch" type="xml">
+        <search string="Search Factur-X Analysis">
+            <field name="name" string="Number or Title" filter_domain="['|', '|', ('name', 'ilike', self), ('title', 'ilike', self), ('partner_id', 'ilike', self)]"/>
+            <field name="partner_id"/>
+            <filter name="my_analysis" string="My Analysis" domain="[('create_uid', '=', uid)]"/>
+            <separator/>
+            <filter name="no_analysed" string="Not Analysed" domain="[('state', '=', 'draft')]"/>
+            <filter name="analysed" string="Analysed" domain="[('state', '=', 'done')]"/>
+            <separator/>
+            <filter name="valid" string="Valid" domain="[('state', '=', 'done'), ('valid', '=', True)]" />
+            <filter name="invalid" string="Not Valid" domain="[('state', '=', 'done'), ('valid', '=', False)]" />
+            <group string="Group By" name="groupby">
+                <filter name="partner_groupby" string="Customer" context="{'group_by': 'partner_id'}"/>
+                <filter name="date_groupby" string="Analysis Date" context="{'group_by': 'date'}"/>
+                <filter name="create_uid_groupby" string="Created By" context="{'group_by': 'create_uid'}"/>
+                <filter name="state_groupby" string="State" context="{'group_by': 'state'}"/>
+            </group>
+        </search>
+    </field>
+</record>
+
+<record id="facturx_analysis_action" model="ir.actions.act_window">
+    <field name="name">Factur-X Analysis</field>
+    <field name="res_model">facturx.analysis</field>
+    <field name="view_mode">tree,form</field>
+    <field name="context">{'search_default_my_analysis': True}</field>
+</record>
+
+<menuitem id="facturx_analysis_root" name="Factur-X" />
+
+<menuitem id="facturx_analysis_parent" name="Factur-X" parent="facturx_analysis_root"/>
+
+<menuitem id="facturx_analysis_menu" action="facturx_analysis_action" parent="facturx_analysis_parent"/>
+
+</odoo>
