@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2018 Akretion France (http://www.akretion.com/)
+  @author: Alexis de Lattre <alexis.delattre@akretion.com>
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+
+<odoo noupdate="1">
+
+
+<record id="schematron_jar_path" model="ir.config_parameter">
+    <field name="key">facturx.schematron.jar_path</field>
+    <field name="value">/opt/schematron-facturx-java-tools/en16931-xml-validator/target/en16931-xml-validator-2.0.2-SNAPSHOT-jar-with-dependencies.jar</field>
+</record>
+
+<record id="schematron_xslt_path" model="ir.config_parameter">
+    <field name="key">facturx.schematron.xslt_path</field>
+    <field name="value">/opt/schematron-facturx/cii/xslt/EN16931-CII-validation.xslt</field>
+</record>
+
+<record id="verapdf_classpath" model="ir.config_parameter">
+    <field name="key">facturx.verapdf.classpath</field>
+    <field name="value">/opt/verapdf/etc:/opt/verapdf/bin/*</field>
+</record>
+
+<record id="verapdf_rest_url" model="ir.config_parameter">
+    <field name="key">facturx.verapdf.rest.url</field>
+    <field name="value">http://localhost:8080/api/validate/3b</field>
+</record>
+
+
+</odoo>

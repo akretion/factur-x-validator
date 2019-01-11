@@ -65,6 +65,10 @@ class FacturxAnalysis(models.Model):
     facturx_file_size = fields.Integer(
         string='File Size', readonly=True, copy=False,
         track_visibility='onchange')
+    file_type = fields.Selection([
+        ('pdf', 'PDF'),
+        ('xml', 'XML'),
+        ], string='File Type', readonly=True, copy=False)
     state = fields.Selection(
         [('draft', 'Draft'), ('done', 'Done')],
         string='State', readonly=True, default='draft', copy=False,
@@ -73,6 +77,8 @@ class FacturxAnalysis(models.Model):
     xmp_valid = fields.Boolean('Valid XMP', readonly=True, copy=False)
     xml_valid = fields.Boolean(
         'Factur-X XML valid against XSD', readonly=True, copy=False)
+    xml_schematron_valid = fields.Boolean(  # only for profile en16931
+        'Factur-X XML valid against Schematron', readonly=True, copy=False)
     valid = fields.Boolean('Fully Valid', readonly=True, copy=False)
     xmp_profile = fields.Selection(
         PROFILES, string='XMP Profile', readonly=True, copy=False)
@@ -100,6 +106,7 @@ class FacturxAnalysis(models.Model):
             'pdfa3_valid': False,
             'xmp_valid': False,
             'xml_valid': False,
+            'xml_schematron_valid': False,
             'valid': False,
             'xmp_profile': False,
             'xml_profile': False,
@@ -111,35 +118,8 @@ class FacturxAnalysis(models.Model):
             'xml_filename': False,
             'xmp_file': False,
             'xmp_filename': False,
+            'file_type': False,
         })
-
-    def analyse_xml_only(self):
-        logger.info('Start XML-only analysis of %s', self.name)
-        facturx_xml_string = self.facturx_file.decode('base64')
-        errors = {
-            '3_xml': [],
-            }
-        xml_root = None
-        try:
-            xml_root = etree.fromstring(facturx_xml_string)
-        except Exception as e:
-            errors['3_xml'].append({
-                'name': u'Not a valid XML file',
-                'comment': u'Technical error message:\n%s' % e,
-                })
-        vals = {}
-        if xml_root is not None:
-            self.analyse_xml(vals, xml_root, errors)
-        if not errors['3_xml']:
-            vals['xml_valid'] = True
-        errors_write = self.errors2errors_write(errors)
-        vals.update({
-            'state': 'done',
-            'date': fields.Datetime.now(),
-            'error_ids': errors_write,
-            })
-        self.write(vals)
-        logger.info('End XML-only analysis of %s', self.name)
 
     @api.model
     def errors2errors_write(self, errors):
@@ -157,9 +137,16 @@ class FacturxAnalysis(models.Model):
             raise UserError(_("Missing Factur-X File"))
         filetype = mimetypes.guess_type(self.facturx_filename)
         logger.debug('Factur-X file mimetype: %s', filetype)
+        vals = {'file_type': 'pdf'}
+        errors = {
+            '1_pdfa3': [],
+            '2_xmp': [],
+            '3_xml': [],
+            '4_xml_schematron': [],
+            }
         if filetype:
             if filetype[0] == 'application/xml':
-                return self.analyse_xml_only()
+                vals = {'file_type': 'xml'}
             elif filetype[0] != 'application/pdf':
                 raise UserError(_(
                     "The Factur-X file has not been recognised as a PDF file "
@@ -167,55 +154,74 @@ class FacturxAnalysis(models.Model):
                     % filetype[0])
         prefix = self.facturx_filename and self.facturx_filename[:4] + '-'\
             or 'facturx-'
-        f = NamedTemporaryFile('wb+', prefix=prefix, suffix='.pdf')
+        suffix = '.%s' % vals['file_type']
+        f = NamedTemporaryFile('wb+', prefix=prefix, suffix=suffix)
         f.write(self.facturx_file.decode('base64'))
         f.seek(0)
-        try:
-            pdf = PdfFileReader(f)
-            pdf_root = pdf.trailer['/Root']
-        except:
-            raise UserError(_("This is not a PDF file"))
-        errors = {
-            '1_pdfa3': [],
-            '2_xmp': [],
-            '3_xml': [],
-            }
-        vals = {}
-        rest = False
-        try:
-            logger.info('Connecting to veraPDF via Rest')
-            vera_xml_root = self.run_verapdf_rest(vals, f)
-            rest = True
-        except:
-            logger.warning(
-                'Failed to connect to veraPDF via Rest. '
-                'Fallback to subprocess method')
-            vera_xml_root = self.run_verapdf_subprocess(vals, f)
-        if rest:
-            pdfa_errors = self.analyse_verapdf_rest(vals, vera_xml_root)
-        else:
-            pdfa_errors = self.analyse_verapdf_subprocess(vals, vera_xml_root)
-        if pdfa_errors:
-            self.vera_errors_reformat(pdfa_errors, errors)
-        xmp_root = self.extract_xmp(vals, pdf_root, errors)
-        if xmp_root:
-            self.analyse_xmp(vals, xmp_root, errors)
-        xml_root = self.extract_xml(vals, pdf_root, errors)
+        if vals['file_type'] == 'pdf':
+            try:
+                pdf = PdfFileReader(f)
+                pdf_root = pdf.trailer['/Root']
+            except:
+                raise UserError(_("This is not a PDF file"))
+            rest = False
+            try:
+                logger.info('Connecting to veraPDF via Rest')
+                vera_xml_root = self.run_verapdf_rest(vals, f)
+                rest = True
+            except:
+                logger.warning(
+                    'Failed to connect to veraPDF via Rest. '
+                    'Fallback to subprocess method')
+                vera_xml_root = self.run_verapdf_subprocess(vals, f)
+            if rest:
+                pdfa_errors = self.analyse_verapdf_rest(vals, vera_xml_root)
+            else:
+                pdfa_errors = self.analyse_verapdf_subprocess(vals, vera_xml_root)
+            if pdfa_errors:
+                self.vera_errors_reformat(pdfa_errors, errors)
+            xmp_root = self.extract_xmp(vals, pdf_root, errors)
+            if xmp_root:
+                self.analyse_xmp(vals, xmp_root, errors)
+
+            xml_root, xml_string = self.extract_xml(vals, pdf_root, errors)
+
+            if not errors['1_pdfa3']:
+                vals['pdfa3_valid'] = True
+            if not errors['2_xmp']:
+                vals['xmp_valid'] = True
+
+        elif vals['file_type'] == 'xml':
+            xml_string = self.facturx_file.decode('base64')
+            xml_root = False
+            try:
+                xml_root = etree.fromstring(xml_string)
+            except Exception as e:
+                errors['3_xml'].append({
+                    'name': u'Not a valid XML file',
+                    'comment': u'Technical error message:\n%s' % e,
+                    })
         if xml_root:
-            self.analyse_xml(vals, xml_root, errors)
-        if not errors['1_pdfa3']:
-            vals['pdfa3_valid'] = True
-        if not errors['2_xmp']:
-            vals['xmp_valid'] = True
+            self.analyse_xml_xsd(vals, xml_root, errors)
+        if vals.get('xml_profile') == 'en16931' and xml_string:
+            self.analyse_xml_schematron(vals, xml_string, errors, prefix)
         if not errors['3_xml']:
             vals['xml_valid'] = True
-        if (
-                vals.get('pdfa3_valid') and
-                vals.get('xmp_valid') and
-                vals.get('xml_valid') and
-                vals.get('xmp_profile') and
-                vals.get('xmp_profile') == vals.get('xml_profile')):
-            vals['valid'] = True
+        if vals.get('xml_profile') == 'en16931' and not errors['4_xml_schematron']:
+            vals['xml_schematron_valid'] = True
+        if vals['file_type'] == 'pdf':
+            if (
+                    vals.get('pdfa3_valid') and
+                    vals.get('xmp_valid') and
+                    vals.get('xml_valid') and
+                    vals.get('xmp_profile') and
+                    vals.get('xmp_profile') == vals.get('xml_profile')):
+                vals['valid'] = True
+        elif vals['file_type'] == 'xml':
+            if vals.get('xml_valid'):
+                vals['valid'] = True
+        if vals.get('xml_profile') == 'en16931' and not vals.get('xml_schematron_valid'):
+            vals['valid'] = False
         facturx_file_size = os.stat(f.name).st_size
         f.seek(0)
         facturx_file_sha1 = hashlib.sha1(f.read()).hexdigest()
@@ -305,7 +311,7 @@ class FacturxAnalysis(models.Model):
         return
 
     def extract_xml(self, vals, pdf_root, errors):
-        xml_root = False
+        xml_root = xml_string = False
         try:
             embeddedfiles = pdf_root['/Names']['/EmbeddedFiles']['/Names']
         except:
@@ -363,7 +369,7 @@ class FacturxAnalysis(models.Model):
                         })
 
                 try:
-                    tmp_xml_string = xml_file_dict['/EF']['/F'].getData()
+                    xml_string = xml_file_dict['/EF']['/F'].getData()
                     xml_file_subdict = xml_file_dict['/EF']['/F'].getObject()
                 except:
                     errors['1_pdfa3'].append({
@@ -390,23 +396,23 @@ class FacturxAnalysis(models.Model):
                         })
                 facturx_file_present = True
                 try:
-                    xml_root = etree.fromstring(tmp_xml_string)
+                    xml_root = etree.fromstring(xml_string)
                 except Exception as e:
                     errors['3_xml'].append({
                         'name': u'factur-x.xml file is not a valid XML file',
                         'comment': u'Technical error message:\n%s' % e,
                         })
                     continue
-                vals['xml_file'] = tmp_xml_string.encode('base64')
+                vals['xml_file'] = xml_string.encode('base64')
                 vals['xml_filename'] = 'factur-x_%s.xml' % self.name.replace('/', '_')
 
         if not facturx_file_present:
             errors['3_xml'].append({
                 'name': u'No embedded factur-x.xml file',
                 })
-        return xml_root
+        return xml_root, xml_string
 
-    def analyse_xml(self, vals, xml_root, errors):
+    def analyse_xml_xsd(self, vals, xml_root, errors):
         # Check profile
         namespaces = xml_root.nsmap  # NO because it may not contain good nsmap
         doc_id_xpath = xml_root.xpath(
@@ -456,9 +462,88 @@ class FacturxAnalysis(models.Model):
             })
         return
 
+    def analyse_xml_schematron(self, vals, xml_string, errors, prefix=None):
+        facturx_xml_file = NamedTemporaryFile('w+', prefix=prefix, suffix='.xml')
+        facturx_xml_file.write(xml_string)
+        facturx_xml_file.seek(0)
+        result_xml_file = NamedTemporaryFile('w+', prefix=prefix, suffix='.xml')
+        ico = self.env['ir.config_parameter'].sudo()
+        paths = {
+            'facturx.schematron.jar_path': False,
+            'facturx.schematron.xslt_path': False,
+            }
+        for key in paths:
+            paths[key] = ico.get_param(key)
+            if not paths[key]:
+                raise UserError(_(
+                    "Missing system parameter '%s' "
+                    "or empty value for this parameter.") % key)
+            if not os.path.isfile(paths[key]):
+                raise UserError(_(
+                    "File '%s' stated in system parameter '%s' "
+                    "doesn't exist on the Odoo server filesystem.")
+                    % (paths[key], key))
+        cmd_list = [
+            '/usr/bin/java',
+            '-jar',
+            paths['facturx.schematron.jar_path'],
+            '-xml',
+            facturx_xml_file.name,
+            '-xslt',
+            paths['facturx.schematron.xslt_path'],
+            '-svrl',
+            result_xml_file.name,
+            ]
+        logger.info('Start to spawn java schematron for %s', self.name)
+        try:
+            process = subprocess.Popen(
+                cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                shell=False)
+            out, err = process.communicate()
+            logger.info(
+                'Java schematron analysis finished successfully for %s. '
+                'Output: %s', self.name, out)
+        except Exception as e:
+            logger.error('Failed to spawn java schematron. Error: %s', e)
+            return
+        result_xml_file.seek(0)
+        xml_result_string = result_xml_file.read()
+        logger.debug('xml_result_string=%s', xml_result_string)
+        try:
+            xml_result_root = etree.fromstring(xml_result_string)
+        except Exception as e:
+            logger.error(
+                'Failed to parse XML result file of schematron '
+                'analysis. Error: %s', e)
+            return
+        namespaces = xml_result_root.nsmap
+        namespaces.pop(None)
+        sch_errors = xml_result_root.xpath(
+            "/*[local-name() = 'schematron-output']/*[local-name() = 'failed-assert']",
+            namespaces=namespaces)
+        for sch_error in sch_errors:
+            detail_xpath = sch_error.xpath("*[local-name() = 'text']", namespaces=namespaces)
+            if detail_xpath:
+                comment = detail_xpath[0].text
+                location = sch_error.attrib and sch_error.attrib.get('location')
+                if location:
+                    comment += '\nError location: %s' % location
+                if comment:
+                    errors['4_xml_schematron'].append({
+                        'name': sch_error.attrib.get('id'),
+                        'comment': comment,
+                        })
+        facturx_xml_file.close()
+        result_xml_file.close()
+
     def run_verapdf_rest(self, vals, f):
         f.seek(0)  # VERY IMPORTANT !!!
-        url = 'http://localhost:8080/api/validate/3b'
+        ico = self.env['ir.config_parameter'].sudo()
+        url = ico.get_param('facturx.verapdf.rest.url')
+        if not url:
+            raise UserError(_(
+                "Missing system parameter 'facturx.verapdf.rest.url' "
+                "or empty value for this parameter."))
         files = {'file': f}
         headers = {'Accept': 'application/xml'}
         res_request = requests.post(url, files=files, headers=headers)
@@ -476,10 +561,17 @@ class FacturxAnalysis(models.Model):
         return vera_xml_root
 
     def run_verapdf_subprocess(self, vals, f):
+        ico = self.env['ir.config_parameter'].sudo()
+        classpath = ico.get_param('facturx.verapdf.classpath')
+        if not classpath:
+            raise UserError(_(
+                "Missing system parameter 'facturx.verapdf.classpath' "
+                "or empty value for this parameter."))
+
         cmd_list = [
             '/usr/bin/java',
             '-classpath',
-            '/opt/verapdf/etc:/opt/verapdf/bin/*',
+            classpath,
             #  '-Dfile.encoding=UTF8',  # MARCHE
             #  '-XX:+IgnoreUnrecognizedVMOptions',
             #  '--add-modules=java.xml.bind',
@@ -664,7 +756,8 @@ class FacturxAnalysisError(models.Model):
     group = fields.Selection([
         ('1_pdfa3', 'PDF/A-3'),
         ('2_xmp', 'XMP'),
-        ('3_xml', 'XML'),
+        ('3_xml', 'XML XSD'),
+        ('4_xml_schematron', 'XML Schematron'),
         ], string='Group', required=True)
     name = fields.Char(required=True)
     comment = fields.Text()

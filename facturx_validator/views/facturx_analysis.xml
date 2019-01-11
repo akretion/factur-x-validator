@@ -38,18 +38,20 @@
                                 <label string=" Kb" class="oe_inline"/>
                             </div>
                             <field name="facturx_file_sha1"/>
+                            <field name="file_type"/>
                         </group>
                     </group>
                     <group name="result" string="Results" attrs="{'invisible': [('state', '=', 'draft')]}">
-                        <field name="xmp_file" filename="xmp_filename"/>
+                        <field name="xmp_file" filename="xmp_filename" attrs="{'invisible': [('file_type', '!=', 'pdf')]}"/>
                         <field name="xmp_filename" invisible="1"/>
-                        <field name="xml_file" filename="xml_filename"/>
+                        <field name="xml_file" filename="xml_filename" attrs="{'invisible': [('file_type', '!=', 'pdf')]}"/>
                         <field name="xml_filename" invisible="1"/>
                         <field name="valid"/>
-                        <field name="pdfa3_valid"/>
-                        <field name="xmp_valid"/>
+                        <field name="pdfa3_valid" attrs="{'invisible': [('file_type', '!=', 'pdf')]}"/>
+                        <field name="xmp_valid" attrs="{'invisible': [('file_type', '!=', 'pdf')]}"/>
                         <field name="xml_valid"/>
-                        <field name="xmp_profile"/>
+                        <field name="xml_schematron_valid" attrs="{'invisible': [('xml_profile', '!=', 'en16931')]}"/>
+                        <field name="xmp_profile" attrs="{'invisible': [('file_type', '!=', 'pdf')]}"/>
                         <field name="xml_profile"/>
                     </group>
                 </group>
@@ -80,6 +82,8 @@
             <field name="title"/>
             <field name="partner_id"/>
             <field name="date"/>
+            <field name="facturx_filename"/>
+            <field name="file_type"/>
             <field name="valid"/>
             <field name="state"/>
         </tree>
@@ -90,12 +94,15 @@
     <field name="model">facturx.analysis</field>
     <field name="arch" type="xml">
         <search string="Search Factur-X Analysis">
-            <field name="name" string="Number or Title" filter_domain="['|', '|', ('name', 'ilike', self), ('title', 'ilike', self), ('partner_id', 'ilike', self)]"/>
+            <field name="name" string="Number, Title or Filename" filter_domain="['|', '|', ('name', 'ilike', self), ('title', 'ilike', self), ('facturx_filename', 'ilike', self)]"/>
             <field name="partner_id"/>
             <filter name="my_analysis" string="My Analysis" domain="[('create_uid', '=', uid)]"/>
             <separator/>
             <filter name="no_analysed" string="Not Analysed" domain="[('state', '=', 'draft')]"/>
             <filter name="analysed" string="Analysed" domain="[('state', '=', 'done')]"/>
+            <separator/>
+            <filter name="pdf" string="PDF" domain="[('file_type', '=', 'pdf')]"/>
+            <filter name="xml" string="XML" domain="[('file_type', '=', 'xml')]"/>
             <separator/>
             <filter name="valid" string="Valid" domain="[('state', '=', 'done'), ('valid', '=', True)]" />
             <filter name="invalid" string="Not Valid" domain="[('state', '=', 'done'), ('valid', '=', False)]" />

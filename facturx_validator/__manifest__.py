@@ -18,6 +18,7 @@
     'external_dependencies': {'python': ['facturx']},
     'data': [
         'data/sequence.xml',
+        'data/ir_config_parameter.xml',
         'views/facturx_analysis.xml',
         'security/ir.model.access.csv',
         'report/report.xml',
