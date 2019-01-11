@@ -570,6 +570,8 @@ class FacturxAnalysis(models.Model):
 
         cmd_list = [
             '/usr/bin/java',
+            '--add-modules',  # required for openjdk 10 (not for openjdk 8)
+            'java.xml.bind',
             '-classpath',
             classpath,
             #  '-Dfile.encoding=UTF8',  # MARCHE
