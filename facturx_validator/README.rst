@@ -58,12 +58,20 @@ For schematron analysis, you will need the Java tool and the XSLT file compiled 
 
 You can get the XSLT file from the Github repo `https://github.com/CenPC434/validation <https://github.com/CenPC434/validation>`_ under the path *cii/xslt/EN16931-CII-validation.xslt*.
 
-To get the Java tool, checkout the Github repo `https://github.com/CenPC434/java-tools <https://github.com/CenPC434/java-tools>`_ and compile it with Maven. The result JAR file can be found under *en16931-xml-validator/target/en16931-xml-validator-2.0.2-SNAPSHOT-jar-with-dependencies.jar*.
+To get the Java tool, checkout the Github repo `https://github.com/CenPC434/java-tools <https://github.com/CenPC434/java-tools>`_ and compile it with Maven:
+
+.. code::
+
+  git clone https://github.com/CenPC434/java-tools
+  cd java-tools
+  mvn clean package
+
+The result JAR file can be found under *en16931-xml-validator/target/en16931-xml-validator-2.0.2-SNAPSHOT-jar-with-dependencies.jar*.
 
 Configuration
 =============
 
-Go to the menu *Settings > Technical > Parameters > System parameters* and set the value for all the parameters whose key starts with *facturx.*.
+Go to the menu *Settings > Technical > Parameters > System parameters* and set the value for all the parameters whose key starts with *facturx.*. It is required to tell Odoo the location of the schematron JAR file, the schematron XSLT file, the URL of veraPDF rest, etc...
 
 Usage
 =====

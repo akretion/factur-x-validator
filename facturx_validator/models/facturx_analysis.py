@@ -13,6 +13,7 @@ import os
 import hashlib
 import mimetypes
 from lxml import etree
+from collections import OrderedDict
 from PyPDF2 import PdfFileReader
 from facturx import check_facturx_xsd
 import logging
@@ -735,13 +736,13 @@ class FacturxAnalysis(models.Model):
         self.ensure_one()
         faeo = self.env['facturx.analysis.error']
         group2label = dict(faeo.fields_get('group', 'selection')['group']['selection'])
-        res = {}
+        res = OrderedDict()
         for err in self.error_ids:
             if err.group in res:
                 res[err.group].append({'name': err.name, 'comment': err.comment})
             else:
                 res[err.group] = [{'name': err.name, 'comment': err.comment}]
-        fres = {}
+        fres = OrderedDict()
         for key, value in res.iteritems():
             fres[group2label[key]] = value
         # from pprint import pprint
