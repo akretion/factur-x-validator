@@ -362,11 +362,18 @@ class FacturxAnalysis(models.Model):
                                        u"Current value is '%s'." % (entry, xml_file_dict.get(entry))
                             })
 
-                if xml_file_dict.get('/AFRelationship') != '/Data':
+                afrel_accepted = ['/Data', '/Source', '/Alternative']
+                if '/AFRelationship' not in xml_file_dict:
+                    errors['1_pdfa3'].append({
+                        'name': 'Missing /AFRelationship entry for file %s' % filename,
+                        })
+                elif xml_file_dict.get('/AFRelationship') not in afrel_accepted:
                     errors['1_pdfa3'].append({
                         'name': 'Wrong value for /AFRelationship for file %s' % filename,
-                        'comment': "Value for /AFRelationship should be '/Data'. "
-                                   "Current value is '%s'." % xml_file_dict.get('/AFRelationship'),
+                        'comment': "Accepted values for /AFRelationship are: %s. "
+                                   "Current value is '%s'." % (
+                                       ', '.join(["'%s'" % x for x in afrel_accepted]),
+                                       xml_file_dict.get('/AFRelationship', '')),
                         })
 
                 try:
