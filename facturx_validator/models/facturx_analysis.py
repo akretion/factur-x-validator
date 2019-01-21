@@ -185,7 +185,10 @@ class FacturxAnalysis(models.Model):
             if xmp_root:
                 self.analyse_xmp(vals, xmp_root, errors)
 
-            xml_root, xml_string = self.extract_xml(vals, pdf_root, errors)
+            xml_root = xml_string = False
+            res_xml = self.extract_xml(vals, pdf_root, errors)
+            if res_xml:
+                xml_root, xml_string = res_xml
 
             if not errors['1_pdfa3']:
                 vals['pdfa3_valid'] = True
