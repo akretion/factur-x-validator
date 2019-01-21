@@ -50,7 +50,7 @@
                         <field name="pdfa3_valid" attrs="{'invisible': [('file_type', '!=', 'pdf')]}"/>
                         <field name="xmp_valid" attrs="{'invisible': [('file_type', '!=', 'pdf')]}"/>
                         <field name="xml_valid"/>
-                        <field name="xml_schematron_valid" attrs="{'invisible': [('xml_profile', '!=', 'en16931')]}"/>
+                        <field name="xml_schematron_valid" attrs="{'invisible': [('xml_profile', 'not in', ('en16931', 'basic'))]}"/>
                         <field name="xmp_profile" attrs="{'invisible': [('file_type', '!=', 'pdf')]}"/>
                         <field name="xml_profile"/>
                     </group>

@@ -78,7 +78,7 @@ class FacturxAnalysis(models.Model):
     xmp_valid = fields.Boolean('Valid XMP', readonly=True, copy=False)
     xml_valid = fields.Boolean(
         'Factur-X XML valid against XSD', readonly=True, copy=False)
-    xml_schematron_valid = fields.Boolean(  # only for profile en16931
+    xml_schematron_valid = fields.Boolean(  # only for profile en16931 and basic
         'Factur-X XML valid against Schematron', readonly=True, copy=False)
     valid = fields.Boolean('Fully Valid', readonly=True, copy=False)
     xmp_profile = fields.Selection(
@@ -207,11 +207,11 @@ class FacturxAnalysis(models.Model):
                     })
         if xml_root:
             self.analyse_xml_xsd(vals, xml_root, errors)
-        if vals.get('xml_profile') == 'en16931' and xml_string:
+        if vals.get('xml_profile') in ('en16931', 'basic') and xml_string:
             self.analyse_xml_schematron(vals, xml_string, errors, prefix)
         if not errors['3_xml']:
             vals['xml_valid'] = True
-        if vals.get('xml_profile') == 'en16931' and not errors['4_xml_schematron']:
+        if vals.get('xml_profile') in ('en16931', 'basic') and not errors['4_xml_schematron']:
             vals['xml_schematron_valid'] = True
         if vals['file_type'] == 'pdf':
             if (
@@ -224,7 +224,7 @@ class FacturxAnalysis(models.Model):
         elif vals['file_type'] == 'xml':
             if vals.get('xml_valid'):
                 vals['valid'] = True
-        if vals.get('xml_profile') == 'en16931' and not vals.get('xml_schematron_valid'):
+        if vals.get('xml_profile') in ('en16931', 'basic') and not vals.get('xml_schematron_valid'):
             vals['valid'] = False
         facturx_file_size = os.stat(f.name).st_size
         f.seek(0)
