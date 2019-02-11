@@ -17,7 +17,7 @@ This tool is a bit complex to install because it uses several Java components.
 
 .. code::
 
-  sudo apt install default-jre maven
+  sudo apt install openjdk-8-jdk maven
 
 Get veraPDF-rest, the tool that analyse the PDF/A conformity:
 
