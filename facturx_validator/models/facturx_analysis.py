@@ -293,22 +293,31 @@ class FacturxAnalysis(models.Model):
         res = {}
         for desc_node in desc_xpath:
             for tag_name in tags.keys():
-                xpath_str = desc_xpath_str + '/fx:' + tag_name
-                tag_xpath = xmp_root.xpath(
-                    xpath_str, namespaces=namespaces)
-                if tag_xpath:
-                    res[tag_name] = tag_xpath[0].text and tag_xpath[0].text.strip() or False
+                # First, check attributes
+                attrib_key = '{%s}%s' % (namespaces['fx'], tag_name)
+                if desc_node.attrib and attrib_key in desc_node.attrib:
+                    res[tag_name] = desc_node.attrib[attrib_key]
+                # then check sub-tags
+                else:
+                    xpath_str = desc_xpath_str + '/fx:' + tag_name
+                    tag_xpath = xmp_root.xpath(
+                        xpath_str, namespaces=namespaces)
+                    if tag_xpath and tag_xpath[0].text:
+                        res[tag_name] = tag_xpath[0].text.strip()
         for tag_name, tag_val in tags.items():
             xpath_str = desc_xpath_str + '/fx:' + tag_name
             if tag_name not in res:
                 errors['2_xmp'].append({
                     'name': u"Required tag '%s' missing" % tag_name,
-                    'comment': u"Missing tag %s in XMP Metadata" % xpath_str,
+                    'comment': u"Missing tag %s in XMP Metadata "
+                               u"(can also be set via an attribute '%s' of "
+                               u"the tag '%s')" % (
+                                   xpath_str, tag_name, desc_xpath_str),
                     })
             elif res.get(tag_name) not in tags[tag_name]:
                 errors['2_xmp'].append({
                     'name': u"Wrong value for tag '%s'" % tag_name,
-                    'comment': u"For tag '%s', the value is '%s' whereas the value should be '%s'" % (xpath_str, res.get(tag_name), ' or '.join(tags[tag_name])),
+                    'comment': u"For tag '%s' (or attribute '%s' of tag '%s'), the value is '%s' whereas the value should be '%s'" % (xpath_str, tag_name, desc_xpath_str, res.get(tag_name), ' or '.join(tags[tag_name])),
                     })
             elif tag_name == 'ConformanceLevel':
                 vals['xmp_profile'] = FACTURX_xmp2LEVEL[res[tag_name]]
