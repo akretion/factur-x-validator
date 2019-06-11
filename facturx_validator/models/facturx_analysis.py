@@ -14,7 +14,8 @@ import hashlib
 import mimetypes
 from lxml import etree
 from collections import OrderedDict
-from PyPDF2 import PdfFileReader
+from PyPDF4 import PdfFileReader
+from PyPDF4.generic import IndirectObject
 from facturx import check_facturx_xsd
 import logging
 logger = logging.getLogger(__name__)
@@ -323,23 +324,100 @@ class FacturxAnalysis(models.Model):
                 vals['xmp_profile'] = FACTURX_xmp2LEVEL[res[tag_name]]
         return
 
+    def _get_dict_entry(self, node, entry):
+        if not isinstance(node, dict):
+            raise ValueError('The node must be a dict')
+        dict_entry = node.get(entry)
+        if isinstance(dict_entry, dict):
+            return dict_entry
+        elif isinstance(dict_entry, IndirectObject):
+            res_dict_entry = dict_entry.getObject()
+            if isinstance(res_dict_entry, dict):
+                return res_dict_entry
+            else:
+                return False
+        else:
+            return False
+
+    def _parse_embeddedfiles_kids_node(self, kids_node, level, res):
+        if level not in [1, 2]:
+            raise ValueError('Level argument should be 1 or 2')
+        # The /Kids entry of the EmbeddedFiles name tree must be an array
+        if not isinstance(kids_node, list):
+            return False
+        for kid_entry in kids_node:
+            # The /Kids entry of the EmbeddedFiles name tree must be a
+            # list of IndirectObjects
+            if not isinstance(kid_entry, IndirectObject):
+                return False
+            kids_node = kid_entry.getObject()
+            # The /Kids entry of the EmbeddedFiles name tree
+            # must be a list of IndirectObjects that point to dict objects
+            if not isinstance(kids_node, dict):
+                return False
+            if '/Names' in kids_node:
+                # The /Names entry in EmbeddedFiles must be an array
+                if not isinstance(kids_node['/Names'], list):
+                    return False
+                res += kids_node['/Names']
+            elif '/Kids' in kids_node and level == 1:
+                kids_node_l2 = kids_node['/Kids']
+                self._parse_embeddedfiles_kids_node(kids_node_l2, 2, res)
+            else:
+                # /Kids node should have a /Names or /Kids entry
+                return False
+        return True
+
+    def _get_embeddedfiles(self, embeddedfiles_node):
+        if not isinstance(embeddedfiles_node, dict):
+            raise ValueError('The EmbeddedFiles node must be a dict')
+        res = []
+        if '/Names' in embeddedfiles_node:
+            # The /Names entry of the EmbeddedFiles name tree must be an array
+            if not isinstance(embeddedfiles_node['/Names'], list):
+                return False
+            res = embeddedfiles_node['/Names']
+        elif '/Kids' in embeddedfiles_node:
+            kids_node = embeddedfiles_node['/Kids']
+            parse_result = self._parse_embeddedfiles_kids_node(
+                kids_node, 1, res)
+            if parse_result is False:
+                return False
+        else:
+            # The EmbeddedFiles name tree should have either a /Names or a
+            # /Kids entry
+            return False
+        # The EmbeddedFiles name tree should point to an even number
+        # of elements
+        if len(res) % 2 != 0:
+            return False
+        return res
+
     def extract_xml(self, vals, pdf_root, errors):
         xml_root = xml_string = False
         try:
-            embeddedfiles = pdf_root['/Names']['/EmbeddedFiles']['/Names']
+            catalog_name = self._get_dict_entry(pdf_root, '/Names')
         except:
             errors['1_pdfa3'].append({
-                'name': u'Missing /Names/EmbeddedFiles/Names in PDF structure',
+                'name': u'Missing /Names in PDF Catalog',
+                })
+            return False
+        embeddedfiles_node = self._get_dict_entry(
+            catalog_name, '/EmbeddedFiles')
+        if not embeddedfiles_node:
+            errors['1_pdfa3'].append({
+                'name': u'Missing /Names/EmbeddedFiles in PDF Catalog',
+                })
+            return False
+        embeddedfiles = self._get_embeddedfiles(embeddedfiles_node)
+        if not embeddedfiles:
+            errors['1_pdfa3'].append({
+                'name': u'Missing /Names/EmbeddedFiles/Names or '
+                        u'/Names/EmbeddedFiles/Kids in PDF Catalog '
+                        u'or wrong structure',
                 })
             return False
         # embeddedfiles must contain an even number of elements
-        if len(embeddedfiles) % 2 != 0:
-            errors['1_pdfa3'].append({
-                'name': u'Wrong value for /Names/EmbeddedFiles/Names in PDF structure',
-                'comment': u'/Names/EmbeddedFiles/Names should contain '
-                           u'an even number of elements',
-                })
-            return False
         embeddedfiles_by_two = zip(embeddedfiles, embeddedfiles[1:])[::2]
         logger.debug('embeddedfiles_by_two=%s', embeddedfiles_by_two)
         facturx_file_present = False
@@ -398,7 +476,9 @@ class FacturxAnalysis(models.Model):
                         })
                     continue
                 # The absence of /Subtype is reported by veraPDF
-                if xml_file_subdict.get('/Subtype') != '/text#2Fxml':
+                if (
+                        xml_file_subdict.get('/Subtype') and
+                        xml_file_subdict['/Subtype'] not in ['/text#2Fxml', '/text#2fxml']):
                     errors['1_pdfa3'].append({
                         'name': u'Wrong value for /EF/F/Subtype',
                         'comment': u"Value for /EF/F/Subtype should be '/text#2Fxml'. "
