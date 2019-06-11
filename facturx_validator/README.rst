@@ -26,15 +26,45 @@ Get veraPDF-rest, the tool that analyse the PDF/A conformity:
   git clone https://github.com/veraPDF/veraPDF-rest.git
   cd veraPDF-rest
   git checkout integration
+
+To be able to compile it with Maven and OpenJDK 11, you need to modifiy the file pom.xml. Add the following lines at the beginning of the **<dependencies>** block:
+
+.. code::
+
+  <dependency>
+    <groupId>javax.xml.bind</groupId>
+    <artifactId>jaxb-api</artifactId>
+    <version>2.3.0</version>
+  </dependency>
+  <dependency>
+    <groupId>com.sun.xml.bind</groupId>
+    <artifactId>jaxb-core</artifactId>
+    <version>2.3.0</version>
+  </dependency>
+  <dependency>
+    <groupId>com.sun.xml.bind</groupId>
+    <artifactId>jaxb-impl</artifactId>
+    <version>2.3.0</version>
+  </dependency>
+  <dependency>
+    <groupId>javax.activation</groupId>
+    <artifactId>activation</artifactId>
+    <version>1.1.1</version>
+   </dependency>
+
+Then compile to generate the jar file:
+
+.. code::
+
   mvn clean package
 
 Starts veraPDF-rest:
 
 .. code::
 
-  java --add-modules java.xml.bind -jar target/verapdf-rest-0.1.0-SNAPSHOT.jar server
+  java -jar target/verapdf-rest-0.1.0-SNAPSHOT.jar server
 
-If you use openjdk 8, you don't need *--add-modules java.xml.bind* on the command line.
+If you followed the instructions above and modified the pom.xml file, you should NOT need *--add-modules java.xml.bind* on the command line.
 
 You can use *supervisor* to auto-start *veraPDF-rest* on boot:
 
@@ -48,7 +78,7 @@ Then create a file */etc/supervisor/conf.d/verapdf.conf* as root that contains (
 
   [program:verapdf-rest]
   user=odoo
-  command=/usr/bin/java --add-modules java.xml.bind -jar /home/odoo/veraPDF-rest/target/verapdf-rest-0.1.0-SNAPSHOT.jar server
+  command=/usr/bin/java -jar /home/odoo/veraPDF-rest/target/verapdf-rest-0.1.0-SNAPSHOT.jar server
   stdout_logfile=/var/log/odoo/verapdf-rest.log
   redirect_stderr=true
   autostart=true
