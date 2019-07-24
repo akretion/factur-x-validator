@@ -27,6 +27,7 @@ PROFILES = [
     ('basicwl', 'Basic WL'),
     ('basic', 'Basic'),
     ('en16931', 'EN 16931 (Comfort)'),
+    ('extended', 'Extended'),
     ]
 
 FACTURX_xmp2LEVEL = {
@@ -34,13 +35,7 @@ FACTURX_xmp2LEVEL = {
     'BASIC WL': 'basicwl',
     'BASIC': 'basic',
     'EN 16931': 'en16931',
-    }
-
-FACTURX_LEVEL2XSD = {
-    'minimum': 'FACTUR-X_BASIC-WL.xsd',
-    'basicwl': 'FACTUR-X_BASIC-WL.xsd',
-    'basic': 'FACTUR-X_EN16931.xsd',
-    'en16931': 'FACTUR-X_EN16931.xsd',
+    'EXTENDED': 'extended',
     }
 
 
@@ -540,9 +535,10 @@ class FacturxAnalysis(models.Model):
             return
         doc_id_split = doc_id.split(':')
         xml_profile = doc_id_split[-1]
-        if xml_profile not in FACTURX_LEVEL2XSD and len(doc_id_split) > 1:
+        PROFILES_LIST = [x[0] for x in PROFILES]
+        if xml_profile not in PROFILES_LIST and len(doc_id_split) > 1:
             xml_profile = doc_id.split(':')[-2]
-        if xml_profile not in FACTURX_LEVEL2XSD:
+        if xml_profile not in PROFILES_LIST:
             errors['3_xml'].append({
                 'name': "Invalid Factur-X URN",
                 'comment': "Invalid Factur-X URN '%s' in the XML tag "
