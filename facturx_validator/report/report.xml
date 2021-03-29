@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-<record id="facturx_analysis_report" model="ir.actions.report.xml">
+<record id="facturx_analysis_report" model="ir.actions.report">
       <field name="name">Analysis Report</field>
       <field name="model">facturx.analysis</field>
       <field name="report_name">facturx.analysis.report</field>
@@ -9,6 +9,7 @@
       <field name="py3o_filetype">odt</field>
       <field name="module">facturx_validator</field>
       <field name="py3o_template_fallback">report/analysis.odt</field>
+      <field name="binding_model_id" ref="model_facturx_analysis" />
 </record>
 
 

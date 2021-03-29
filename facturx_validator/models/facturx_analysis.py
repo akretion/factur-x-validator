@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright 2018 Akretion France (https://www.akretion.com/)
+# Copyright 2018-2021 Akretion France (https://www.akretion.com/)
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 
 from odoo import api, fields, models, _
@@ -10,10 +9,11 @@ import subprocess
 from tempfile import NamedTemporaryFile
 import re
 import os
+import base64
 import hashlib
 import mimetypes
 from lxml import etree
-from collections import OrderedDict
+from collections import defaultdict
 from PyPDF4 import PdfFileReader
 from PyPDF4.generic import IndirectObject
 from facturx import check_facturx_xsd
@@ -42,26 +42,24 @@ FACTURX_xmp2LEVEL = {
 class FacturxAnalysis(models.Model):
     _name = 'facturx.analysis'
     _description = 'Factur-X Analysis and Validation'
-    _inherit = ['mail.thread']
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'id desc'
 
     name = fields.Char(string='Number', readonly=True, copy=False)  # sequence
     partner_id = fields.Many2one(
-        'res.partner', string='Customer', ondelete='restrict',
-        track_visibility='onchange', domain=[('customer', '=', True)])
-    title = fields.Char(string='Title', track_visibility='onchange')
+        'res.partner', string='Partner', ondelete='restrict', tracking=True)
+    title = fields.Char(string='Title', tracking=True)
     date = fields.Datetime(string='Analysis Date', readonly=True, copy=False)
     facturx_file = fields.Binary(
         string='Factur-X File', copy=False,
         states={'done': [('readonly', True)]})
     facturx_filename = fields.Char(
-        string='Factur-X Filename', copy=False, track_visibility='onchange')
+        string='Factur-X Filename', copy=False, tracking=True)
     facturx_file_sha1 = fields.Char(
-        string='SHA1 Sum', readonly=True, copy=False,
-        track_visibility='onchange')
+        string='SHA1 Sum', readonly=True, copy=False, tracking=True)
     facturx_file_size = fields.Integer(
         string='File Size', readonly=True, copy=False,
-        track_visibility='onchange')
+        tracking=True)
     file_type = fields.Selection([
         ('pdf', 'PDF'),
         ('xml', 'XML'),
@@ -69,7 +67,7 @@ class FacturxAnalysis(models.Model):
     state = fields.Selection(
         [('draft', 'Draft'), ('done', 'Done')],
         string='State', readonly=True, default='draft', copy=False,
-        track_visibility='onchange')
+        tracking=True)
     pdfa3_valid = fields.Boolean(string='Valid PDF/A-3', readonly=True, copy=False)
     xmp_valid = fields.Boolean('Valid XMP', readonly=True, copy=False)
     xml_valid = fields.Boolean(
@@ -153,20 +151,20 @@ class FacturxAnalysis(models.Model):
             or 'facturx-'
         suffix = '.%s' % vals['file_type']
         f = NamedTemporaryFile('wb+', prefix=prefix, suffix=suffix)
-        f.write(self.facturx_file.decode('base64'))
+        f.write(base64.decodebytes(self.facturx_file))
         f.seek(0)
         if vals['file_type'] == 'pdf':
             try:
                 pdf = PdfFileReader(f)
                 pdf_root = pdf.trailer['/Root']
-            except:
+            except Exception:
                 raise UserError(_("This is not a PDF file"))
             rest = False
             try:
                 logger.info('Connecting to veraPDF via Rest')
                 vera_xml_root = self.run_verapdf_rest(vals, f)
                 rest = True
-            except:
+            except Exception:
                 logger.warning(
                     'Failed to connect to veraPDF via Rest. '
                     'Fallback to subprocess method')
@@ -198,8 +196,8 @@ class FacturxAnalysis(models.Model):
                 xml_root = etree.fromstring(xml_string)
             except Exception as e:
                 errors['3_xml'].append({
-                    'name': u'Not a valid XML file',
-                    'comment': u'Technical error message:\n%s' % e,
+                    'name': 'Not a valid XML file',
+                    'comment': 'Technical error message:\n%s' % e,
                     })
         if xml_root:
             self.analyse_xml_xsd(vals, xml_root, errors)
@@ -242,25 +240,24 @@ class FacturxAnalysis(models.Model):
     def extract_xmp(self, vals, pdf_root, errors):
         try:
             metaobj = pdf_root['/Metadata']
-            xmp_string = metaobj.getData()
+            xmp_bytes = metaobj.getData()
         except Exception as e:
             errors['2_xmp'].append({
-                'name': u'No valid /Metadata in PDF structure',
-                'comment': u"Cannot extract content of /Metadata from PDF",
+                'name': 'No valid /Metadata in PDF structure',
+                'comment': "Cannot extract content of /Metadata from PDF",
                 })
             return False
-        # print "xmp=", xmp_string
         vals.update({
-            'xmp_file': xmp_string.encode('base64'),
+            'xmp_file': base64.encodebytes(xmp_bytes),
             'xmp_filename': 'metadata_%s.xml' % self.name.replace('/', '_'),
             })
         xmp_root = False
         try:
-            xmp_root = etree.fromstring(xmp_string)
+            xmp_root = etree.fromstring(xmp_bytes)
         except Exception as e:
             errors['2_xmp'].append({
-                'name': u'XMP Metadata file is not a valid XML file',
-                'comment': u'Technical error message:\n%s' % e,
+                'name': 'XMP Metadata file is not a valid XML file',
+                'comment': 'Technical error message:\n%s' % e,
                 })
         return xmp_root
 
@@ -275,9 +272,9 @@ class FacturxAnalysis(models.Model):
             desc_xpath_str, namespaces=namespaces)
         if not desc_xpath:
             errors['2_xmp'].append({
-                'name': u'Required tag missing in XMP Metadata',
-                'comment': u'Missing path /x:xmpmeta/rdf:RDF/rdf:Description '
-                           u'in XMP Metadata',
+                'name': 'Required tag missing in XMP Metadata',
+                'comment': 'Missing path /x:xmpmeta/rdf:RDF/rdf:Description '
+                           'in XMP Metadata',
                 })
             return
         tags = {
@@ -304,16 +301,16 @@ class FacturxAnalysis(models.Model):
             xpath_str = desc_xpath_str + '/fx:' + tag_name
             if tag_name not in res:
                 errors['2_xmp'].append({
-                    'name': u"Required tag '%s' missing" % tag_name,
-                    'comment': u"Missing tag %s in XMP Metadata "
-                               u"(can also be set via an attribute '%s' of "
-                               u"the tag '%s')" % (
+                    'name': "Required tag '%s' missing" % tag_name,
+                    'comment': "Missing tag %s in XMP Metadata "
+                               "(can also be set via an attribute '%s' of "
+                               "the tag '%s')" % (
                                    xpath_str, tag_name, desc_xpath_str),
                     })
             elif res.get(tag_name) not in tags[tag_name]:
                 errors['2_xmp'].append({
-                    'name': u"Wrong value for tag '%s'" % tag_name,
-                    'comment': u"For tag '%s' (or attribute '%s' of tag '%s'), the value is '%s' whereas the value should be '%s'" % (xpath_str, tag_name, desc_xpath_str, res.get(tag_name), ' or '.join(tags[tag_name])),
+                    'name': "Wrong value for tag '%s'" % tag_name,
+                    'comment': "For tag '%s' (or attribute '%s' of tag '%s'), the value is '%s' whereas the value should be '%s'" % (xpath_str, tag_name, desc_xpath_str, res.get(tag_name), ' or '.join(tags[tag_name])),
                     })
             elif tag_name == 'ConformanceLevel':
                 vals['xmp_profile'] = FACTURX_xmp2LEVEL[res[tag_name]]
@@ -392,59 +389,65 @@ class FacturxAnalysis(models.Model):
         xml_root = xml_string = False
         try:
             catalog_name = self._get_dict_entry(pdf_root, '/Names')
-        except:
+        except Exception:
             errors['1_pdfa3'].append({
-                'name': u'Missing /Names in PDF Catalog',
+                'name': 'Missing /Names in PDF Catalog',
                 })
             return False
-        embeddedfiles_node = self._get_dict_entry(
-            catalog_name, '/EmbeddedFiles')
+        try:
+            embeddedfiles_node = self._get_dict_entry(
+                catalog_name, '/EmbeddedFiles')
+        except Exception:
+            errors['1_pdfa3'].append({
+                'name': 'Missing /Names/EmbeddedFiles in PDF Catalog',
+                })
+            return False
         if not embeddedfiles_node:
             errors['1_pdfa3'].append({
-                'name': u'Missing /Names/EmbeddedFiles in PDF Catalog',
+                'name': 'Missing /Names/EmbeddedFiles in PDF Catalog',
                 })
             return False
         embeddedfiles = self._get_embeddedfiles(embeddedfiles_node)
         if not embeddedfiles:
             errors['1_pdfa3'].append({
-                'name': u'Missing /Names/EmbeddedFiles/Names or '
-                        u'/Names/EmbeddedFiles/Kids in PDF Catalog '
-                        u'or wrong structure',
+                'name': 'Missing /Names/EmbeddedFiles/Names or '
+                        '/Names/EmbeddedFiles/Kids in PDF Catalog '
+                        'or wrong structure',
                 })
             return False
         # embeddedfiles must contain an even number of elements
-        embeddedfiles_by_two = zip(embeddedfiles, embeddedfiles[1:])[::2]
+        embeddedfiles_by_two = list(zip(embeddedfiles, embeddedfiles[1:]))[::2]
         logger.debug('embeddedfiles_by_two=%s', embeddedfiles_by_two)
         facturx_file_present = False
         for (filename, file_obj) in embeddedfiles_by_two:
             if filename == FACTURX_FILENAME:
                 try:
                     xml_file_dict = file_obj.getObject()
-                except:
+                except Exception:
                     errors['1_pdfa3'].append({
-                        'name': u'Unable to get the PDF file object %s' % filename,
+                        'name': 'Unable to get the PDF file object %s' % filename,
                         })
                     continue
                 # If '/AFRelationship' not in xml_file_dict reported by veraPDF
                 if '/Type' not in xml_file_dict:
                     errors['1_pdfa3'].append({
-                        'name': u'Missing entry /Type in File Specification Dictionary',
+                        'name': 'Missing entry /Type in File Specification Dictionary',
                         })
                 elif xml_file_dict.get('/Type') != '/Filespec':
                     errors['1_pdfa3'].append({
-                        'name': u'Wrong value for /Type in File Specification Dictionary',
-                        'comment': u"Value for /Type in File Specification "
-                                   u"Dictionary should be '/Filespec'. "
-                                   u"Current value is '%s'." % xml_file_dict.get('/Type')
+                        'name': 'Wrong value for /Type in File Specification Dictionary',
+                        'comment': "Value for /Type in File Specification "
+                                   "Dictionary should be '/Filespec'. "
+                                   "Current value is '%s'." % xml_file_dict.get('/Type')
                         })
                 # presence of /F and /UF already checked by VeraPDF
                 for entry in ['/F', '/UF']:
                     if xml_file_dict.get(entry) != FACTURX_FILENAME:
                         errors['1_pdfa3'].append({
-                            'name': u'Wrong value for %s in File Specification Dictionary' % entry,
-                            'comment': u"Value for %s in File Specification "
-                                       u"Dictionary should be 'factur-x.xml'. "
-                                       u"Current value is '%s'." % (entry, xml_file_dict.get(entry))
+                            'name': 'Wrong value for %s in File Specification Dictionary' % entry,
+                            'comment': "Value for %s in File Specification "
+                                       "Dictionary should be 'factur-x.xml'. "
+                                       "Current value is '%s'." % (entry, xml_file_dict.get(entry))
                             })
 
                 afrel_accepted = ['/Data', '/Source', '/Alternative']
@@ -464,10 +467,10 @@ class FacturxAnalysis(models.Model):
                 try:
                     xml_string = xml_file_dict['/EF']['/F'].getData()
                     xml_file_subdict = xml_file_dict['/EF']['/F'].getObject()
-                except:
+                except Exception:
                     errors['1_pdfa3'].append({
-                        'name': u'Unable to extract the file %s' % filename,
-                        'comment': u'Wrong value for /EF/F for file %s' % filename,
+                        'name': 'Unable to extract the file %s' % filename,
+                        'comment': 'Wrong value for /EF/F for file %s' % filename,
                         })
                     continue
                 # The absence of /Subtype is reported by veraPDF
@@ -475,35 +478,35 @@ class FacturxAnalysis(models.Model):
                         xml_file_subdict.get('/Subtype') and
                         xml_file_subdict['/Subtype'] not in ['/text#2Fxml', '/text#2fxml']):
                     errors['1_pdfa3'].append({
-                        'name': u'Wrong value for /EF/F/Subtype',
-                        'comment': u"Value for /EF/F/Subtype should be '/text#2Fxml'. "
-                                   u"Current value is '%s'." % xml_file_subdict.get('/Subtype')
+                        'name': 'Wrong value for /EF/F/Subtype',
+                        'comment': "Value for /EF/F/Subtype should be '/text#2Fxml'. "
+                                   "Current value is '%s'." % xml_file_subdict.get('/Subtype')
                         })
                 if '/Type' not in xml_file_subdict:
                     errors['1_pdfa3'].append({
-                        'name': u'Missing entry /EF/F/Type',
+                        'name': 'Missing entry /EF/F/Type',
                         })
                 elif xml_file_subdict.get('/Type') != '/EmbeddedFile':
                     errors['1_pdfa3'].append({
-                        'name': u'Wrong value for /EF/F/Type',
-                        'comment': u"Value for /EF/F/Type should be '/EmbeddedFile'. "
-                                   u"Current value is '%s'." % xml_file_subdict.get('/Type')
+                        'name': 'Wrong value for /EF/F/Type',
+                        'comment': "Value for /EF/F/Type should be '/EmbeddedFile'. "
+                                   "Current value is '%s'." % xml_file_subdict.get('/Type')
                         })
                 facturx_file_present = True
                 try:
                     xml_root = etree.fromstring(xml_string)
                 except Exception as e:
                     errors['3_xml'].append({
-                        'name': u'factur-x.xml file is not a valid XML file',
-                        'comment': u'Technical error message:\n%s' % e,
+                        'name': 'factur-x.xml file is not a valid XML file',
+                        'comment': 'Technical error message:\n%s' % e,
                         })
                     continue
-                vals['xml_file'] = xml_string.encode('base64')
+                vals['xml_file'] = base64.encodebytes(xml_string)
                 vals['xml_filename'] = 'factur-x_%s.xml' % self.name.replace('/', '_')
 
         if not facturx_file_present:
             errors['3_xml'].append({
-                'name': u'No embedded factur-x.xml file',
+                'name': 'No embedded factur-x.xml file',
                 })
         return xml_root, xml_string
 
@@ -553,16 +556,16 @@ class FacturxAnalysis(models.Model):
                 xml_root, flavor='factur-x', facturx_level=xml_profile)
         except Exception as e:
             errors['3_xml'].append({
-                'name': u'factur-x.xml file invalid against XSD',
-                'comment': u'%s' % e,
+                'name': 'factur-x.xml file invalid against XSD',
+                'comment': '%s' % e,
             })
         return
 
-    def analyse_xml_schematron(self, vals, xml_string, errors, prefix=None):
-        facturx_xml_file = NamedTemporaryFile('w+', prefix=prefix, suffix='.xml')
-        facturx_xml_file.write(xml_string)
+    def analyse_xml_schematron(self, vals, xml_bytes, errors, prefix=None):
+        facturx_xml_file = NamedTemporaryFile('wb+', prefix=prefix, suffix='.xml')
+        facturx_xml_file.write(xml_bytes)
         facturx_xml_file.seek(0)
-        result_xml_file = NamedTemporaryFile('w+', prefix=prefix, suffix='.xml')
+        result_xml_file = NamedTemporaryFile('wb+', prefix=prefix, suffix='.xml')
         ico = self.env['ir.config_parameter'].sudo()
         paths = {
             'facturx.schematron.jar_path': False,
@@ -591,11 +594,14 @@ class FacturxAnalysis(models.Model):
             result_xml_file.name,
             ]
         logger.info('Start to spawn java schematron for %s', self.name)
+        logger.debug('java schematron cmd: %s', cmd_list)
         try:
             process = subprocess.Popen(
                 cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 shell=False)
             out, err = process.communicate()
+            if err:
+                logger.error('Schematron analysis output errors: %s', err)
             logger.info(
                 'Java schematron analysis finished successfully for %s. '
                 'Output: %s', self.name, out)
@@ -613,7 +619,8 @@ class FacturxAnalysis(models.Model):
                 'analysis. Error: %s', e)
             return
         namespaces = xml_result_root.nsmap
-        namespaces.pop(None)
+        if None in namespaces:
+            namespaces.pop(None)
         sch_errors = xml_result_root.xpath(
             "/*[local-name() = 'schematron-output']/*[local-name() = 'failed-assert']",
             namespaces=namespaces)
@@ -653,7 +660,7 @@ class FacturxAnalysis(models.Model):
         # fr = open('/tmp/answer_veraPDF_rest.xml', 'w')
         # fr.write(xml_string)
         # fr.close()
-        vera_xml_root = ET.fromstring(xml_string)
+        vera_xml_root = ET.fromstring(xml_string.encode('utf8'))
         return vera_xml_root
 
     def run_verapdf_subprocess(self, vals, f):
@@ -666,13 +673,10 @@ class FacturxAnalysis(models.Model):
 
         cmd_list = [
             '/usr/bin/java',
-            '--add-modules',  # required for openjdk 10 (not for openjdk 8)
-            'java.xml.bind',
             '-classpath',
             classpath,
             #  '-Dfile.encoding=UTF8',  # MARCHE
             #  '-XX:+IgnoreUnrecognizedVMOptions',
-            #  '--add-modules=java.xml.bind',
             #  '-Dapp.name="VeraPDF validation CLI"',
             #  '-Dapp.repo="/opt/verapdf/bin"',
             #  '-Dapp.home="/opt/verapdf"',
@@ -681,23 +685,24 @@ class FacturxAnalysis(models.Model):
             f.name,
             ]
         logger.info('Start to spawn veraPDF for %s', self.name)
+        logger.debug('veraPDF command: %s', cmd_list)
         process = subprocess.Popen(
             cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             shell=False)
         out, err = process.communicate()
+        if err:
+            logger.error('Error output in subprocess call: %s', err)
         logger.info('End veraPDF for %s', self.name)
         vera_xml_root = ET.fromstring(out)
         return vera_xml_root
 
     def analyse_verapdf_rest(self, vals, vera_xml_root):
         errors = []
-        namespaces = vera_xml_root.nsmap
-        profile_xpath = vera_xml_root.xpath(
-            '/ValidationResultImpl/pdfaflavour', namespaces=namespaces)
-        profile = profile_xpath and profile_xpath[0].text or False
-        compliant_xpath = vera_xml_root.xpath(
-            '/ValidationResultImpl/compliant', namespaces=namespaces)
-        compliant = compliant_xpath and compliant_xpath[0].text or False
+        namespaces = {'vera': 'http://www.verapdf.org/ValidationProfile'}
+        result_xpath = vera_xml_root.xpath(
+            '/vera:validationResult', namespaces=namespaces)
+        profile = result_xpath and result_xpath[0].attrib.get('flavour') or False
+        compliant = result_xpath and result_xpath[0].attrib.get('isCompliant') or False
         logger.info(
             'Analysis %s: profile=%s compliant=%s',
             self.name, profile, compliant)
@@ -711,37 +716,28 @@ class FacturxAnalysis(models.Model):
                     'comment': "PDF profile is '%s'" % profile,
                     })
         errors_xpath = vera_xml_root.xpath(
-            "/ValidationResultImpl/testAssertions/testAssertions",
+            "/vera:validationResult/vera:assertions/vera:assertion",
             namespaces=namespaces)
         tmp_errors = {}
         for verrors in errors_xpath:
-            spec_xpath = verrors.xpath(
-                'ruleId/specification', namespaces=namespaces)
-            spec = spec_xpath and spec_xpath[0].text or False
-            clause_xpath = verrors.xpath(
-                'ruleId/clause', namespaces=namespaces)
-            clause = clause_xpath and clause_xpath[0].text or False
-            test_number_xpath = verrors.xpath(
-                'ruleId/testNumber', namespaces=namespaces)
-            test_number = test_number_xpath\
-                and test_number_xpath[0].text or False
-            status_xpath = verrors.xpath(
-                'status', namespaces=namespaces)
-            status = status_xpath and status_xpath[0].text or False
+            rule_xpath = verrors.xpath('vera:ruleId', namespaces=namespaces)
+            spec = rule_xpath and rule_xpath[0].attrib.get('specification') or False
+            clause = rule_xpath and rule_xpath[0].attrib.get('clause') or False
+            test_number = rule_xpath and rule_xpath[0].attrib.get('testNumber') or False
+            status = verrors.attrib.get('status') or False
             if status != 'FAILED':
                 raise UserError(_(
                     "Wrong Rest XML output: STATUS = %s (should be FAILED)")
                     % status)
-            msg_xpath = verrors.xpath(
-                'message', namespaces=namespaces)
+            msg_xpath = verrors.xpath('vera:message', namespaces=namespaces)
             msg = msg_xpath and msg_xpath[0].text or False
             if msg:
-                msg = msg.replace('\n\t\t', ' ')  # Cleanup
+                msg = re.sub('\s+', ' ', msg)
             level_xpath = verrors.xpath(
-                'location/level', namespaces=namespaces)
+                'vera:location/vera:level', namespaces=namespaces)
             level = level_xpath and level_xpath[0].text or False
             vcontext_xpath = verrors.xpath(
-                'location/context', namespaces=namespaces)
+                'vera:location/vera:context', namespaces=namespaces)
             vcontext = vcontext_xpath and vcontext_xpath[0].text or False
             key = (spec, clause, test_number, msg, level)
             if key in tmp_errors:
@@ -790,8 +786,10 @@ class FacturxAnalysis(models.Model):
             for rcheck in verrors.xpath("check[@status='failed']", namespaces=namespaces):
                 rctx = rcheck.xpath('context', namespaces=namespaces)[0].text
                 rcontext.append(rctx)
-            msg_raw = verrors.xpath('description', namespaces=namespaces)[0].text
-            msg = re.sub('\s+', ' ', msg_raw)
+            msg = verrors.xpath('description', namespaces=namespaces)[0].text
+            if msg:
+                # Remove tab, newlines, double whitespace
+                msg = re.sub('\s+', ' ', msg)
             level = verrors.xpath('object', namespaces=namespaces)[0].text
             vcontext = '\n'.join(rcontext)
             errors.append({
@@ -824,25 +822,17 @@ class FacturxAnalysis(models.Model):
 
     def print_report(self):
         self.ensure_one()
-        action = self.env['report'].get_action(self, 'facturx.analysis.report')
+        action = self.env.ref('facturx_validator.facturx_analysis_report').with_context({'discard_logo_check': True}).report_action(self)
         return action
 
     def report_get_errors(self):
         self.ensure_one()
         faeo = self.env['facturx.analysis.error']
         group2label = dict(faeo.fields_get('group', 'selection')['group']['selection'])
-        res = OrderedDict()
+        res = defaultdict(list)
         for err in self.error_ids:
-            if err.group in res:
-                res[err.group].append({'name': err.name, 'comment': err.comment})
-            else:
-                res[err.group] = [{'name': err.name, 'comment': err.comment}]
-        fres = OrderedDict()
-        for key, value in res.iteritems():
-            fres[group2label[key]] = value
-        # from pprint import pprint
-        # pprint(fres)
-        return fres
+            res[group2label[err.group]].append({'name': err.name, 'comment': err.comment})
+        return res
 
 
 class FacturxAnalysisError(models.Model):

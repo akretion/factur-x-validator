@@ -13,6 +13,8 @@ This module is completely independant from the invoicing feature of Odoo. This t
 Installation
 ============
 
+This installation procedure is for Odoo v14.0 on Ubuntu 20.04 LTS.
+
 This tool is a bit complex to install because it uses several Java components.
 
 .. code::
@@ -27,30 +29,12 @@ Get veraPDF-rest, the tool that analyse the PDF/A conformity:
   cd veraPDF-rest
   git checkout integration
 
-To be able to compile it with Maven and OpenJDK 11, you need to modifiy the file pom.xml. Add the following lines at the beginning of the **<dependencies>** block:
+If `bug #56 <https://github.com/veraPDF/veraPDF-rest/issues/56>`_ is still open, you should checkout a slightly older version (otherwise, it won't start):
+
 
 .. code::
 
-  <dependency>
-    <groupId>javax.xml.bind</groupId>
-    <artifactId>jaxb-api</artifactId>
-    <version>2.3.0</version>
-  </dependency>
-  <dependency>
-    <groupId>com.sun.xml.bind</groupId>
-    <artifactId>jaxb-core</artifactId>
-    <version>2.3.0</version>
-  </dependency>
-  <dependency>
-    <groupId>com.sun.xml.bind</groupId>
-    <artifactId>jaxb-impl</artifactId>
-    <version>2.3.0</version>
-  </dependency>
-  <dependency>
-    <groupId>javax.activation</groupId>
-    <artifactId>activation</artifactId>
-    <version>1.1.1</version>
-   </dependency>
+  git checkout 7f1970f81d3d55e1804dafbc60596d3f2c5cfb38
 
 Then compile to generate the jar file:
 
@@ -63,8 +47,6 @@ Starts veraPDF-rest:
 .. code::
 
   java -jar target/verapdf-rest-0.1.0-SNAPSHOT.jar server
-
-If you followed the instructions above and modified the pom.xml file, you should NOT need *--add-modules java.xml.bind* on the command line.
 
 You can use *supervisor* to auto-start *veraPDF-rest* on boot:
 
@@ -96,12 +78,19 @@ To get the Java tool, checkout the Github repo `https://github.com/CenPC434/java
   cd java-tools
   mvn clean package
 
-The result JAR file can be found under *en16931-xml-validator/target/en16931-xml-validator-2.0.2-SNAPSHOT-jar-with-dependencies.jar*.
+The result JAR file can be found under *en16931-xml-validator/target/en16931-xml-validator-2.0.5-SNAPSHOT-jar-with-dependencies.jar*.
 
 Configuration
 =============
 
 Go to the menu *Settings > Technical > Parameters > System parameters* and set the value for all the parameters whose key starts with *facturx.*. It is required to tell Odoo the location of the schematron JAR file, the schematron XSLT file, the URL of veraPDF rest, etc...
+
+If the fallback on veraPDF command line tool doesn't work, edit the Odoo server configuration file:
+
+.. code::
+
+  limit_memory_hard = 8589934592
+
 
 Usage
 =====

@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-# Copyright 2018 Akretion France (https://www.akretion.com/)
+# Copyright 2018-2021 Akretion France (https://www.akretion.com/)
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 
 {
     'name': 'Factur-X Validator',
-    'version': '10.0.1.0.0',
+    'version': '14.0.1.0.0',
     'category': 'Tools',
     'license': 'AGPL-3',
     'summary': 'Analyse and validate Factur-X invoices',
