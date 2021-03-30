@@ -190,10 +190,10 @@ class FacturxAnalysis(models.Model):
                 vals['xmp_valid'] = True
 
         elif vals['file_type'] == 'xml':
-            xml_string = self.facturx_file.decode('base64')
+            xml_bytes = base64.decodebytes(self.facturx_file)
             xml_root = False
             try:
-                xml_root = etree.fromstring(xml_string)
+                xml_root = etree.fromstring(xml_bytes)
             except Exception as e:
                 errors['3_xml'].append({
                     'name': 'Not a valid XML file',
@@ -201,8 +201,8 @@ class FacturxAnalysis(models.Model):
                     })
         if xml_root:
             self.analyse_xml_xsd(vals, xml_root, errors)
-        if vals.get('xml_profile') in ('en16931', 'basic') and xml_string:
-            self.analyse_xml_schematron(vals, xml_string, errors, prefix)
+        if vals.get('xml_profile') in ('en16931', 'basic') and xml_bytes:
+            self.analyse_xml_schematron(vals, xml_bytes, errors, prefix)
         if not errors['3_xml']:
             vals['xml_valid'] = True
         if vals.get('xml_profile') in ('en16931', 'basic') and not errors['4_xml_schematron']:
