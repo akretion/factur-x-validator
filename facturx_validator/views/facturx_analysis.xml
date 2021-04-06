@@ -123,10 +123,29 @@
     </field>
 </record>
 
+<record id="facturx_analysis_pivot" model="ir.ui.view">
+    <field name="model">facturx.analysis</field>
+    <field name="arch" type="xml">
+        <pivot>
+            <field name="date" type="row"/>
+            <field name="doc_type" type="col"/>
+        </pivot>
+    </field>
+</record>
+
+<record id="facturx_analysis_graph" model="ir.ui.view">
+    <field name="model">facturx.analysis</field>
+    <field name="arch" type="xml">
+        <graph>
+            <field name="date" interval="month"/>
+        </graph>
+    </field>
+</record>
+
 <record id="facturx_analysis_action" model="ir.actions.act_window">
     <field name="name">Analysis</field>
     <field name="res_model">facturx.analysis</field>
-    <field name="view_mode">tree,form</field>
+    <field name="view_mode">tree,form,pivot,graph</field>
     <field name="context">{'search_default_my_analysis': True}</field>
 </record>
 
