@@ -130,7 +130,7 @@
     <field name="context">{'search_default_my_analysis': True}</field>
 </record>
 
-<menuitem id="facturx_analysis_root" name="Factur-X" web_icon="facturx_validator,static/description/fx_menu_icon.png"/>
+<menuitem id="facturx_analysis_root" name="Factur-X" web_icon="facturx_validator,static/description/fx_menu_icon.png" sequence="-1"/>
 
 <menuitem id="facturx_analysis_parent" name="Analysis" parent="facturx_analysis_root"/>
 
