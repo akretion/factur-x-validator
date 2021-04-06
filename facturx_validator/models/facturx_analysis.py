@@ -13,29 +13,47 @@ import base64
 import hashlib
 import mimetypes
 from lxml import etree
+from lxml.isoschematron import Schematron
 from collections import defaultdict
 from PyPDF4 import PdfFileReader
 from PyPDF4.generic import IndirectObject
-from facturx import check_facturx_xsd
+from facturx import xml_check_xsd, get_flavor, get_orderx_type
 import logging
 logger = logging.getLogger(__name__)
 
 FACTURX_FILENAME = 'factur-x.xml'
+ORDERX_FILENAME = 'order-x.xml'
+ALL_FILENAMES = [FACTURX_FILENAME, ORDERX_FILENAME]
 
 PROFILES = [
-    ('minimum', 'Minimum'),
-    ('basicwl', 'Basic WL'),
-    ('basic', 'Basic'),
-    ('en16931', 'EN 16931 (Comfort)'),
-    ('extended', 'Extended'),
+    ('facturx_minimum', 'Minimum'),
+    ('facturx_basicwl', 'Basic WL'),
+    ('facturx_basic', 'Basic'),
+    ('facturx_en16931', 'EN 16931 (Comfort)'),
+    ('facturx_extended', 'Extended'),
+    ('orderx_basic', 'Basic (Order-X)'),
+    ('orderx_comfort', 'Comfort (Order-X)'),
+    ('orderx_extended', 'Extended (Order-X)'),
     ]
 
-FACTURX_xmp2LEVEL = {
-    'MINIMUM': 'minimum',
-    'BASIC WL': 'basicwl',
-    'BASIC': 'basic',
-    'EN 16931': 'en16931',
-    'EXTENDED': 'extended',
+ORDERX_TYPES = [
+    ('order', 'Order'),
+    ('order_response', 'Order Response'),
+    ('order_change', 'Order Change'),
+    ]
+
+FACTURX_xmp2level = {
+    'MINIMUM': 'facturx_minimum',
+    'BASIC WL': 'facturx_basicwl',
+    'BASIC': 'facturx_basic',
+    'EN 16931': 'facturx_en16931',
+    'EXTENDED': 'facturx_extended',
+    }
+
+ORDERX_xmp2level = {
+    'BASIC': 'orderx_basic',
+    'COMFORT': 'orderx_comfort',
+    'EXTENDED': 'orderx_extended',
     }
 
 
@@ -51,10 +69,9 @@ class FacturxAnalysis(models.Model):
     title = fields.Char(string='Title', tracking=True)
     date = fields.Datetime(string='Analysis Date', readonly=True, copy=False)
     facturx_file = fields.Binary(
-        string='Factur-X File', copy=False,
-        states={'done': [('readonly', True)]})
+        string='File', copy=False, states={'done': [('readonly', True)]})
     facturx_filename = fields.Char(
-        string='Factur-X Filename', copy=False, tracking=True)
+        string='Filename', copy=False, tracking=True)
     facturx_file_sha1 = fields.Char(
         string='SHA1 Sum', readonly=True, copy=False, tracking=True)
     facturx_file_size = fields.Integer(
@@ -71,9 +88,9 @@ class FacturxAnalysis(models.Model):
     pdfa3_valid = fields.Boolean(string='Valid PDF/A-3', readonly=True, copy=False)
     xmp_valid = fields.Boolean('Valid XMP', readonly=True, copy=False)
     xml_valid = fields.Boolean(
-        'Factur-X XML valid against XSD', readonly=True, copy=False)
+        'XML valid against XSD', readonly=True, copy=False)
     xml_schematron_valid = fields.Boolean(  # only for profile en16931 and basic
-        'Factur-X XML valid against Schematron', readonly=True, copy=False)
+        'XML valid against Schematron', readonly=True, copy=False)
     valid = fields.Boolean('Fully Valid', readonly=True, copy=False)
     xmp_profile = fields.Selection(
         PROFILES, string='XMP Profile', readonly=True, copy=False)
@@ -86,6 +103,15 @@ class FacturxAnalysis(models.Model):
     xmp_filename = fields.Char(readonly=True, copy=False)
     xml_file = fields.Binary(string='XML File', readonly=True, copy=False)
     xml_filename = fields.Char(readonly=True, copy=False)
+    doc_type = fields.Selection([
+        ('facturx', 'Factur-X'),
+        ('orderx', 'Order-X'),
+        ], readonly=True, tracking=True)
+    xml_orderx_type = fields.Selection(
+        ORDERX_TYPES, string='XML Order-X Type', readonly=True, copy=False)
+    xmp_orderx_type = fields.Selection(
+        ORDERX_TYPES, string='XMP Order-X Type', readonly=True, copy=False)
+    afrelationship = fields.Char(string='AFRelationship', readonly=True, copy=False)
 
     @api.model
     def create(self, vals):
@@ -114,6 +140,10 @@ class FacturxAnalysis(models.Model):
             'xmp_file': False,
             'xmp_filename': False,
             'file_type': False,
+            'doc_type': False,
+            'xml_orderx_type': False,
+            'xmp_orderx_type': False,
+            'afrelationship': False,
         })
 
     @api.model
@@ -141,7 +171,7 @@ class FacturxAnalysis(models.Model):
             }
         if filetype:
             if filetype[0] == 'application/xml':
-                vals = {'file_type': 'xml'}
+                vals['file_type'] = 'xml'
             elif filetype[0] != 'application/pdf':
                 raise UserError(_(
                     "The Factur-X file has not been recognised as a PDF file "
@@ -176,22 +206,17 @@ class FacturxAnalysis(models.Model):
             if pdfa_errors:
                 self.vera_errors_reformat(pdfa_errors, errors)
             xmp_root = self.extract_xmp(vals, pdf_root, errors)
-            if xmp_root:
-                self.analyse_xmp(vals, xmp_root, errors)
 
-            xml_root = xml_string = False
+            xml_root = xml_bytes = None
             res_xml = self.extract_xml(vals, pdf_root, errors)
             if res_xml:
-                xml_root, xml_string = res_xml
-
-            if not errors['1_pdfa3']:
-                vals['pdfa3_valid'] = True
-            if not errors['2_xmp']:
-                vals['xmp_valid'] = True
+                xml_root, xml_bytes = res_xml
+            # Set pdfa3_valid later in the code, because
+            # there is a check later on AFRelationShip
 
         elif vals['file_type'] == 'xml':
             xml_bytes = base64.decodebytes(self.facturx_file)
-            xml_root = False
+            xml_root = None
             try:
                 xml_root = etree.fromstring(xml_bytes)
             except Exception as e:
@@ -201,24 +226,46 @@ class FacturxAnalysis(models.Model):
                     })
         if xml_root:
             self.analyse_xml_xsd(vals, xml_root, errors)
-        if vals.get('xml_profile') in ('en16931', 'basic') and xml_bytes:
-            self.analyse_xml_schematron(vals, xml_bytes, errors, prefix)
+        else:
+            vals['doc_type'] = 'facturx'
+        # Starting from here, we have vals['doc_type'] and vals['xml_profile']
+        if vals['file_type'] == 'pdf' and vals.get('afrelationship') and vals['afrelationship'] != '/Data' and vals['xml_profile'] in ('facturx_minimum', 'facturx_basicwl'):
+            errors['1_pdfa3'].append({
+                'name': '/AFRelationship = %s not allowed for this Factur-X profile' % vals['afrelationship'],
+                'comment': "For Factur-X profiles Minimum and Basic WL, "
+                           "/AFRelationship for attachment factur-x.xml must be "
+                           "/Data, it cannot be /Alternative nor /Source. "
+                           "In this file, /AFRelationship for attachment "
+                           "factur-x.xml is %s." % vals['afrelationship']
+                })
+        if vals['file_type'] == 'pdf' and xmp_root:
+            self.analyse_xmp(vals, xmp_root, errors)
+            if not errors['2_xmp']:
+                vals['xmp_valid'] = True
+        if vals.get('xml_profile') in ('facturx_en16931', 'facturx_basic') and xml_bytes:
+            self.analyse_xml_schematron_facturx(vals, xml_bytes, errors, prefix)
+        elif vals.get('xml_profile') in ('orderx_extended', 'orderx_comfort', 'orderx_basic') and xml_root is not None:
+            self.analyse_xml_schematron_orderx(vals, xml_root, errors, prefix)
         if not errors['3_xml']:
             vals['xml_valid'] = True
-        if vals.get('xml_profile') in ('en16931', 'basic') and not errors['4_xml_schematron']:
+        if vals.get('xml_profile') in ('facturx_en16931', 'facturx_basic', 'orderx_extended', 'orderx_comfort', 'orderx_basic') and not errors['4_xml_schematron']:
             vals['xml_schematron_valid'] = True
         if vals['file_type'] == 'pdf':
+            if not errors['1_pdfa3']:
+                vals['pdfa3_valid'] = True
             if (
                     vals.get('pdfa3_valid') and
                     vals.get('xmp_valid') and
                     vals.get('xml_valid') and
                     vals.get('xmp_profile') and
-                    vals.get('xmp_profile') == vals.get('xml_profile')):
+                    vals.get('xmp_profile') == vals.get('xml_profile') and
+                    vals.get('xmp_orderx_type') == vals.get('xml_orderx_type')
+                    ):
                 vals['valid'] = True
         elif vals['file_type'] == 'xml':
             if vals.get('xml_valid'):
                 vals['valid'] = True
-        if vals.get('xml_profile') in ('en16931', 'basic') and not vals.get('xml_schematron_valid'):
+        if vals.get('xml_profile') in ('facturx_en16931', 'facturx_basic') and not vals.get('xml_schematron_valid'):
             vals['valid'] = False
         facturx_file_size = os.stat(f.name).st_size
         f.seek(0)
@@ -244,7 +291,7 @@ class FacturxAnalysis(models.Model):
         except Exception as e:
             errors['2_xmp'].append({
                 'name': 'No valid /Metadata in PDF structure',
-                'comment': "Cannot extract content of /Metadata from PDF",
+                'comment': "Cannot extract content of /Metadata from PDF. Error: %s" % e,
                 })
             return False
         vals.update({
@@ -277,12 +324,23 @@ class FacturxAnalysis(models.Model):
                            'in XMP Metadata',
                 })
             return
-        tags = {
-            'DocumentType': ['INVOICE'],
-            'DocumentFileName': [FACTURX_FILENAME],
-            'Version': ['1.0'],
-            'ConformanceLevel': FACTURX_xmp2LEVEL.keys(),
-            }
+        if vals['doc_type'] == 'orderx':
+            tags = {
+                'DocumentType': [x[0].upper() for x in ORDERX_TYPES],
+                'DocumentFileName': [ORDERX_FILENAME],
+                'Version': ['1.0'],
+                'ConformanceLevel': list(ORDERX_xmp2level.keys()),
+                }
+            xmp2level = ORDERX_xmp2level
+            namespaces['fx'] = 'urn:factur-x:pdfa:CrossIndustryDocument:1p0#'
+        else:
+            tags = {
+                'DocumentType': ['INVOICE'],
+                'DocumentFileName': [FACTURX_FILENAME],
+                'Version': ['1.0'],
+                'ConformanceLevel': list(FACTURX_xmp2level.keys()),
+                }
+            xmp2level = FACTURX_xmp2level
         res = {}
         for desc_node in desc_xpath:
             for tag_name in tags.keys():
@@ -292,13 +350,12 @@ class FacturxAnalysis(models.Model):
                     res[tag_name] = desc_node.attrib[attrib_key]
                 # then check sub-tags
                 else:
-                    xpath_str = desc_xpath_str + '/fx:' + tag_name
-                    tag_xpath = xmp_root.xpath(
-                        xpath_str, namespaces=namespaces)
+                    xpath_str = '%s/fx:%s' % (desc_xpath_str, tag_name)
+                    tag_xpath = xmp_root.xpath(xpath_str, namespaces=namespaces)
                     if tag_xpath and tag_xpath[0].text:
                         res[tag_name] = tag_xpath[0].text.strip()
         for tag_name, tag_val in tags.items():
-            xpath_str = desc_xpath_str + '/fx:' + tag_name
+            xpath_str = '%s/fx:%s' % (desc_xpath_str, tag_name)
             if tag_name not in res:
                 errors['2_xmp'].append({
                     'name': "Required tag '%s' missing" % tag_name,
@@ -312,8 +369,10 @@ class FacturxAnalysis(models.Model):
                     'name': "Wrong value for tag '%s'" % tag_name,
                     'comment': "For tag '%s' (or attribute '%s' of tag '%s'), the value is '%s' whereas the value should be '%s'" % (xpath_str, tag_name, desc_xpath_str, res.get(tag_name), ' or '.join(tags[tag_name])),
                     })
+            elif vals['doc_type'] == 'orderx' and tag_name == 'DocumentType':
+                vals['xmp_orderx_type'] = res[tag_name].lower()
             elif tag_name == 'ConformanceLevel':
-                vals['xmp_profile'] = FACTURX_xmp2LEVEL[res[tag_name]]
+                vals['xmp_profile'] = xmp2level[res[tag_name]]
         return
 
     def _get_dict_entry(self, node, entry):
@@ -386,7 +445,7 @@ class FacturxAnalysis(models.Model):
         return res
 
     def extract_xml(self, vals, pdf_root, errors):
-        xml_root = xml_string = False
+        xml_root = xml_string = None
         try:
             catalog_name = self._get_dict_entry(pdf_root, '/Names')
         except Exception:
@@ -420,7 +479,7 @@ class FacturxAnalysis(models.Model):
         logger.debug('embeddedfiles_by_two=%s', embeddedfiles_by_two)
         facturx_file_present = False
         for (filename, file_obj) in embeddedfiles_by_two:
-            if filename == FACTURX_FILENAME:
+            if filename in ALL_FILENAMES:
                 try:
                     xml_file_dict = file_obj.getObject()
                 except Exception:
@@ -428,7 +487,6 @@ class FacturxAnalysis(models.Model):
                         'name': 'Unable to get the PDF file object %s' % filename,
                         })
                     continue
-                # If '/AFRelationship' not in xml_file_dict reported by veraPDF
                 if '/Type' not in xml_file_dict:
                     errors['1_pdfa3'].append({
                         'name': 'Missing entry /Type in File Specification Dictionary',
@@ -442,7 +500,7 @@ class FacturxAnalysis(models.Model):
                         })
                 # presence of /F and /UF already checked by VeraPDF
                 for entry in ['/F', '/UF']:
-                    if xml_file_dict.get(entry) != FACTURX_FILENAME:
+                    if xml_file_dict.get(entry) not in ALL_FILENAMES:
                         errors['1_pdfa3'].append({
                             'name': 'Wrong value for %s in File Specification Dictionary' % entry,
                             'comment': "Value for %s in File Specification "
@@ -451,11 +509,11 @@ class FacturxAnalysis(models.Model):
                             })
 
                 afrel_accepted = ['/Data', '/Source', '/Alternative']
-                if '/AFRelationship' not in xml_file_dict:
-                    errors['1_pdfa3'].append({
-                        'name': 'Missing /AFRelationship entry for file %s' % filename,
-                        })
-                elif xml_file_dict.get('/AFRelationship') not in afrel_accepted:
+                vals['afrelationship'] = xml_file_dict.get('/AFRelationship')
+                # If '/AFRelationship' not in xml_file_dict, it is reported by veraPDF
+                if (
+                        xml_file_dict.get('/AFRelationship') and
+                        xml_file_dict['/AFRelationship'] not in afrel_accepted):
                     errors['1_pdfa3'].append({
                         'name': 'Wrong value for /AFRelationship for file %s' % filename,
                         'comment': "Accepted values for /AFRelationship are: %s. "
@@ -511,6 +569,25 @@ class FacturxAnalysis(models.Model):
         return xml_root, xml_string
 
     def analyse_xml_xsd(self, vals, xml_root, errors):
+        # Order-X or Factur-X ?
+        flavor = get_flavor(xml_root)
+        if flavor == 'factur-x':
+            vals['doc_type'] = 'facturx'
+        elif flavor == 'order-x':
+            vals['doc_type'] = 'orderx'
+            try:
+                vals['xml_orderx_type'] = get_orderx_type(xml_root).lower()
+            except Exception as e:
+                errors['3_xml'].append({
+                    'name': 'Invalid Order-X Type Code',
+                    'comment': '%s' % e,
+                    })
+        else:
+            errors['3_xml'].append({
+                'name': 'Neither Order-X nor Factur-X file',
+                'comment': 'The XML file is neither an Order-X nor a Factur-X file.',
+            })
+            return
         # Check profile
         namespaces = xml_root.nsmap  # NO because it may not contain good nsmap
         doc_id_xpath = xml_root.xpath(
@@ -522,7 +599,7 @@ class FacturxAnalysis(models.Model):
                 'name': 'Missing tag in XML file',
                 'comment': "Missing XML tag ExchangedDocumentContext/"
                 "GuidelineSpecifiedDocumentContextParameter/ID, so we "
-                "cannot read the Factur-X profile and therefore we cannot test "
+                "cannot read the profile and therefore we cannot test "
                 "against the XSD.",
                 })
             return
@@ -532,19 +609,19 @@ class FacturxAnalysis(models.Model):
                 'name': 'Empty tag in XML file',
                 'comment': "The tag ExchangedDocumentContext/"
                 "GuidelineSpecifiedDocumentContextParameter/ID "
-                "is empty, so we cannot read the Factur-X profile and "
+                "is empty, so we cannot read the profile and "
                 "therefore we cannot test against the XSD.",
                 })
             return
         doc_id_split = doc_id.split(':')
-        xml_profile = doc_id_split[-1]
+        xml_profile = '%s_%s' % (vals['doc_type'], doc_id_split[-1])
         PROFILES_LIST = [x[0] for x in PROFILES]
         if xml_profile not in PROFILES_LIST and len(doc_id_split) > 1:
-            xml_profile = doc_id.split(':')[-2]
+            xml_profile = '%s_%s' % (vals['doc_type'], doc_id.split(':')[-2])
         if xml_profile not in PROFILES_LIST:
             errors['3_xml'].append({
-                'name': "Invalid Factur-X URN",
-                'comment': "Invalid Factur-X URN '%s' in the XML tag "
+                'name': "Invalid URN",
+                'comment': "Invalid URN '%s' in the XML tag "
                            "ExchangedDocumentContext/"
                            "GuidelineSpecifiedDocumentContextParameter/ID" % doc_id,
                 })
@@ -552,25 +629,19 @@ class FacturxAnalysis(models.Model):
         vals['xml_profile'] = xml_profile
         # check XSD
         try:
-            check_facturx_xsd(
-                xml_root, flavor='factur-x', facturx_level=xml_profile)
+            xml_check_xsd(
+                xml_root, flavor=flavor, level=xml_profile.split('_')[1])
         except Exception as e:
             errors['3_xml'].append({
-                'name': 'factur-x.xml file invalid against XSD',
+                'name': 'XML file invalid against XSD',
                 'comment': '%s' % e,
             })
         return
 
-    def analyse_xml_schematron(self, vals, xml_bytes, errors, prefix=None):
-        facturx_xml_file = NamedTemporaryFile('wb+', prefix=prefix, suffix='.xml')
-        facturx_xml_file.write(xml_bytes)
-        facturx_xml_file.seek(0)
-        result_xml_file = NamedTemporaryFile('wb+', prefix=prefix, suffix='.xml')
+    @api.model
+    def _config_parameter_filepath_update(self, paths):
+        assert isinstance(paths, dict)
         ico = self.env['ir.config_parameter'].sudo()
-        paths = {
-            'facturx.schematron.jar_path': False,
-            'facturx.schematron.xslt_path': False,
-            }
         for key in paths:
             paths[key] = ico.get_param(key)
             if not paths[key]:
@@ -582,12 +653,50 @@ class FacturxAnalysis(models.Model):
                     "File '%s' stated in system parameter '%s' "
                     "doesn't exist on the Odoo server filesystem.")
                     % (paths[key], key))
+
+    def analyse_xml_schematron_orderx(self, vals, xml_root, errors, prefix=None):
+        # As the SCH of Order-X are ISO SCH and not XSTL2, we can use lxml
+        paths = {
+            'facturx.orderx.schematron.basic.sch_path': False,
+            'facturx.orderx.schematron.comfort.sch_path': False,
+            'facturx.orderx.schematron.extended.sch_path': False,
+            }
+        self._config_parameter_filepath_update(paths)
+        if not vals['xml_profile'].startswith('orderx_'):
+            raise UserError(_("Wrong XML profile %s. Must be an Order-X profile. This should never happen.") % vals['xml_profile'])
+        sch_key = 'facturx.orderx.schematron.%s.sch_path' % vals['xml_profile'][7:]
+        sch_path = paths[sch_key]
+        try:
+            sch_root = etree.parse(sch_path)
+        except Exception as e:
+            raise UserError(_(
+                "Cannot parse SCH XML file %s. Error: %s") % (sch_path, e))
+        schematron = Schematron(sch_root, store_report=True)
+        res = schematron.validate(xml_root)
+        svrl_xml_string = schematron.validation_report
+        svrl_root = etree.fromstring(str(svrl_xml_string))
+        if res is False:
+            self.schematron_result_analysis(vals, svrl_root, errors)
+
+    def analyse_xml_schematron_facturx(self, vals, xml_bytes, errors, prefix=None):
+        # As the SCH of FacturX uses XSLT2, we can't use lxml
+        # cf https://stackoverflow.com/questions/46767903/schematronparseerror-invalid-schematron-schema-for-isosts-schema
+        # and https://lxml.de/validation.html#id2
+        xml_file = NamedTemporaryFile('wb+', prefix=prefix, suffix='.xml')
+        xml_file.write(xml_bytes)
+        xml_file.seek(0)
+        result_xml_file = NamedTemporaryFile('wb+', prefix=prefix, suffix='.xml')
+        paths = {
+            'facturx.schematron.jar_path': False,
+            'facturx.schematron.xslt_path': False,
+            }
+        self._config_parameter_filepath_update(paths)
         cmd_list = [
             '/usr/bin/java',
             '-jar',
             paths['facturx.schematron.jar_path'],
             '-xml',
-            facturx_xml_file.name,
+            xml_file.name,
             '-xslt',
             paths['facturx.schematron.xslt_path'],
             '-svrl',
@@ -609,35 +718,36 @@ class FacturxAnalysis(models.Model):
             logger.error('Failed to spawn java schematron. Error: %s', e)
             return
         result_xml_file.seek(0)
-        xml_result_string = result_xml_file.read()
-        logger.debug('xml_result_string=%s', xml_result_string)
         try:
-            xml_result_root = etree.fromstring(xml_result_string)
+            svrl_root = etree.parse(result_xml_file.name)
         except Exception as e:
             logger.error(
                 'Failed to parse XML result file of schematron '
                 'analysis. Error: %s', e)
             return
-        namespaces = xml_result_root.nsmap
-        if None in namespaces:
-            namespaces.pop(None)
-        sch_errors = xml_result_root.xpath(
+        self.schematron_result_analysis(vals, svrl_root, errors)
+        xml_file.close()
+        result_xml_file.close()
+
+    def schematron_result_analysis(self, vals, svrl_root, errors):
+        namespaces = {}
+        sch_errors = svrl_root.xpath(
             "/*[local-name() = 'schematron-output']/*[local-name() = 'failed-assert']",
             namespaces=namespaces)
         for sch_error in sch_errors:
             detail_xpath = sch_error.xpath("*[local-name() = 'text']", namespaces=namespaces)
             if detail_xpath:
-                comment = detail_xpath[0].text
+                comment = detail_xpath[0].text and detail_xpath[0].text.strip()
                 location = sch_error.attrib and sch_error.attrib.get('location')
                 if location:
-                    comment += '\nError location: %s' % location
+                    comment += '\nLocation of the error: %s' % location
                 if comment:
+                    # analysis via java for Factur-X will have an 'id' attrib
+                    # but analysis via lxml for Order-X won't, so we use the 'test' attrib
                     errors['4_xml_schematron'].append({
-                        'name': sch_error.attrib.get('id'),
+                        'name': sch_error.attrib.get('id') or sch_error.attrib.get('test'),
                         'comment': comment,
                         })
-        facturx_xml_file.close()
-        result_xml_file.close()
 
     def run_verapdf_rest(self, vals, f):
         f.seek(0)  # VERY IMPORTANT !!!

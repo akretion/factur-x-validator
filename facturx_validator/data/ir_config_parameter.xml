@@ -18,6 +18,21 @@
     <field name="value">/opt/schematron-facturx/cii/xslt/EN16931-CII-validation.xslt</field>
 </record>
 
+<record id="orderx_schematron_basic_path" model="ir.config_parameter">
+    <field name="key">facturx.orderx.schematron.basic.sch_path</field>
+    <field name="value">/opt/SCRDMCCBDACIOMessageStructure_100pD20B-ORDER_X-BASIC.sch</field>
+</record>
+
+<record id="orderx_schematron_comfort_path" model="ir.config_parameter">
+    <field name="key">facturx.orderx.schematron.comfort.sch_path</field>
+    <field name="value">/opt/SCRDMCCBDACIOMessageStructure_100pD20B-ORDER_X-COMFORT.sch</field>
+</record>
+
+<record id="orderx_schematron_extended_path" model="ir.config_parameter">
+    <field name="key">facturx.orderx.schematron.extended.sch_path</field>
+    <field name="value">/opt/SCRDMCCBDACIOMessageStructure_100pD20B-ORDER_X-EXTENDED.sch</field>
+</record>
+
 <record id="verapdf_classpath" model="ir.config_parameter">
     <field name="key">facturx.verapdf.classpath</field>
     <field name="value">/opt/verapdf/bin/*</field>
