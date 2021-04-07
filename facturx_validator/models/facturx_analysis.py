@@ -194,10 +194,10 @@ class FacturxAnalysis(models.Model):
                 logger.info('Connecting to veraPDF via Rest')
                 vera_xml_root = self.run_verapdf_rest(vals, f)
                 rest = True
-            except Exception:
+            except Exception as e:
                 logger.warning(
-                    'Failed to connect to veraPDF via Rest. '
-                    'Fallback to subprocess method')
+                    'Failed to connect to veraPDF via Rest. Error: %s'
+                    'Fallback to subprocess method' % e)
                 vera_xml_root = self.run_verapdf_subprocess(vals, f)
             if rest:
                 pdfa_errors = self.analyse_verapdf_rest(vals, vera_xml_root)
@@ -555,12 +555,12 @@ class FacturxAnalysis(models.Model):
                     xml_root = etree.fromstring(xml_string)
                 except Exception as e:
                     errors['3_xml'].append({
-                        'name': 'factur-x.xml file is not a valid XML file',
+                        'name': 'The Factur-x/Order-X XML file is not a valid XML file',
                         'comment': 'Technical error message:\n%s' % e,
                         })
                     continue
                 vals['xml_file'] = base64.encodebytes(xml_string)
-                vals['xml_filename'] = 'factur-x_%s.xml' % self.name.replace('/', '_')
+                vals['xml_filename'] = '%s_%s.xml' % (filename, self.name.replace('/', '_'))
 
         if not facturx_file_present:
             errors['3_xml'].append({
