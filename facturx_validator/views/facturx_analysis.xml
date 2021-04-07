@@ -114,7 +114,7 @@
             <filter name="valid" string="Valid" domain="[('state', '=', 'done'), ('valid', '=', True)]" />
             <filter name="invalid" string="Not Valid" domain="[('state', '=', 'done'), ('valid', '=', False)]" />
             <group string="Group By" name="groupby">
-                <filter name="partner_groupby" string="Customer" context="{'group_by': 'partner_id'}"/>
+                <filter name="partner_groupby" string="Partner" context="{'group_by': 'partner_id'}"/>
                 <filter name="date_groupby" string="Analysis Date" context="{'group_by': 'date'}"/>
                 <filter name="create_uid_groupby" string="Created By" context="{'group_by': 'create_uid'}"/>
                 <filter name="state_groupby" string="State" context="{'group_by': 'state'}"/>
@@ -153,6 +153,14 @@
 
 <menuitem id="facturx_analysis_parent" name="Analysis" parent="facturx_analysis_root"/>
 
-<menuitem id="facturx_analysis_menu" action="facturx_analysis_action" parent="facturx_analysis_parent"/>
+<menuitem id="facturx_analysis_menu" action="facturx_analysis_action" parent="facturx_analysis_parent" sequence="10"/>
+
+<record id="partner_tree_action" model="ir.actions.act_window">
+    <field name="name">Partners</field>
+    <field name="res_model">res.partner</field>
+    <field name="view_mode">tree,form,kanban</field>
+</record>
+
+<menuitem id="facturx_partner_menu" action="partner_tree_action" parent="facturx_analysis_parent" sequence="20"/>
 
 </odoo>

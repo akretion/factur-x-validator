@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2018-2021 Akretion France (https://www.akretion.com/)
+  @author: Alexis de Lattre <alexis.delattre@akretion.com>
+-->
+<odoo>
+
+<record id="facturx_analysis_nofilter_action" model="ir.actions.act_window">
+    <field name="name">Analysis</field>
+    <field name="res_model">facturx.analysis</field>
+    <field name="view_mode">tree,form,pivot,graph</field>
+</record>
+
+<record id="view_partner_form" model="ir.ui.view">
+    <field name="model">res.partner</field>
+    <field name="inherit_id" ref="base.view_partner_form"/>
+    <field name="arch" type="xml">
+        <div name="button_box" position="inside">
+            <button class="oe_stat_button" type="action"
+                    name="%(facturx_validator.facturx_analysis_nofilter_action)d"
+                    context="{'search_default_partner_id': active_id}"
+                    icon="fa-binoculars">
+                <field string="Analysis" name="analysis_count" widget="statinfo"/>
+            </button>
+        </div>
+    </field>
+</record>
+
+</odoo>

@@ -19,6 +19,7 @@
         'data/sequence.xml',
         'data/ir_config_parameter.xml',
         'views/facturx_analysis.xml',
+        'views/res_partner.xml',
         'security/ir.model.access.csv',
         'report/report.xml',
         ],

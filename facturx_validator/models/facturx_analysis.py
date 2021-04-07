@@ -56,6 +56,8 @@ ORDERX_xmp2level = {
     'EXTENDED': 'orderx_extended',
     }
 
+PROFILES_schematron_analysis = ('facturx_en16931', 'facturx_basic', 'orderx_extended', 'orderx_comfort', 'orderx_basic')
+
 
 class FacturxAnalysis(models.Model):
     _name = 'facturx.analysis'
@@ -229,26 +231,39 @@ class FacturxAnalysis(models.Model):
         else:
             vals['doc_type'] = 'facturx'
         # Starting from here, we have vals['doc_type'] and vals['xml_profile']
-        if vals['file_type'] == 'pdf' and vals.get('afrelationship') and vals['afrelationship'] != '/Data' and vals['xml_profile'] in ('facturx_minimum', 'facturx_basicwl'):
-            errors['1_pdfa3'].append({
-                'name': '/AFRelationship = %s not allowed for this Factur-X profile' % vals['afrelationship'],
-                'comment': "For Factur-X profiles Minimum and Basic WL, "
-                           "/AFRelationship for attachment factur-x.xml must be "
-                           "/Data, it cannot be /Alternative nor /Source. "
-                           "In this file, /AFRelationship for attachment "
-                           "factur-x.xml is %s." % vals['afrelationship']
-                })
-        if vals['file_type'] == 'pdf' and xmp_root:
-            self.analyse_xmp(vals, xmp_root, errors)
-            if not errors['2_xmp']:
-                vals['xmp_valid'] = True
+        if vals['file_type'] == 'pdf':
+            if (vals.get('afrelationship') and vals['afrelationship'] != '/Data' and vals['xml_profile'] in ('facturx_minimum', 'facturx_basicwl')):
+                errors['1_pdfa3'].append({
+                    'name': '/AFRelationship = %s not allowed for this Factur-X profile' % vals['afrelationship'],
+                    'comment': "For Factur-X profiles Minimum and Basic WL, "
+                               "/AFRelationship for attachment factur-x.xml must be "
+                               "/Data, it cannot be /Alternative nor /Source. "
+                               "In this file, /AFRelationship for attachment "
+                               "factur-x.xml is %s." % vals['afrelationship']
+                    })
+            if xmp_root:
+                self.analyse_xmp(vals, xmp_root, errors)
+                if not errors['2_xmp']:
+                    vals['xmp_valid'] = True
+            if vals['doc_type'] == 'facturx' and vals['xml_filename'] == 'order-x.xml':
+                errors['1_pdfa3'].append({
+                    'name': 'Wrong XML filename',
+                    'comment': "The attached XML filename is order-x.xml, but the content of the XML follows the Factur-X standard!"
+                    })
+            elif vals['doc_type'] == 'orderx' and vals['xml_filename'] == 'factur-x.xml':
+                errors['1_pdfa3'].append({
+                    'name': 'Wrong XML filename',
+                    'comment': "The attached XML filename is factur-x.xml, but the content of the XML follows the Order-X standard!"
+                    })
+            # Rename xml_filename for easier download
+            vals['xml_filename'] = '%s-x_%s.xml' % (vals['doc_type'][:-1], self.name.replace('/', '_'))
         if vals.get('xml_profile') in ('facturx_en16931', 'facturx_basic') and xml_bytes:
             self.analyse_xml_schematron_facturx(vals, xml_bytes, errors, prefix)
         elif vals.get('xml_profile') in ('orderx_extended', 'orderx_comfort', 'orderx_basic') and xml_root is not None:
             self.analyse_xml_schematron_orderx(vals, xml_root, errors, prefix)
         if not errors['3_xml']:
             vals['xml_valid'] = True
-        if vals.get('xml_profile') in ('facturx_en16931', 'facturx_basic', 'orderx_extended', 'orderx_comfort', 'orderx_basic') and not errors['4_xml_schematron']:
+        if vals.get('xml_profile') in PROFILES_schematron_analysis and not errors['4_xml_schematron']:
             vals['xml_schematron_valid'] = True
         if vals['file_type'] == 'pdf':
             if not errors['1_pdfa3']:
@@ -265,7 +280,7 @@ class FacturxAnalysis(models.Model):
         elif vals['file_type'] == 'xml':
             if vals.get('xml_valid'):
                 vals['valid'] = True
-        if vals.get('xml_profile') in ('facturx_en16931', 'facturx_basic') and not vals.get('xml_schematron_valid'):
+        if vals.get('xml_profile') in PROFILES_schematron_analysis and not vals.get('xml_schematron_valid'):
             vals['valid'] = False
         facturx_file_size = os.stat(f.name).st_size
         f.seek(0)
@@ -560,7 +575,10 @@ class FacturxAnalysis(models.Model):
                         })
                     continue
                 vals['xml_file'] = base64.encodebytes(xml_string)
-                vals['xml_filename'] = '%s_%s.xml' % (filename, self.name.replace('/', '_'))
+                # in vals['xml_filename'] we store the original filename
+                # and, later in the code, we use it to see if it's coherent with
+                # the doc_type, and then we rename it for easier download
+                vals['xml_filename'] = filename
 
         if not facturx_file_present:
             errors['3_xml'].append({
@@ -678,7 +696,10 @@ class FacturxAnalysis(models.Model):
         logger.debug('orderx svrl_xml_string=%s', svrl_xml_string)
         svrl_root = etree.fromstring(str(svrl_xml_string))
         if res is False:
+            logger.info('Order-X file is invalid according to Schematron')
             self.schematron_result_analysis(vals, svrl_root, errors)
+        else:
+            logger.info('Order-X file is valid according to Schematron')
 
     def analyse_xml_schematron_facturx(self, vals, xml_bytes, errors, prefix=None):
         # As the SCH of FacturX uses XSLT2, we can't use lxml
