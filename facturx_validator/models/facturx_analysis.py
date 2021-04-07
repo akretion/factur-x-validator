@@ -149,10 +149,10 @@ class FacturxAnalysis(models.Model):
     @api.model
     def errors2errors_write(self, errors):
         errors_write = []
-        for group, err_list in errors.items():
+        for error_group, err_list in errors.items():
             for err in err_list:
                 assert isinstance(err, dict)
-                errors_write.append((0, 0, dict(err, group=group)))
+                errors_write.append((0, 0, dict(err, error_group=error_group)))
         return errors_write
 
     def analyse(self):
@@ -938,20 +938,22 @@ class FacturxAnalysis(models.Model):
     def report_get_errors(self):
         self.ensure_one()
         faeo = self.env['facturx.analysis.error']
-        group2label = dict(faeo.fields_get('group', 'selection')['group']['selection'])
+        group2label = dict(faeo.fields_get('error_group', 'selection')['error_group']['selection'])
         res = defaultdict(list)
         for err in self.error_ids:
-            res[group2label[err.group]].append({'name': err.name, 'comment': err.comment})
+            res[group2label[err.error_group]].append({'name': err.name, 'comment': err.comment})
         return res
 
 
 class FacturxAnalysisError(models.Model):
     _name = 'facturx.analysis.error'
     _description = 'Factur-X Analysis Errors'
-    _order = 'parent_id, group, id'
+    _order = 'parent_id, error_group, id'
 
     parent_id = fields.Many2one('facturx.analysis', ondelete='cascade')
-    group = fields.Selection([
+    # It's not a good idea to name that field 'group' because
+    # it's a special word in SQL
+    error_group = fields.Selection([
         ('1_pdfa3', 'PDF/A-3'),
         ('2_xmp', 'XMP'),
         ('3_xml', 'XML XSD'),

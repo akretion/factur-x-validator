@@ -58,7 +58,7 @@
                 <group name="errors" string="Errors" attrs="{'invisible': [('state', '=', 'done'), ('valid', '=', True)]}">
                     <field name="error_ids" nolabel="1">
                         <tree>
-                            <field name="group"/>
+                            <field name="error_group"/>
                             <field name="name"/>
                             <field name="comment"/>
                         </tree>
