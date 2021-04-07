@@ -271,7 +271,7 @@ class FacturxAnalysis(models.Model):
         f.seek(0)
         facturx_file_sha1 = hashlib.sha1(f.read()).hexdigest()
         f.close()
-        logger.debug('vals at end of analysis=%s', vals)
+        # logger.debug('vals at end of analysis=%s', vals)
         errors_write = self.errors2errors_write(errors)
         vals.update({
             'state': 'done',
@@ -673,7 +673,9 @@ class FacturxAnalysis(models.Model):
                 "Cannot parse SCH XML file %s. Error: %s") % (sch_path, e))
         schematron = Schematron(sch_root, store_report=True)
         res = schematron.validate(xml_root)
+        logger.debug('analyse_xml_schematron_orderx res=%s', res)
         svrl_xml_string = schematron.validation_report
+        logger.debug('orderx svrl_xml_string=%s', svrl_xml_string)
         svrl_root = etree.fromstring(str(svrl_xml_string))
         if res is False:
             self.schematron_result_analysis(vals, svrl_root, errors)
