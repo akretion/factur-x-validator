@@ -245,18 +245,19 @@ class FacturxAnalysis(models.Model):
                 self.analyse_xmp(vals, xmp_root, errors)
                 if not errors['2_xmp']:
                     vals['xmp_valid'] = True
-            if vals['doc_type'] == 'facturx' and vals['xml_filename'] == 'order-x.xml':
-                errors['1_pdfa3'].append({
-                    'name': 'Wrong XML filename',
-                    'comment': "The attached XML filename is order-x.xml, but the content of the XML follows the Factur-X standard!"
-                    })
-            elif vals['doc_type'] == 'orderx' and vals['xml_filename'] == 'factur-x.xml':
-                errors['1_pdfa3'].append({
-                    'name': 'Wrong XML filename',
-                    'comment': "The attached XML filename is factur-x.xml, but the content of the XML follows the Order-X standard!"
-                    })
-            # Rename xml_filename for easier download
-            vals['xml_filename'] = '%s-x_%s.xml' % (vals['doc_type'][:-1], self.name.replace('/', '_'))
+            if vals.get('xml_filename'):
+                if vals['doc_type'] == 'facturx' and vals['xml_filename'] == 'order-x.xml':
+                    errors['1_pdfa3'].append({
+                        'name': 'Wrong XML filename',
+                        'comment': "The attached XML filename is order-x.xml, but the content of the XML follows the Factur-X standard!"
+                        })
+                elif vals['doc_type'] == 'orderx' and vals['xml_filename'] == 'factur-x.xml':
+                    errors['1_pdfa3'].append({
+                        'name': 'Wrong XML filename',
+                        'comment': "The attached XML filename is factur-x.xml, but the content of the XML follows the Order-X standard!"
+                        })
+                # Rename xml_filename for easier download
+                vals['xml_filename'] = '%s-x_%s.xml' % (vals['doc_type'][:-1], self.name.replace('/', '_'))
         if vals.get('xml_profile') in ('facturx_en16931', 'facturx_basic') and xml_bytes:
             self.analyse_xml_schematron_facturx(vals, xml_bytes, errors, prefix)
         elif vals.get('xml_profile') in ('orderx_extended', 'orderx_comfort', 'orderx_basic') and xml_root is not None:
@@ -825,6 +826,7 @@ class FacturxAnalysis(models.Model):
         out, err = process.communicate()
         if err:
             logger.error('Error output in subprocess call: %s', err)
+        logger.debug('subprocess out=%s', out)
         logger.info('End veraPDF for %s', self.name)
         vera_xml_root = ET.fromstring(out)
         return vera_xml_root
