@@ -740,6 +740,10 @@ class FacturxAnalysis(models.Model):
                 'Output: %s', self.name, out)
         except Exception as e:
             logger.error('Failed to spawn java schematron. Error: %s', e)
+            errors['4_xml_schematron'].append({
+                'name': 'Technical failure in Schematron test',
+                'comment': '%s' % e,
+            })
             return
         result_xml_file.seek(0)
         try:
@@ -748,6 +752,10 @@ class FacturxAnalysis(models.Model):
             logger.error(
                 'Failed to parse XML result file of schematron '
                 'analysis. Error: %s', e)
+            errors['4_xml_schematron'].append({
+                'name': 'Failed to parse result of Schematron test',
+                'comment': '%s' % e,
+            })
             return
         self.schematron_result_analysis(vals, svrl_root, errors)
         xml_file.close()

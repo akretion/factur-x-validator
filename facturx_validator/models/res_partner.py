@@ -1,7 +1,7 @@
 # Copyright 2018-2021 Akretion France (https://www.akretion.com/)
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 
-from odoo import fields, models, _
+from odoo import fields, models
 
 
 class ResPartner(models.Model):
@@ -17,4 +17,3 @@ class ResPartner(models.Model):
             [(x['partner_id'][0], x['partner_id_count']) for x in rg_res])
         for partner in self:
             partner.analysis_count = mapped_data.get(partner.id, 0)
-
