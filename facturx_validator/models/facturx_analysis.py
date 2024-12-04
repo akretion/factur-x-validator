@@ -625,6 +625,12 @@ class FacturxAnalysis(models.Model):
             return
         # Check profile
         namespaces = xml_root.nsmap  # NO because it may not contain good nsmap
+        if not namespaces or None in namespaces:
+            errors['3_xml'].append({
+                'name': 'Empty namespace declaration',
+                'comment': "Set proper namespace declaration at the beginning of the XML file.",
+                })
+            return
         doc_id_xpath = xml_root.xpath(
             "//rsm:ExchangedDocumentContext"
             "/ram:GuidelineSpecifiedDocumentContextParameter"
