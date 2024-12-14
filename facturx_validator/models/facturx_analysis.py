@@ -32,6 +32,22 @@ FACTURX_FILENAME = 'factur-x.xml'
 ORDERX_FILENAME = 'order-x.xml'
 ALL_FILENAMES = [FACTURX_FILENAME, ORDERX_FILENAME]
 
+FACTURX_XML_NAMESPACES = {
+    'qdt': 'urn:un:unece:uncefact:data:standard:QualifiedDataType:100',
+    'ram': 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100',
+    'rsm': 'urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100',
+    'udt': 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100',
+    'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
+}
+
+ORDERX_XML_NAMESPACES = {
+    'qdt': 'urn:un:unece:uncefact:data:standard:QualifiedDataType:128',
+    'ram': 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:128',
+    'rsm': 'urn:un:unece:uncefact:data:SCRDMCCBDACIOMessageStructure:100',
+    'udt': 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:128',
+    'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
+}
+
 PROFILES = [
     ('facturx_minimum', 'Minimum'),
     ('facturx_basicwl', 'Basic WL'),
@@ -608,8 +624,10 @@ class FacturxAnalysis(models.Model):
         flavor = get_flavor(xml_root)
         if flavor == 'factur-x':
             vals['doc_type'] = 'facturx'
+            namespaces = FACTURX_XML_NAMESPACES
         elif flavor == 'order-x':
             vals['doc_type'] = 'orderx'
+            namespaces = ORDERX_XML_NAMESPACES
             try:
                 vals['xml_orderx_type'] = get_orderx_type(xml_root).lower()
             except Exception as e:
@@ -624,13 +642,6 @@ class FacturxAnalysis(models.Model):
             })
             return
         # Check profile
-        namespaces = xml_root.nsmap  # NO because it may not contain good nsmap
-        if not namespaces or None in namespaces:
-            errors['3_xml'].append({
-                'name': 'Empty namespace declaration',
-                'comment': "Set proper namespace declaration at the beginning of the XML file.",
-                })
-            return
         doc_id_xpath = xml_root.xpath(
             "//rsm:ExchangedDocumentContext"
             "/ram:GuidelineSpecifiedDocumentContextParameter"
