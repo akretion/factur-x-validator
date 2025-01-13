@@ -233,12 +233,18 @@ class FacturxAnalysis(models.Model):
                     'Failed to connect to veraPDF via Rest. Error: %s'
                     'Fallback to subprocess method' % e)
                 vera_xml_root = self.run_verapdf_subprocess(vals, f)
-            if rest:
-                pdfa_errors = self.analyse_verapdf_rest(vals, vera_xml_root)
+            if vera_xml_root:
+                if rest:
+                    pdfa_errors = self.analyse_verapdf_rest(vals, vera_xml_root)
+                else:
+                    pdfa_errors = self.analyse_verapdf_subprocess(vals, vera_xml_root)
+                if pdfa_errors:
+                    self.vera_errors_reformat(pdfa_errors, errors)
             else:
-                pdfa_errors = self.analyse_verapdf_subprocess(vals, vera_xml_root)
-            if pdfa_errors:
-                self.vera_errors_reformat(pdfa_errors, errors)
+                errors['1_pdfa3'].append({
+                    'name': 'Failure to run the PDF/A-3 test with veraPDF',
+                    'comment': 'This is a technical failure of the Factur-X/Order-X validator. The problem is not linked to the PDF file you uploaded.',
+                    })
             xmp_root = self.extract_xmp(vals, pdf_root, errors)
 
             xml_root = xml_bytes = None
@@ -798,7 +804,6 @@ class FacturxAnalysis(models.Model):
             raise UserError(_(
                 "Missing system parameter 'facturx.verapdf.classpath' "
                 "or empty value for this parameter."))
-
         cmd_list = [
             '/usr/bin/java',
             '-classpath',
@@ -813,16 +818,20 @@ class FacturxAnalysis(models.Model):
             f.name,
             ]
         logger.info('Start to spawn veraPDF for %s', self.name)
-        logger.debug('veraPDF command: %s', cmd_list)
+        logger.info('veraPDF command: %s', cmd_list)
         process = subprocess.Popen(
             cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             shell=False)
         out, err = process.communicate()
         if err:
             logger.error('Error output in subprocess call: %s', err)
-        logger.debug('subprocess out=%s', out)
+        logger.info('subprocess out=%s', out)
         logger.info('End veraPDF for %s', self.name)
-        vera_xml_root = ET.fromstring(out)
+        try:
+            vera_xml_root = ET.fromstring(out)
+        except Exception as e:
+            logger.warning('Failed to parse output of veraPDF cmd line as XML file. Error: %s', e)
+            vera_xml_root = False
         return vera_xml_root
 
     def analyse_verapdf_rest(self, vals, vera_xml_root):
