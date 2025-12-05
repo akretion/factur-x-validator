@@ -60,11 +60,11 @@ PROFILES = [
     ]
 
 SCH_PATHS = {
-    'facturx_minimum': 'facturx_validator/sch_files/Factur-X_1.07.2_MINIMUM.sch',
-    'facturx_basicwl': 'facturx_validator/sch_files/Factur-X_1.07.2_BASICWL.sch',
-    'facturx_basic': 'facturx_validator/sch_files/Factur-X_1.07.2_BASIC.sch',
-    'facturx_en16931': 'facturx_validator/sch_files/Factur-X_1.07.2_EN16931.sch',
-    'facturx_extended': 'facturx_validator/sch_files/Factur-X_1.07.2_EXTENDED.sch',
+    'facturx_minimum': 'facturx_validator/sch_files/Factur-X_1.08_MINIMUM.sch',
+    'facturx_basicwl': 'facturx_validator/sch_files/Factur-X_1.08_BASICWL.sch',
+    'facturx_basic': 'facturx_validator/sch_files/Factur-X_1.08_BASIC.sch',
+    'facturx_en16931': 'facturx_validator/sch_files/Factur-X_1.08_EN16931.sch',
+    'facturx_extended': 'facturx_validator/sch_files/Factur-X_1.08_EXTENDED.sch',
     'orderx_basic': 'facturx_validator/sch_files/SCRDMCCBDACIOMessageStructure_100pD20B_BASIC.sch',
     'orderx_comfort': 'facturx_validator/sch_files/SCRDMCCBDACIOMessageStructure_100pD20B_COMFORT.sch',
     'orderx_extended': 'facturx_validator/sch_files/SCRDMCCBDACIOMessageStructure_100pD20B_EXTENDED.sch',
