@@ -742,6 +742,7 @@ class FacturxAnalysis(models.Model):
         sch_file = SCH_PATHS[vals['xml_profile']]
         stylesheet_file_rel = f"{sch_file[:-4]}-compiled-saxonc.xsl"
         stylesheet_file = self.file_path(stylesheet_file_rel)
+        logger.info('Start to validate factur-x against schematron with saxon')
         logger.debug('stylesheet_file absolute path=%s', stylesheet_file)
         with NamedTemporaryFile('wb+', prefix=prefix, suffix='.xml') as xml_file:
             xml_file.write(xml_bytes)
@@ -752,6 +753,7 @@ class FacturxAnalysis(models.Model):
                 result_str = xslt_processor.transform_to_string(source_file=xml_file.name, stylesheet_file=stylesheet_file)
                 svrl_root = etree.fromstring(result_str.encode('utf-8'))
                 self.schematron_result_analysis(vals, svrl_root, errors)
+        logger.info('End of factur-x validation against schematron with saxon')
 
     def schematron_result_analysis(self, vals, svrl_root, errors):
         namespaces = {}
