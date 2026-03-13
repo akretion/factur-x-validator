@@ -756,9 +756,9 @@ class FacturxAnalysis(models.Model):
         logger.info('End of factur-x validation against schematron with saxon')
 
     def schematron_result_analysis(self, vals, svrl_root, errors):
-        namespaces = {}
+        namespaces = svrl_root.nsmap
         sch_errors = svrl_root.xpath(
-            "/*[local-name() = 'schematron-output']/*[local-name() = 'failed-assert']",
+            ".//svrl:successful-report | .//svrl:failed-assert",
             namespaces=namespaces)
         for sch_error in sch_errors:
             detail_xpath = sch_error.xpath("*[local-name() = 'text']", namespaces=namespaces)
@@ -771,7 +771,7 @@ class FacturxAnalysis(models.Model):
                     # analysis via java for Factur-X will have an 'id' attrib
                     # but analysis via lxml for Order-X won't, so we use the 'test' attrib
                     errors['4_xml_schematron'].append({
-                        'name': sch_error.attrib.get('id') or sch_error.attrib.get('test'),
+                        'name': sch_error.attrib.get('test') or "Schematron error",
                         'comment': comment,
                         })
 
