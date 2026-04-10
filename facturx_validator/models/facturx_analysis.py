@@ -420,7 +420,7 @@ class FacturxAnalysis(models.Model):
             elif res.get(tag_name) not in tags[tag_name]:
                 errors['2_xmp'].append({
                     'name': "Wrong value for tag '%s'" % tag_name,
-                    'comment': "For tag '%s' (or attribute '%s' of tag '%s'), the value is '%s' whereas the value should be '%s'" % (xpath_str, tag_name, desc_xpath_str, res.get(tag_name), ' or '.join(tags[tag_name])),
+                    'comment': "For tag '%s' (or attribute '%s' of tag '%s'), the value is '%s' whereas the value should be %s" % (xpath_str, tag_name, desc_xpath_str, res.get(tag_name), ' or '.join([f"'{x}'" for x in tags[tag_name]])),
                     })
             elif vals['doc_type'] == 'orderx' and tag_name == 'DocumentType':
                 vals['xmp_orderx_type'] = res[tag_name].lower()
@@ -621,7 +621,7 @@ class FacturxAnalysis(models.Model):
 
         if not facturx_file_present:
             errors['3_xml'].append({
-                'name': 'No embedded factur-x.xml file',
+                'name': "No embedded 'factur-x.xml' nor 'order-x.xml' file. Look at the diagram at the end of section 6.2 of the Factur-X specification to implement correctly the integration of the XML file in the PDF. A common error is to write a value in /Names/EmbeddedFiles/Names[0] different than %s." % ' or '.join([f"'{filename}'" for filename in ALL_FILENAMES]),
                 })
         return xml_root, xml_string
 
