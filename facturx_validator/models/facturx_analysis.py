@@ -531,8 +531,11 @@ class FacturxAnalysis(models.Model):
         embeddedfiles_by_two = list(zip(embeddedfiles, embeddedfiles[1:]))[::2]
         logger.debug('embeddedfiles_by_two=%s', embeddedfiles_by_two)
         facturx_file_present = False
+        other_filenames = []
         for (filename, file_obj) in embeddedfiles_by_two:
-            if filename in ALL_FILENAMES:
+            if filename not in ALL_FILENAMES:
+                other_filenames.append(filename)
+            else:
                 try:
                     xml_file_dict = file_obj.get_object()
                 except Exception:
@@ -620,9 +623,10 @@ class FacturxAnalysis(models.Model):
                 vals['xml_filename'] = filename
 
         if not facturx_file_present:
+            other_filenames_label = other_filenames and ', '.join([f"'{x}'" for x in other_filenames]) or 'none'
             errors['3_xml'].append({
                 'name': "No embedded 'factur-x.xml' nor 'order-x.xml' file.",
-                "comment": "Look at the diagram at the end of section 6.2 of the Factur-X specification to implement correctly the integration of the XML file in the PDF. A common error is to write a value in /Names/EmbeddedFiles/Names[0] different than %s." % ' or '.join([f"'{filename}'" for filename in ALL_FILENAMES]),
+                "comment": f"List of filenames found in /Names/EmbeddedFiles/Names: {other_filenames_label}. Look at the diagram at the end of section 6.2 of the Factur-X specification to implement correctly the integration of the XML file in the PDF."
                 })
         return xml_root, xml_string
 
