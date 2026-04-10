@@ -621,7 +621,8 @@ class FacturxAnalysis(models.Model):
 
         if not facturx_file_present:
             errors['3_xml'].append({
-                'name': "No embedded 'factur-x.xml' nor 'order-x.xml' file. Look at the diagram at the end of section 6.2 of the Factur-X specification to implement correctly the integration of the XML file in the PDF. A common error is to write a value in /Names/EmbeddedFiles/Names[0] different than %s." % ' or '.join([f"'{filename}'" for filename in ALL_FILENAMES]),
+                'name': "No embedded 'factur-x.xml' nor 'order-x.xml' file.",
+                "comment": "Look at the diagram at the end of section 6.2 of the Factur-X specification to implement correctly the integration of the XML file in the PDF. A common error is to write a value in /Names/EmbeddedFiles/Names[0] different than %s." % ' or '.join([f"'{filename}'" for filename in ALL_FILENAMES]),
                 })
         return xml_root, xml_string
 
