@@ -32,14 +32,34 @@ FACTURX_FILENAME = 'factur-x.xml'
 ORDERX_FILENAME = 'order-x.xml'
 ALL_FILENAMES = [FACTURX_FILENAME, ORDERX_FILENAME]
 
-FACTURX_XML_NAMESPACES = {
+FACTURX_XML_FX_NAMESPACES = {
     'qdt': 'urn:un:unece:uncefact:data:standard:QualifiedDataType:100',
     'ram': 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100',
     'rsm': 'urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100',
     'udt': 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100',
-    'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
+}
+#ADDED by Seb 30/04/2026
+FACTURX_XML_CII_NAMESPACES = {
+    'ccts': 'uri="urn:un:unece:uncefact:documentation:standard:CoreComponentsTechnicalSpecification:2',
+    'rsm': 'uri="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100',
+    'udt': 'uri="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100',
+    'qdt': 'uri="urn:un:unece:uncefact:data:standard:QualifiedDataType:100',
+    'ram': 'uri="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100'
 }
 
+FACTURX_XML_UBL_NAMESPACES = {
+    'uri': 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
+    'cac': 'uri="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
+    'qdt': 'uri="urn:oasis:names:specification:ubl:schema:xsd:QualifiedDataTypes-2',
+    'udt': 'uri="urn:oasis:names:specification:ubl:schema:xsd:UnqualifiedDataTypes-2',
+    'ubl': 'uri="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
+    'cn': 'uri="urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2'
+    
+}
+
+
+
+#-------------------------------------
 ORDERX_XML_NAMESPACES = {
     'qdt': 'urn:un:unece:uncefact:data:standard:QualifiedDataType:128',
     'ram': 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:128',
@@ -54,6 +74,7 @@ PROFILES = [
     ('facturx_basic', 'Basic'),
     ('facturx_en16931', 'EN 16931 (Comfort)'),
     ('facturx_extended', 'Extended'),
+    ('facturx_extended_ctc_fr', 'Extended-CTC-FR')
     ('orderx_basic', 'Basic (Order-X)'),
     ('orderx_comfort', 'Comfort (Order-X)'),
     ('orderx_extended', 'Extended (Order-X)'),
@@ -270,7 +291,8 @@ class FacturxAnalysis(models.Model):
             vals['doc_type'] = 'facturx'
         # Starting from here, we have vals['doc_type'] and vals['xml_profile']
         if vals['file_type'] == 'pdf':
-            if (vals.get('afrelationship') and vals['afrelationship'] != '/Data' and vals['xml_profile'] in ('facturx_minimum', 'facturx_basicwl')):
+            if (vals.get('afrelationship') and vals['afrelationship'] != '/Data' and vals['xml_profile'
+            ] in ('facturx_minimum', 'facturx_basicwl')):
                 errors['1_pdfa3'].append({
                     'name': '/AFRelationship = %s not allowed for this Factur-X profile' % vals['afrelationship'],
                     'comment': "For Factur-X profiles Minimum and Basic WL, "
