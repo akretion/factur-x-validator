@@ -37,6 +37,7 @@ FACTURX_XML_FX_NAMESPACES = {
     'ram': 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100',
     'rsm': 'urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100',
     'udt': 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100',
+    'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
 }
 #ADDED by Seb 30/04/2026
 FACTURX_XML_CII_NAMESPACES = {
@@ -56,8 +57,6 @@ FACTURX_XML_UBL_NAMESPACES = {
     'cn': 'uri="urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2'
     
 }
-
-
 
 #-------------------------------------
 ORDERX_XML_NAMESPACES = {
@@ -657,7 +656,7 @@ class FacturxAnalysis(models.Model):
         flavor = get_flavor(xml_root)
         if flavor == 'factur-x':
             vals['doc_type'] = 'facturx'
-            namespaces = FACTURX_XML_NAMESPACES
+            namespaces = FACTURX_XML_FX_NAMESPACES
         elif flavor == 'order-x':
             vals['doc_type'] = 'orderx'
             namespaces = ORDERX_XML_NAMESPACES
