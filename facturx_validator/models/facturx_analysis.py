@@ -39,13 +39,15 @@ FACTURX_XML_FX_NAMESPACES = {
     'udt': 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100',
     'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
 }
+
 #ADDED by Seb 30/04/2026
 FACTURX_XML_CII_NAMESPACES = {
     'ccts': 'uri="urn:un:unece:uncefact:documentation:standard:CoreComponentsTechnicalSpecification:2',
     'rsm': 'uri="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100',
     'udt': 'uri="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100',
     'qdt': 'uri="urn:un:unece:uncefact:data:standard:QualifiedDataType:100',
-    'ram': 'uri="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100'
+    'ram': 'uri="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100',
+    'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
 }
 
 FACTURX_XML_UBL_NAMESPACES = {
@@ -54,8 +56,7 @@ FACTURX_XML_UBL_NAMESPACES = {
     'qdt': 'uri="urn:oasis:names:specification:ubl:schema:xsd:QualifiedDataTypes-2',
     'udt': 'uri="urn:oasis:names:specification:ubl:schema:xsd:UnqualifiedDataTypes-2',
     'ubl': 'uri="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
-    'cn': 'uri="urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2'
-    
+    'cn': 'uri="urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2',
 }
 
 #-------------------------------------
@@ -64,7 +65,7 @@ ORDERX_XML_NAMESPACES = {
     'ram': 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:128',
     'rsm': 'urn:un:unece:uncefact:data:SCRDMCCBDACIOMessageStructure:100',
     'udt': 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:128',
-    'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
+    'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
 }
 
 PROFILES = [
@@ -85,6 +86,7 @@ SCH_PATHS = {
     'facturx_basic': 'facturx_validator/sch_files/Factur-X_1.08_BASIC.sch',
     'facturx_en16931': 'facturx_validator/sch_files/Factur-X_1.08_EN16931.sch',
     'facturx_extended': 'facturx_validator/sch_files/Factur-X_1.08_EXTENDED.sch',
+    'facturx_extended_ctc_fr': 'CII_EN16931_validation-preprocessed.sch'
     'orderx_basic': 'facturx_validator/sch_files/SCRDMCCBDACIOMessageStructure_100pD20B_BASIC.sch',
     'orderx_comfort': 'facturx_validator/sch_files/SCRDMCCBDACIOMessageStructure_100pD20B_COMFORT.sch',
     'orderx_extended': 'facturx_validator/sch_files/SCRDMCCBDACIOMessageStructure_100pD20B_EXTENDED.sch',
@@ -102,6 +104,7 @@ FACTURX_xmp2level = {
     'BASIC': 'facturx_basic',
     'EN 16931': 'facturx_en16931',
     'EXTENDED': 'facturx_extended',
+    'EXTENDED': 'facturx_extended_ctc_fr',
     }
 
 ORDERX_xmp2level = {
@@ -600,7 +603,7 @@ class FacturxAnalysis(models.Model):
                         })
 
                 try:
-                    xml_string = xml_file_dict['/EF']['/F'].get_data()
+                    xml_string = xml_file_dict['/EF'][''xsi': 'http://www.w3.org/2001/XMLSchema-instance'/F'].get_data()
                     xml_file_subdict = xml_file_dict['/EF']['/F'].get_object()
                 except Exception:
                     errors['1_pdfa3'].append({
