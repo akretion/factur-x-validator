@@ -74,7 +74,7 @@ PROFILES = [
     ('facturx_basic', 'Basic'),
     ('facturx_en16931', 'EN 16931 (Comfort)'),
     ('facturx_extended', 'Extended'),
-    ('facturx_extended_ctc_fr', 'Extended-CTC-FR')
+    ('facturx_extended_ctc_fr', 'Extended-CTC-FR'),
     ('orderx_basic', 'Basic (Order-X)'),
     ('orderx_comfort', 'Comfort (Order-X)'),
     ('orderx_extended', 'Extended (Order-X)'),
@@ -86,7 +86,7 @@ SCH_PATHS = {
     'facturx_basic': 'facturx_validator/sch_files/Factur-X_1.08_BASIC.sch',
     'facturx_en16931': 'facturx_validator/sch_files/Factur-X_1.08_EN16931.sch',
     'facturx_extended': 'facturx_validator/sch_files/Factur-X_1.08_EXTENDED.sch',
-    'facturx_extended_ctc_fr': 'CII_EN16931_validation-preprocessed.sch'
+    'facturx_extended_ctc_fr': 'facturx_validator/sch_files/Factur-X_1.08_EXTENDED-CTC-FR-CII-V1.3.1.sch',
     'orderx_basic': 'facturx_validator/sch_files/SCRDMCCBDACIOMessageStructure_100pD20B_BASIC.sch',
     'orderx_comfort': 'facturx_validator/sch_files/SCRDMCCBDACIOMessageStructure_100pD20B_COMFORT.sch',
     'orderx_extended': 'facturx_validator/sch_files/SCRDMCCBDACIOMessageStructure_100pD20B_EXTENDED.sch',
@@ -104,7 +104,7 @@ FACTURX_xmp2level = {
     'BASIC': 'facturx_basic',
     'EN 16931': 'facturx_en16931',
     'EXTENDED': 'facturx_extended',
-    'EXTENDED': 'facturx_extended_ctc_fr',
+    'EXTENDED_CTC_FR': 'facturx_extended_ctc_fr',
     }
 
 ORDERX_xmp2level = {
@@ -603,7 +603,7 @@ class FacturxAnalysis(models.Model):
                         })
 
                 try:
-                    xml_string = xml_file_dict['/EF'][''xsi': 'http://www.w3.org/2001/XMLSchema-instance'/F'].get_data()
+                    xml_string = xml_file_dict['/EF']['/F'].get_data()
                     xml_file_subdict = xml_file_dict['/EF']['/F'].get_object()
                 except Exception:
                     errors['1_pdfa3'].append({
@@ -1009,6 +1009,7 @@ class FacturxAnalysis(models.Model):
     def file_path(self, file_path, filter_ext=('',), env=None):
         root_path = os.path.abspath(config['root_path'])
         addons_paths = odoo.addons.__path__ + [root_path]
+        
         if env and hasattr(env.transaction, '__file_open_tmp_paths'):
             addons_paths += env.transaction.__file_open_tmp_paths
         is_abs = os.path.isabs(file_path)
