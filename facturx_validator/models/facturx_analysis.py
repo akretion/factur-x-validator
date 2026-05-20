@@ -104,7 +104,7 @@ FACTURX_xmp2level = {
     'BASIC': 'facturx_basic',
     'EN 16931': 'facturx_en16931',
     'EXTENDED': 'facturx_extended',
-    'EXTENDED_CTC_FR': 'facturx_extended_ctc_fr',
+    'EXTENDED CTC FR': 'facturx_extended_ctc_fr',
     }
 
 ORDERX_xmp2level = {
@@ -837,6 +837,7 @@ class FacturxAnalysis(models.Model):
                 "or empty value for this parameter."))
         cmd_list = [
             '/usr/bin/java',
+            '-Xmx256m',
             '-classpath',
             classpath,
             #  '-Dfile.encoding=UTF8',  # MARCHE
