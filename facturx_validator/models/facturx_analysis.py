@@ -837,7 +837,6 @@ class FacturxAnalysis(models.Model):
                 "or empty value for this parameter."))
         cmd_list = [
             '/usr/bin/java',
-            '-Xmx256m',
             '-classpath',
             classpath,
             #  '-Dfile.encoding=UTF8',  # MARCHE
