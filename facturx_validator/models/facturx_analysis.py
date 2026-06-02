@@ -95,6 +95,7 @@ PROFILES = [
     ('orderx_basic', 'Basic (Order-X)'),
     ('orderx_comfort', 'Comfort (Order-X)'),
     ('orderx_extended', 'Extended (Order-X)'),
+#Ajouter par Seb 02/06/2026
     ('cii_en16931', 'EN 16931 (CII)'),
     ('cii_extended', 'Extended (CII)'),
     ('cii_extended_ctc_fr', 'Extended-CTC-FR (CII)'),
@@ -132,6 +133,42 @@ SCH_PATHS = {
     # CDAR
     'cdar_ctc_fr': 'facturx_validator/schemas/CDAR/SCH/20260430_BR-FR-CDV-Schematron-CDAR_V1.3.1.sch',
     }
+
+# Compiled XSLT stylesheets for Saxon-based schematron validation.
+# Separate from SCH_PATHS because the compiled XSL lives in a different folder.
+XSL_PATHS = {
+    # Factur-X 1.08
+    'facturx_minimum':         'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_MINIMUM-compiled-saxonc.xsl',
+    'facturx_basicwl':         'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_BASICWL-compiled-saxonc.xsl',
+    'facturx_basic':           'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_BASIC-compiled-saxonc.xsl',
+    'facturx_en16931':         'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_EN16931-compiled-saxonc.xsl',
+    'facturx_extended':        'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_EXTENDED-compiled-saxonc.xsl',
+    'facturx_extended_ctc_fr': 'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_EXTENDED-CTC-FR-CII-V1.3.1-compiled-saxonc.xsl',
+    # Factur-X 1.07.2 (compiled XSL colocated with SCH)
+    'facturx_107_minimum':  'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_MINIMUM-compiled-saxonc.xsl',
+    'facturx_107_basicwl':  'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_BASICWL-compiled-saxonc.xsl',
+    'facturx_107_basic':    'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_BASIC-compiled-saxonc.xsl',
+    'facturx_107_en16931':  'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_EN16931-compiled-saxonc.xsl',
+    'facturx_107_extended': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_EXTENDED-compiled-saxonc.xsl',
+    # UBL — EN16931 compiled XSL not yet available; CTC-FR ready
+    'ubl_extended_ctc_fr': 'facturx_validator/schemas/UBL/XSD/UBL_1.08_EXTENDED-CTC-FR-UBL-V1.3.1-compiled-saxonc.xsl',
+    # CII — EN16931 compiled XSL not yet available; CTC-FR ready
+    'cii_extended_ctc_fr': 'facturx_validator/schemas/CII/XSLT/CII_1.08_EXTENDED-CTC-FR-CII-V1.3.1-compiled-saxonc.xsl',
+    }
+
+# UBL profile detection from cbc:CustomizationID.
+# Order matters: most specific prefix first.
+# TODO: add CTC-FR CustomizationID prefix once confirmed.
+UBL_PROFILE_MAP = [
+    # ('urn:fnfe-mpe.fr:ctc-fr:', 'ubl_extended_ctc_fr'),  # placeholder
+    ('urn:cen.eu:en16931:2017', 'ubl_en16931'),
+    ]
+
+# UBL root tag namespaces (Invoice and CreditNote)
+UBL_ROOT_NAMESPACES = (
+    'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
+    'urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2',
+    )
 
 ORDERX_TYPES = [
     ('order', 'Order'),
@@ -204,6 +241,9 @@ class FacturxAnalysis(models.Model):
     doc_type = fields.Selection([
         ('facturx', 'Factur-X'),
         ('orderx', 'Order-X'),
+        ('ubl', 'UBL'),
+        ('cii', 'CII'),
+        ('cdar', 'CDAR'),
         ], readonly=True, tracking=True)
     xml_orderx_type = fields.Selection(
         ORDERX_TYPES, string='XML Order-X Type', readonly=True, copy=False)
@@ -365,6 +405,8 @@ class FacturxAnalysis(models.Model):
             self.analyse_xml_schematron_facturx(vals, xml_bytes, errors, prefix)
         elif vals.get('xml_profile') and vals['xml_profile'].startswith('orderx_') and xml_root is not None:
             self.analyse_xml_schematron_orderx(vals, xml_root, errors, prefix)
+        elif vals.get('xml_profile') and vals['xml_profile'].startswith('ubl_') and xml_bytes:
+            self.analyse_xml_schematron_ubl(vals, xml_bytes, errors, prefix)
         if not errors['3_xml']:
             vals['xml_valid'] = True
         if not errors['4_xml_schematron']:
@@ -696,7 +738,37 @@ class FacturxAnalysis(models.Model):
         return xml_root, xml_string
 
     def analyse_xml_xsd(self, vals, xml_root, errors):
-        # Order-X or Factur-X ?
+        # --- UBL detection (must run before get_flavor which raises for UBL) ---
+        root_ns = xml_root.nsmap.get(None) or xml_root.tag.split('}')[0].lstrip('{')
+        if root_ns in UBL_ROOT_NAMESPACES:
+            vals['doc_type'] = 'ubl'
+            cbc_ns = 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2'
+            cid_nodes = xml_root.xpath(
+                'cbc:CustomizationID',
+                namespaces={'cbc': cbc_ns})
+            cid = (cid_nodes[0].text or '').strip() if cid_nodes else ''
+            if not cid:
+                errors['3_xml'].append({
+                    'name': 'Missing cbc:CustomizationID',
+                    'comment': 'A UBL invoice must carry a CustomizationID (BT-24 / BR-01).',
+                    })
+                return
+            ubl_profile = None
+            for prefix, profile in UBL_PROFILE_MAP:
+                if cid.startswith(prefix):
+                    ubl_profile = profile
+                    break
+            if not ubl_profile:
+                errors['3_xml'].append({
+                    'name': 'Unrecognized UBL CustomizationID',
+                    'comment': "CustomizationID '%s' does not match any known UBL profile." % cid,
+                    })
+                return
+            vals['xml_profile'] = ubl_profile
+            # No bundled UBL XSD — schematron validation carries the conformance check.
+            return
+
+        # --- Factur-X / CII / Order-X ---
         flavor = get_flavor(xml_root)
         if flavor == 'factur-x':
             vals['doc_type'] = 'facturx'
@@ -806,13 +878,18 @@ class FacturxAnalysis(models.Model):
         else:
             logger.info('file is valid according to Schematron')
 
-    def analyse_xml_schematron_facturx(self, vals, xml_bytes, errors, prefix=None):
-        if not vals['xml_profile'].startswith('facturx_'):
-            raise UserError(_("Wrong XML profile %s. Must be a Factur-X profile. This should never happen.") % vals['xml_profile'])
-        sch_file = SCH_PATHS[vals['xml_profile']]
-        stylesheet_file_rel = f"{sch_file[:-4]}-compiled-saxonc.xsl"
+    def _run_schematron_saxon(self, vals, xml_bytes, errors, prefix=None):
+        profile = vals['xml_profile']
+        if profile not in XSL_PATHS:
+            errors['4_xml_schematron'].append({
+                'name': 'Schematron validation not available for profile %s' % profile,
+                'comment': 'No compiled XSLT stylesheet found for this profile. '
+                           'Please compile the schematron source first.',
+                })
+            return
+        stylesheet_file_rel = XSL_PATHS[profile]
         stylesheet_file = self.file_path(stylesheet_file_rel)
-        logger.info('Start to validate factur-x against schematron with saxon')
+        logger.info('Start schematron validation (saxon) for profile %s', profile)
         logger.debug('stylesheet_file absolute path=%s', stylesheet_file)
         with NamedTemporaryFile('wb+', prefix=prefix, suffix='.xml') as xml_file:
             xml_file.write(xml_bytes)
@@ -820,10 +897,21 @@ class FacturxAnalysis(models.Model):
             with saxonche.PySaxonProcessor(license=False) as saxproc:
                 logger.debug('saxon version %s', saxproc.version)
                 xslt_processor = saxproc.new_xslt30_processor()
-                result_str = xslt_processor.transform_to_string(source_file=xml_file.name, stylesheet_file=stylesheet_file)
+                result_str = xslt_processor.transform_to_string(
+                    source_file=xml_file.name, stylesheet_file=stylesheet_file)
                 svrl_root = etree.fromstring(result_str.encode('utf-8'))
                 self.schematron_result_analysis(vals, svrl_root, errors)
-        logger.info('End of factur-x validation against schematron with saxon')
+        logger.info('End schematron validation (saxon) for profile %s', profile)
+
+    def analyse_xml_schematron_facturx(self, vals, xml_bytes, errors, prefix=None):
+        if not vals['xml_profile'].startswith('facturx_'):
+            raise UserError(_("Wrong XML profile %s. Must be a Factur-X profile. This should never happen.") % vals['xml_profile'])
+        self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
+
+    def analyse_xml_schematron_ubl(self, vals, xml_bytes, errors, prefix=None):
+        if not vals['xml_profile'].startswith('ubl_'):
+            raise UserError(_("Wrong XML profile %s. Must be a UBL profile. This should never happen.") % vals['xml_profile'])
+        self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
 
     def schematron_result_analysis(self, vals, svrl_root, errors):
         namespaces = svrl_root.nsmap
