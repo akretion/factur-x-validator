@@ -30,7 +30,11 @@ from odoo.tools import config
 
 FACTURX_FILENAME = 'factur-x.xml'
 ORDERX_FILENAME = 'order-x.xml'
-ALL_FILENAMES = [FACTURX_FILENAME, ORDERX_FILENAME]
+UBL_FILENAME = 'ubl.xml'
+CII_FILENAME = 'cii.xml'
+CDAR_FILENAME = 'cdar.xml'
+EREPORTING_FILENAME = 'ereporting.xml'
+ALL_FILENAMES = [FACTURX_FILENAME, ORDERX_FILENAME,UBL_FILENAME,CII_FILENAME,CDAR_FILENAME,EREPORTING_FILENAME]
 
 FACTURX_XML_FX_NAMESPACES = {
     'qdt': 'urn:un:unece:uncefact:data:standard:QualifiedDataType:100',
@@ -40,17 +44,27 @@ FACTURX_XML_FX_NAMESPACES = {
     'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
 }
 
-#ADDED by Seb 30/04/2026
-FACTURX_XML_CII_NAMESPACES = {
-    'ccts': 'uri="urn:un:unece:uncefact:documentation:standard:CoreComponentsTechnicalSpecification:2',
-    'rsm': 'uri="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100',
-    'udt': 'uri="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100',
-    'qdt': 'uri="urn:un:unece:uncefact:data:standard:QualifiedDataType:100',
-    'ram': 'uri="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100',
+ORDERX_XML_NAMESPACES = {
+    'qdt': 'urn:un:unece:uncefact:data:standard:QualifiedDataType:128',
+    'ram': 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:128',
+    'rsm': 'urn:un:unece:uncefact:data:SCRDMCCBDACIOMessageStructure:100',
+    'udt': 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:128',
     'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
 }
 
-FACTURX_XML_UBL_NAMESPACES = {
+#---------------ADDED by SMV 02/06/2026----------------
+
+#FX should be equal to CII
+#FACTURX_XML_CII-FX_NAMESPACES = {
+#    'ccts': 'uri="urn:un:unece:uncefact:documentation:standard:CoreComponentsTechnicalSpecification:2',
+#    'qdt': 'urn:un:unece:uncefact:data:standard:QualifiedDataType:100'
+#    'udt':'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100'
+#    'ram':'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100'
+#    'rsm':'urn:un:unece:uncefact:data:standard:CrossDomainAcknowledgementAndResponse:100'
+#    'xsi':'http://www.w3.org/2001/XMLSchema-instance',
+#}
+
+UBL_XML_NAMESPACES = {
     'uri': 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
     'cac': 'uri="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
     'qdt': 'uri="urn:oasis:names:specification:ubl:schema:xsd:QualifiedDataTypes-2',
@@ -59,14 +73,17 @@ FACTURX_XML_UBL_NAMESPACES = {
     'cn': 'uri="urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2',
 }
 
-#-------------------------------------
-ORDERX_XML_NAMESPACES = {
-    'qdt': 'urn:un:unece:uncefact:data:standard:QualifiedDataType:128',
-    'ram': 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:128',
-    'rsm': 'urn:un:unece:uncefact:data:SCRDMCCBDACIOMessageStructure:100',
-    'udt': 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:128',
-    'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+CDAR_XML_NAMESPACES = {
+    'qdt': 'urn:un:unece:uncefact:data:standard:QualifiedDataType:100'
+    'udt':'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100'
+    'ram':'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100'
+    'rsm':'urn:un:unece:uncefact:data:standard:CrossDomainAcknowledgementAndResponse:100'
+    'xsi':'http://www.w3.org/2001/XMLSchema-instance'
 }
+
+#e-Reporting_XML_NAMESPACES = { will be added later}
+
+#------------------END NAMESPACES MODIFICTION-------------------
 
 PROFILES = [
     ('facturx_minimum', 'Minimum'),
@@ -78,18 +95,42 @@ PROFILES = [
     ('orderx_basic', 'Basic (Order-X)'),
     ('orderx_comfort', 'Comfort (Order-X)'),
     ('orderx_extended', 'Extended (Order-X)'),
+    ('cii_en16931', 'EN 16931 (CII)'),
+    ('cii_extended', 'Extended (CII)'),
+    ('cii_extended_ctc_fr', 'Extended-CTC-FR (CII)'),
+    ('ubl_en16931', 'EN 16931 (UBL)'),
+    ('ubl_extended', 'Extended (UBL)'),
+    ('ubl_extended_ctc_fr', 'Extended-CTC-FR (UBL)'),
+    ('cdar_ctc_fr', 'CDAR CTC-FR'),
+    ('ereporting', 'e-Reporting'),
     ]
 
 SCH_PATHS = {
-    'facturx_minimum': 'facturx_validator/sch_files/Factur-X_1.08_MINIMUM.sch',
-    'facturx_basicwl': 'facturx_validator/sch_files/Factur-X_1.08_BASICWL.sch',
-    'facturx_basic': 'facturx_validator/sch_files/Factur-X_1.08_BASIC.sch',
-    'facturx_en16931': 'facturx_validator/sch_files/Factur-X_1.08_EN16931.sch',
-    'facturx_extended': 'facturx_validator/sch_files/Factur-X_1.08_EXTENDED.sch',
-    'facturx_extended_ctc_fr': 'facturx_validator/sch_files/Factur-X_1.08_EXTENDED-CTC-FR-CII-V1.3.1.sch',
-    'orderx_basic': 'facturx_validator/sch_files/SCRDMCCBDACIOMessageStructure_100pD20B_BASIC.sch',
-    'orderx_comfort': 'facturx_validator/sch_files/SCRDMCCBDACIOMessageStructure_100pD20B_COMFORT.sch',
-    'orderx_extended': 'facturx_validator/sch_files/SCRDMCCBDACIOMessageStructure_100pD20B_EXTENDED.sch',
+    # Factur-X 1.08 (CII)
+    'facturx_minimum': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_MINIMUM.sch',
+    'facturx_basicwl': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_BASICWL.sch',
+    'facturx_basic': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_BASIC.sch',
+    'facturx_en16931': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_EN16931.sch',
+    'facturx_extended': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_EXTENDED.sch',
+    'facturx_extended_ctc_fr': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_EXTENDED-CTC-FR-CII-V1.3.1.sch',
+    # Factur-X 1.07.2 (former release)
+    'facturx_107_minimum': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_MINIMUM.sch',
+    'facturx_107_basicwl': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_BASICWL.sch',
+    'facturx_107_basic': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_BASIC.sch',
+    'facturx_107_en16931': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_EN16931.sch',
+    'facturx_107_extended': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_EXTENDED.sch',
+    # Order-X
+    'orderx_basic': 'facturx_validator/schemas/Order-X/SCH/SCRDMCCBDACIOMessageStructure_100pD20B_BASIC.sch',
+    'orderx_comfort': 'facturx_validator/schemas/Order-X/SCH/SCRDMCCBDACIOMessageStructure_100pD20B_COMFORT.sch',
+    'orderx_extended': 'facturx_validator/schemas/Order-X/SCH/SCRDMCCBDACIOMessageStructure_100pD20B_EXTENDED.sch',
+    # CII (standalone)
+    'cii_en16931': 'facturx_validator/schemas/CII/SCH/CII_EN16931_validation-preprocessed.sch',
+    'cii_extended_ctc_fr': 'facturx_validator/schemas/CII/SCH/CII_1.08_EXTENDED-CTC-FR-CII-V1.3.1.sch',
+    # UBL
+    'ubl_en16931': 'facturx_validator/schemas/UBL/SCH/UBL_EN16931_validation-preprocessed.sch',
+    'ubl_extended_ctc_fr': 'facturx_validator/schemas/UBL/SCH/UBL_1.08_EXTENDED-CTC-FR-UBL-V1.3.1.sch',
+    # CDAR
+    'cdar_ctc_fr': 'facturx_validator/schemas/CDAR/SCH/20260430_BR-FR-CDV-Schematron-CDAR_V1.3.1.sch',
     }
 
 ORDERX_TYPES = [
