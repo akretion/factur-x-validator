@@ -74,11 +74,11 @@ UBL_XML_NAMESPACES = {
 }
 
 CDAR_XML_NAMESPACES = {
-    'qdt': 'urn:un:unece:uncefact:data:standard:QualifiedDataType:100'
-    'udt':'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100'
-    'ram':'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100'
-    'rsm':'urn:un:unece:uncefact:data:standard:CrossDomainAcknowledgementAndResponse:100'
-    'xsi':'http://www.w3.org/2001/XMLSchema-instance'
+    'qdt': 'urn:un:unece:uncefact:data:standard:QualifiedDataType:100',
+    'udt': 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100',
+    'ram': 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100',
+    'rsm': 'urn:un:unece:uncefact:data:standard:CrossDomainAcknowledgementAndResponse:100',
+    'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
 }
 
 #e-Reporting_XML_NAMESPACES = { will be added later}
