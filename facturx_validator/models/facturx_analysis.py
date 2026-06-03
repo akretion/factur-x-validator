@@ -91,9 +91,9 @@ _PROFILES_DEF = [
     ('cii_en16931',             'EN 16931 (CII)'),
     ('cii_extended',            'Extended (CII)'),
     ('cii_extended_ctc_fr',     'Extended-CTC-FR (CII)'),
-    ('ubl_en16931',             'EN 16931 (UBL)',        'urn:cen.eu:en16931:2017'),
+    ('ubl_en16931',             'EN 16931 (UBL)',         'urn:cen.eu:en16931:2017'),
+    ('ubl_extended_ctc_fr',     'Extended-CTC-FR (UBL)', 'urn:cen.eu:en16931:2017#conformant#urn.cpro.gouv.fr:1p0:extended-ctc-fr'),
     ('ubl_extended',            'Extended (UBL)'),
-    ('ubl_extended_ctc_fr',     'Extended-CTC-FR (UBL)'),  # TODO: CustomizationID à confirmer
     ('cdar_ctc_fr',             'CDAR CTC-FR'),
     ('ereporting',              'e-Reporting'),
     ]
@@ -761,7 +761,7 @@ class FacturxAnalysis(models.Model):
                 return
             ubl_profile = None
             for prefix, profile in UBL_PROFILE_MAP:
-                if cid.startswith(prefix):
+                if cid == prefix:
                     ubl_profile = profile
                     break
             if not ubl_profile:
