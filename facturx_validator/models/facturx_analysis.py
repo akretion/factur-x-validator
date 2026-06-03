@@ -19,7 +19,7 @@ import saxonche
 from collections import defaultdict
 from pypdf import PdfReader
 from pypdf.generic import IndirectObject
-from facturx import xml_check_xsd, get_flavor, get_orderx_type
+from facturx import xml_check_xsd, get_flavor as _get_flavor_orig, get_orderx_type
 import logging
 logger = logging.getLogger(__name__)
 
@@ -64,14 +64,7 @@ ORDERX_XML_NAMESPACES = {
 #    'xsi':'http://www.w3.org/2001/XMLSchema-instance',
 #}
 
-UBL_XML_NAMESPACES = {
-    'uri': 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
-    'cac': 'uri="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
-    'qdt': 'uri="urn:oasis:names:specification:ubl:schema:xsd:QualifiedDataTypes-2',
-    'udt': 'uri="urn:oasis:names:specification:ubl:schema:xsd:UnqualifiedDataTypes-2',
-    'ubl': 'uri="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
-    'cn': 'uri="urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2',
-}
+# No UBL_XML_NAMESPACES dict: root-tag detection uses UBL_ROOT_NAMESPACES; XPath prefix maps are declared inline at each query site.
 
 CDAR_XML_NAMESPACES = {
     'qdt': 'urn:un:unece:uncefact:data:standard:QualifiedDataType:100',
@@ -85,28 +78,36 @@ CDAR_XML_NAMESPACES = {
 
 #------------------END NAMESPACES MODIFICTION-------------------
 
-PROFILES = [
-    ('facturx_minimum', 'Minimum'),
-    ('facturx_basicwl', 'Basic WL'),
-    ('facturx_basic', 'Basic'),
-    ('facturx_en16931', 'EN 16931 (Comfort)'),
-    ('facturx_extended', 'Extended'),
+_PROFILES_DEF = [
+    ('facturx_minimum',         'Minimum'),
+    ('facturx_basicwl',         'Basic WL'),
+    ('facturx_basic',           'Basic'),
+    ('facturx_en16931',         'EN 16931 (Comfort)'),
+    ('facturx_extended',        'Extended'),
     ('facturx_extended_ctc_fr', 'Extended-CTC-FR'),
-    ('orderx_basic', 'Basic (Order-X)'),
-    ('orderx_comfort', 'Comfort (Order-X)'),
-    ('orderx_extended', 'Extended (Order-X)'),
-#Ajouter par Seb 02/06/2026
-    ('cii_en16931', 'EN 16931 (CII)'),
-    ('cii_extended', 'Extended (CII)'),
-    ('cii_extended_ctc_fr', 'Extended-CTC-FR (CII)'),
-    ('ubl_en16931', 'EN 16931 (UBL)'),
-    ('ubl_extended', 'Extended (UBL)'),
-    ('ubl_extended_ctc_fr', 'Extended-CTC-FR (UBL)'),
-    ('cdar_ctc_fr', 'CDAR CTC-FR'),
-    ('ereporting', 'e-Reporting'),
+    ('orderx_basic',            'Basic (Order-X)'),
+    ('orderx_comfort',          'Comfort (Order-X)'),
+    ('orderx_extended',         'Extended (Order-X)'),
+    ('cii_en16931',             'EN 16931 (CII)'),
+    ('cii_extended',            'Extended (CII)'),
+    ('cii_extended_ctc_fr',     'Extended-CTC-FR (CII)'),
+    ('ubl_en16931',             'EN 16931 (UBL)',        'urn:cen.eu:en16931:2017'),
+    ('ubl_extended',            'Extended (UBL)'),
+    ('ubl_extended_ctc_fr',     'Extended-CTC-FR (UBL)'),  # TODO: CustomizationID à confirmer
+    ('cdar_ctc_fr',             'CDAR CTC-FR'),
+    ('ereporting',              'e-Reporting'),
     ]
 
+PROFILES = [(p[0], p[1]) for p in _PROFILES_DEF]
+UBL_PROFILE_MAP = [(p[2], p[0]) for p in _PROFILES_DEF if len(p) == 3]
+
 SCH_PATHS = {
+    # Factur-X 1.07.2 (former release)
+    'facturx_107_minimum': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_MINIMUM.sch',
+    'facturx_107_basicwl': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_BASICWL.sch',
+    'facturx_107_basic': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_BASIC.sch',
+    'facturx_107_en16931': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_EN16931.sch',
+    'facturx_107_extended': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_EXTENDED.sch',
     # Factur-X 1.08 (CII)
     'facturx_minimum': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_MINIMUM.sch',
     'facturx_basicwl': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_BASICWL.sch',
@@ -114,12 +115,6 @@ SCH_PATHS = {
     'facturx_en16931': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_EN16931.sch',
     'facturx_extended': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_EXTENDED.sch',
     'facturx_extended_ctc_fr': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_EXTENDED-CTC-FR-CII-V1.3.1.sch',
-    # Factur-X 1.07.2 (former release)
-    'facturx_107_minimum': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_MINIMUM.sch',
-    'facturx_107_basicwl': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_BASICWL.sch',
-    'facturx_107_basic': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_BASIC.sch',
-    'facturx_107_en16931': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_EN16931.sch',
-    'facturx_107_extended': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_EXTENDED.sch',
     # Order-X
     'orderx_basic': 'facturx_validator/schemas/Order-X/SCH/SCRDMCCBDACIOMessageStructure_100pD20B_BASIC.sch',
     'orderx_comfort': 'facturx_validator/schemas/Order-X/SCH/SCRDMCCBDACIOMessageStructure_100pD20B_COMFORT.sch',
@@ -132,11 +127,19 @@ SCH_PATHS = {
     'ubl_extended_ctc_fr': 'facturx_validator/schemas/UBL/SCH/UBL_1.08_EXTENDED-CTC-FR-UBL-V1.3.1.sch',
     # CDAR
     'cdar_ctc_fr': 'facturx_validator/schemas/CDAR/SCH/20260430_BR-FR-CDV-Schematron-CDAR_V1.3.1.sch',
+    # e-Reporting
+    # expecting the specifications
     }
 
 # Compiled XSLT stylesheets for Saxon-based schematron validation.
 # Separate from SCH_PATHS because the compiled XSL lives in a different folder.
 XSL_PATHS = {
+    # Factur-X 1.07.2 (compiled XSL colocated with SCH)
+    'facturx_107_minimum':  'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_MINIMUM-compiled-saxonc.xsl',
+    'facturx_107_basicwl':  'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_BASICWL-compiled-saxonc.xsl',
+    'facturx_107_basic':    'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_BASIC-compiled-saxonc.xsl',
+    'facturx_107_en16931':  'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_EN16931-compiled-saxonc.xsl',
+    'facturx_107_extended': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_EXTENDED-compiled-saxonc.xsl',
     # Factur-X 1.08
     'facturx_minimum':         'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_MINIMUM-compiled-saxonc.xsl',
     'facturx_basicwl':         'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_BASICWL-compiled-saxonc.xsl',
@@ -144,31 +147,33 @@ XSL_PATHS = {
     'facturx_en16931':         'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_EN16931-compiled-saxonc.xsl',
     'facturx_extended':        'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_EXTENDED-compiled-saxonc.xsl',
     'facturx_extended_ctc_fr': 'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_EXTENDED-CTC-FR-CII-V1.3.1-compiled-saxonc.xsl',
-    # Factur-X 1.07.2 (compiled XSL colocated with SCH)
-    'facturx_107_minimum':  'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_MINIMUM-compiled-saxonc.xsl',
-    'facturx_107_basicwl':  'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_BASICWL-compiled-saxonc.xsl',
-    'facturx_107_basic':    'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_BASIC-compiled-saxonc.xsl',
-    'facturx_107_en16931':  'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_EN16931-compiled-saxonc.xsl',
-    'facturx_107_extended': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_EXTENDED-compiled-saxonc.xsl',
     # UBL — EN16931 compiled XSL not yet available; CTC-FR ready
     'ubl_extended_ctc_fr': 'facturx_validator/schemas/UBL/XSD/UBL_1.08_EXTENDED-CTC-FR-UBL-V1.3.1-compiled-saxonc.xsl',
     # CII — EN16931 compiled XSL not yet available; CTC-FR ready
     'cii_extended_ctc_fr': 'facturx_validator/schemas/CII/XSLT/CII_1.08_EXTENDED-CTC-FR-CII-V1.3.1-compiled-saxonc.xsl',
     }
 
-# UBL profile detection from cbc:CustomizationID.
-# Order matters: most specific prefix first.
-# TODO: add CTC-FR CustomizationID prefix once confirmed.
-UBL_PROFILE_MAP = [
-    # ('urn:fnfe-mpe.fr:ctc-fr:', 'ubl_extended_ctc_fr'),  # placeholder
-    ('urn:cen.eu:en16931:2017', 'ubl_en16931'),
-    ]
-
 # UBL root tag namespaces (Invoice and CreditNote)
 UBL_ROOT_NAMESPACES = (
     'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
     'urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2',
     )
+
+def get_flavor(xml_etree):
+    """Extension locale de get_flavor() (upstream: akretion/factur-x).
+    Ajoute la détection des formats non couverts par la lib pip."""
+    tag = xml_etree.tag
+    if '{' in tag:
+        ns = tag[1:tag.index('}')]
+        if ns in UBL_ROOT_NAMESPACES:
+            return 'ubl'
+        if ns == CDAR_XML_NAMESPACES['rsm']:
+            return 'cdar'
+        # TODO e-Reporting: ajouter ici le root namespace quand le cahier des charges sera disponible
+        # if ns == 'urn:...:e-Reporting:...':
+        #     return 'ereporting'
+    return _get_flavor_orig(xml_etree)
+
 
 ORDERX_TYPES = [
     ('order', 'Order'),
@@ -738,9 +743,8 @@ class FacturxAnalysis(models.Model):
         return xml_root, xml_string
 
     def analyse_xml_xsd(self, vals, xml_root, errors):
-        # --- UBL detection (must run before get_flavor which raises for UBL) ---
-        root_ns = xml_root.nsmap.get(None) or xml_root.tag.split('}')[0].lstrip('{')
-        if root_ns in UBL_ROOT_NAMESPACES:
+        flavor = get_flavor(xml_root)
+        if flavor == 'ubl':
             vals['doc_type'] = 'ubl'
             cbc_ns = 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2'
             cid_nodes = xml_root.xpath(
@@ -765,12 +769,12 @@ class FacturxAnalysis(models.Model):
                     })
                 return
             vals['xml_profile'] = ubl_profile
-            # No bundled UBL XSD — schematron validation carries the conformance check.
             return
-
-        # --- Factur-X / CII / Order-X ---
-        flavor = get_flavor(xml_root)
-        if flavor == 'factur-x':
+        elif flavor == 'cdar':
+            vals['doc_type'] = 'cdar'
+            vals['xml_profile'] = 'cdar_ctc_fr'
+            return
+        elif flavor == 'factur-x':
             vals['doc_type'] = 'facturx'
             namespaces = FACTURX_XML_FX_NAMESPACES
         elif flavor == 'order-x':
@@ -786,7 +790,7 @@ class FacturxAnalysis(models.Model):
         else:
             errors['3_xml'].append({
                 'name': 'Neither Order-X nor Factur-X file',
-                'comment': 'The XML file is neither an Order-X nor a Factur-X file.',
+                'comment': 'Unrecognized document format (not Factur-X, Order-X, UBL, CDAR, nor e-Reporting).',
             })
             return
         # Check profile
