@@ -1,0 +1,80 @@
+# Common definition of extensions for all document models
+#
+# $Id: extensions.rnc,v 1.1 2011/05/30 02:38:57 admin Exp $
+#
+# Modify this module to engage the extensions for the UBL extension point.
+
+# List here all of the namespaces used for apex element names below
+namespace sig =
+  "urn:oasis:names:specification:ubl:schema:xsd:CommonSignatureComponents-2"
+
+# Include here all the extension schemas
+include "versions/UBL-CommonSignatureComponents-2.1.rnc"
+
+# Pull in the apex pattern of all extension schemas as a single element choice
+ExtensionContentDataType = 
+    (
+      CommonSignatureComponents_UBLDocumentSignatures
+     | 
+      any-other-apex-element  # allowing any other element as unknown extension
+    )
+
+# Validated apex element names must be excluded or the wildcard will allow them
+any-other-apex-element = element * - sig:UBLDocumentSignatures
+        { 
+          attribute * { text }*,
+          ( any | text )*
+        }
+
+# Anything is allowed below an apex element
+# Important note:
+#   This wildcard pattern for attributes conflicts with any attribute of type
+#   xsd:ID.  Unfortunately, the wildcard cannot exclude known attributes of
+#   type xsd:ID because other unknown extensions may have similarly-named
+#   attributes.  This results in being unable to validate the ID-ness of
+#   extension attributes of type xsd:ID.  To avoid the conflict, the easiest
+#   thing to do is change the attributes of type xsd:ID to be xsd:NMTOKEN.
+#   If this is not possible, then run validation without ID/IDREF checking.
+#   While modifying the pattern below to explicitly exclude named attributes
+#   of type xsd:ID would seem the right thing to do, the constraint of an
+#   attribute of type ID not allowed to be a descendant of a wildcard element
+#   is at: http://www.oasis-open.org/committees/relax-ng/compatibility.html#id
+#   where it reads: "the first child of the element ancestor is a name element"
+any = element *
+        { 
+          attribute * { text }*,
+          ( any | text )*
+        }
+
+# Copyright (C) - Crane Softwrights Ltd.
+#               - http://www.CraneSoftwrights.com/resources/ubl/#ublrnc
+# Portions copyright (c) OASIS Open. All Rights Reserved.
+#                   - http://www.oasis-open.org/who/intellectualproperty.php
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# - Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+# - Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+# - The name of the author may not be used to endorse or promote products
+#   derived from this software without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
+# NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+# EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# Note: for your reference, the above is the "Modified BSD license", this text
+#       was obtained 2003-07-26 at http://www.xfree86.org/3.3.6/COPYRIGHT2.html#5
+# 
+# THE AUTHOR MAKES NO REPRESENTATION ABOUT THE SUITABILITY OF THIS CODE FOR ANY
+# PURPOSE.

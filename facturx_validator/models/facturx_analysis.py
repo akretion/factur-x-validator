@@ -147,10 +147,12 @@ XSL_PATHS = {
     'facturx_en16931':         'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_EN16931-compiled-saxonc.xsl',
     'facturx_extended':        'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_EXTENDED-compiled-saxonc.xsl',
     'facturx_extended_ctc_fr': 'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_EXTENDED-CTC-FR-CII-V1.3.1-compiled-saxonc.xsl',
-    # UBL — EN16931 compiled XSL not yet available; CTC-FR ready
-    'ubl_extended_ctc_fr': 'facturx_validator/schemas/UBL/XSD/UBL_1.08_EXTENDED-CTC-FR-UBL-V1.3.1-compiled-saxonc.xsl',
-    # CII — EN16931 compiled XSL not yet available; CTC-FR ready
-    'cii_extended_ctc_fr': 'facturx_validator/schemas/CII/XSLT/CII_1.08_EXTENDED-CTC-FR-CII-V1.3.1-compiled-saxonc.xsl',
+    # UBL
+    'ubl_en16931':         'facturx_validator/schemas/UBL/XSLT/UBL_EN16931_validation.xslt',
+    'ubl_extended_ctc_fr': 'facturx_validator/schemas/UBL/XSLT/UBL_EXTENDED-CTC-FR_V1.3.1_20260430.xsl',
+    # CII
+    'cii_en16931':         'facturx_validator/schemas/CII/XSLT/CII_EN16931-CII-validation.xslt',
+    'cii_extended_ctc_fr': 'facturx_validator/schemas/CII/XSLT/CII_EXTENDED-CTC-FR-CII-V1.3.1_20260430.xsl',
     }
 
 # UBL root tag namespaces (Invoice and CreditNote)
@@ -743,6 +745,10 @@ class FacturxAnalysis(models.Model):
         return xml_root, xml_string
 
     def analyse_xml_xsd(self, vals, xml_root, errors):
+        # UBL: XSD validation is not performed — schemas/UBL/XSD/ is not yet populated.
+        # Conformance is enforced by the EN16931/CTC-FR Schematron (XSL_PATHS).
+        # xml_valid will reflect "no parse errors" not "XSD validated" for UBL documents.
+        # TODO: wire up UBL XSD validation once OASIS UBL 2.1 schemas are added to schemas/UBL/XSD/.
         flavor = get_flavor(xml_root)
         if flavor == 'ubl':
             vals['doc_type'] = 'ubl'

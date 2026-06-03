@@ -1,0 +1,105 @@
+# A single document model for all OASIS Universal Business Language
+# (UBL) documents
+
+UBL-ApplicationResponse = external "UBL-ApplicationResponse.rnc"
+UBL-AttachedDocument = external "UBL-AttachedDocument.rnc"
+UBL-AwardedNotification = external "UBL-AwardedNotification.rnc"
+UBL-BillOfLading = external "UBL-BillOfLading.rnc"
+UBL-CallForTenders = external "UBL-CallForTenders.rnc"
+UBL-Catalogue = external "UBL-Catalogue.rnc"
+UBL-CatalogueDeletion = external "UBL-CatalogueDeletion.rnc"
+UBL-CatalogueItemSpecificationUpdate = external "UBL-CatalogueItemSpecificationUpdate.rnc"
+UBL-CataloguePricingUpdate = external "UBL-CataloguePricingUpdate.rnc"
+UBL-CatalogueRequest = external "UBL-CatalogueRequest.rnc"
+UBL-CertificateOfOrigin = external "UBL-CertificateOfOrigin.rnc"
+UBL-ContractAwardNotice = external "UBL-ContractAwardNotice.rnc"
+UBL-ContractNotice = external "UBL-ContractNotice.rnc"
+UBL-CreditNote = external "UBL-CreditNote.rnc"
+UBL-DebitNote = external "UBL-DebitNote.rnc"
+UBL-DespatchAdvice = external "UBL-DespatchAdvice.rnc"
+UBL-DocumentStatus = external "UBL-DocumentStatus.rnc"
+UBL-DocumentStatusRequest = external "UBL-DocumentStatusRequest.rnc"
+UBL-ExceptionCriteria = external "UBL-ExceptionCriteria.rnc"
+UBL-ExceptionNotification = external "UBL-ExceptionNotification.rnc"
+UBL-Forecast = external "UBL-Forecast.rnc"
+UBL-ForecastRevision = external "UBL-ForecastRevision.rnc"
+UBL-ForwardingInstructions = external "UBL-ForwardingInstructions.rnc"
+UBL-FreightInvoice = external "UBL-FreightInvoice.rnc"
+UBL-FulfilmentCancellation = external "UBL-FulfilmentCancellation.rnc"
+UBL-GoodsItemItinerary = external "UBL-GoodsItemItinerary.rnc"
+UBL-GuaranteeCertificate = external "UBL-GuaranteeCertificate.rnc"
+UBL-InstructionForReturns = external "UBL-InstructionForReturns.rnc"
+UBL-InventoryReport = external "UBL-InventoryReport.rnc"
+UBL-Invoice = external "UBL-Invoice.rnc"
+UBL-ItemInformationRequest = external "UBL-ItemInformationRequest.rnc"
+UBL-Order = external "UBL-Order.rnc"
+UBL-OrderCancellation = external "UBL-OrderCancellation.rnc"
+UBL-OrderChange = external "UBL-OrderChange.rnc"
+UBL-OrderResponse = external "UBL-OrderResponse.rnc"
+UBL-OrderResponseSimple = external "UBL-OrderResponseSimple.rnc"
+UBL-PackingList = external "UBL-PackingList.rnc"
+UBL-PriorInformationNotice = external "UBL-PriorInformationNotice.rnc"
+UBL-ProductActivity = external "UBL-ProductActivity.rnc"
+UBL-Quotation = external "UBL-Quotation.rnc"
+UBL-ReceiptAdvice = external "UBL-ReceiptAdvice.rnc"
+UBL-Reminder = external "UBL-Reminder.rnc"
+UBL-RemittanceAdvice = external "UBL-RemittanceAdvice.rnc"
+UBL-RequestForQuotation = external "UBL-RequestForQuotation.rnc"
+UBL-RetailEvent = external "UBL-RetailEvent.rnc"
+UBL-SelfBilledCreditNote = external "UBL-SelfBilledCreditNote.rnc"
+UBL-SelfBilledInvoice = external "UBL-SelfBilledInvoice.rnc"
+UBL-Statement = external "UBL-Statement.rnc"
+UBL-StockAvailabilityReport = external "UBL-StockAvailabilityReport.rnc"
+UBL-Tender = external "UBL-Tender.rnc"
+UBL-TendererQualification = external "UBL-TendererQualification.rnc"
+UBL-TendererQualificationResponse = external "UBL-TendererQualificationResponse.rnc"
+UBL-TenderReceipt = external "UBL-TenderReceipt.rnc"
+UBL-TradeItemLocationProfile = external "UBL-TradeItemLocationProfile.rnc"
+UBL-TransportationStatus = external "UBL-TransportationStatus.rnc"
+UBL-TransportationStatusRequest = external "UBL-TransportationStatusRequest.rnc"
+UBL-TransportExecutionPlan = external "UBL-TransportExecutionPlan.rnc"
+UBL-TransportExecutionPlanRequest = external "UBL-TransportExecutionPlanRequest.rnc"
+UBL-TransportProgressStatus = external "UBL-TransportProgressStatus.rnc"
+UBL-TransportProgressStatusRequest = external "UBL-TransportProgressStatusRequest.rnc"
+UBL-TransportServiceDescription = external "UBL-TransportServiceDescription.rnc"
+UBL-TransportServiceDescriptionRequest = external "UBL-TransportServiceDescriptionRequest.rnc"
+UBL-UnawardedNotification = external "UBL-UnawardedNotification.rnc"
+UBL-UtilityStatement = external "UBL-UtilityStatement.rnc"
+UBL-Waybill = external "UBL-Waybill.rnc"
+
+start = UBL-ApplicationResponse | UBL-AttachedDocument | UBL-AwardedNotification | UBL-BillOfLading | UBL-CallForTenders | UBL-Catalogue | UBL-CatalogueDeletion | UBL-CatalogueItemSpecificationUpdate | UBL-CataloguePricingUpdate | UBL-CatalogueRequest | UBL-CertificateOfOrigin | UBL-ContractAwardNotice | UBL-ContractNotice | UBL-CreditNote | UBL-DebitNote | UBL-DespatchAdvice | UBL-DocumentStatus | UBL-DocumentStatusRequest | UBL-ExceptionCriteria | UBL-ExceptionNotification | UBL-Forecast | UBL-ForecastRevision | UBL-ForwardingInstructions | UBL-FreightInvoice | UBL-FulfilmentCancellation | UBL-GoodsItemItinerary | UBL-GuaranteeCertificate | UBL-InstructionForReturns | UBL-InventoryReport | UBL-Invoice | UBL-ItemInformationRequest | UBL-Order | UBL-OrderCancellation | UBL-OrderChange | UBL-OrderResponse | UBL-OrderResponseSimple | UBL-PackingList | UBL-PriorInformationNotice | UBL-ProductActivity | UBL-Quotation | UBL-ReceiptAdvice | UBL-Reminder | UBL-RemittanceAdvice | UBL-RequestForQuotation | UBL-RetailEvent | UBL-SelfBilledCreditNote | UBL-SelfBilledInvoice | UBL-Statement | UBL-StockAvailabilityReport | UBL-Tender | UBL-TendererQualification | UBL-TendererQualificationResponse | UBL-TenderReceipt | UBL-TradeItemLocationProfile | UBL-TransportationStatus | UBL-TransportationStatusRequest | UBL-TransportExecutionPlan | UBL-TransportExecutionPlanRequest | UBL-TransportProgressStatus | UBL-TransportProgressStatusRequest | UBL-TransportServiceDescription | UBL-TransportServiceDescriptionRequest | UBL-UnawardedNotification | UBL-UtilityStatement | UBL-Waybill
+
+# Synthesized from UBL document models 2013-10-31 18:07:36z
+#
+# Copyright (C) - Crane Softwrights Ltd.
+#               - http://www.CraneSoftwrights.com/resources/ubl/#ublrnc
+# Portions copyright (c) OASIS Open. All Rights Reserved.
+#                   - http://www.oasis-open.org/who/intellectualproperty.php
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# - Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+# - Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+# - The name of the author may not be used to endorse or promote products
+#   derived from this software without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
+# NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+# EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# Note: for your reference, the above is the "Modified BSD license", this text
+#       was obtained 2003-07-26 at http://www.xfree86.org/3.3.6/COPYRIGHT2.html#5
+# 
+# THE AUTHOR MAKES NO REPRESENTATION ABOUT THE SUITABILITY OF THIS CODE FOR ANY
+# PURPOSE.
