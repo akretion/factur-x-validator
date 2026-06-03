@@ -745,10 +745,6 @@ class FacturxAnalysis(models.Model):
         return xml_root, xml_string
 
     def analyse_xml_xsd(self, vals, xml_root, errors):
-        # UBL: XSD validation is not performed — schemas/UBL/XSD/ is not yet populated.
-        # Conformance is enforced by the EN16931/CTC-FR Schematron (XSL_PATHS).
-        # xml_valid will reflect "no parse errors" not "XSD validated" for UBL documents.
-        # TODO: wire up UBL XSD validation once OASIS UBL 2.1 schemas are added to schemas/UBL/XSD/.
         flavor = get_flavor(xml_root)
         if flavor == 'ubl':
             vals['doc_type'] = 'ubl'
@@ -775,10 +771,32 @@ class FacturxAnalysis(models.Model):
                     })
                 return
             vals['xml_profile'] = ubl_profile
+            xsd_rel = (
+                'facturx_validator/schemas/UBL/XSD/UBL-2.1/xsd/maindoc/UBL-CreditNote-2.1.xsd'
+                if 'CreditNote' in xml_root.tag else
+                'facturx_validator/schemas/UBL/XSD/UBL-2.1/xsd/maindoc/UBL-Invoice-2.1.xsd'
+            )
+            try:
+                xsd_doc = etree.parse(self.file_path(xsd_rel))
+                etree.XMLSchema(xsd_doc).assertValid(xml_root)
+            except Exception as e:
+                errors['3_xml'].append({
+                    'name': 'XML file invalid against UBL 2.1 XSD',
+                    'comment': '%s' % e,
+                })
             return
         elif flavor == 'cdar':
             vals['doc_type'] = 'cdar'
             vals['xml_profile'] = 'cdar_ctc_fr'
+            xsd_rel = 'facturx_validator/schemas/CDAR/XSD/CrossDomainAcknowledgementAndResponse_100pD22B.xsd'
+            try:
+                xsd_doc = etree.parse(self.file_path(xsd_rel))
+                etree.XMLSchema(xsd_doc).assertValid(xml_root)
+            except Exception as e:
+                errors['3_xml'].append({
+                    'name': 'XML file invalid against CDAR XSD',
+                    'comment': '%s' % e,
+                })
             return
         elif flavor == 'factur-x':
             vals['doc_type'] = 'facturx'
