@@ -427,6 +427,11 @@ class FacturxAnalysis(models.Model):
             vals['xml_valid'] = True
         if not errors['4_xml_schematron']:
             vals['xml_schematron_valid'] = True
+        logger.info(
+            'vals after schematron: xml_valid=%s xml_schematron_valid=%s valid=%s sch_errors=%d',
+            vals.get('xml_valid'), vals.get('xml_schematron_valid', False),
+            vals.get('valid', False), len(errors['4_xml_schematron'])
+        )
         if vals['file_type'] == 'pdf':
             if not errors['1_pdfa3']:
                 vals['pdfa3_valid'] = True
@@ -952,18 +957,21 @@ class FacturxAnalysis(models.Model):
         if not vals['xml_profile'].startswith('facturx_'):
             raise UserError(_("Wrong XML profile %s. Must be a Factur-X profile. This should never happen.") % vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
+        logger.info('End analyse_xml_schematron_facturx: sch_errors=%d', len(errors.get('4_xml_schematron', [])))
 
     def analyse_xml_schematron_ubl(self, vals, xml_bytes, errors, prefix=None):
         logger.info('Start analyse_xml_schematron_ubl (profile=%s)', vals.get('xml_profile'))
         if not vals['xml_profile'].startswith('ubl_'):
             raise UserError(_("Wrong XML profile %s. Must be a UBL profile. This should never happen.") % vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
+        logger.info('End analyse_xml_schematron_ubl: sch_errors=%d', len(errors.get('4_xml_schematron', [])))
 
     def analyse_xml_schematron_cdar(self, vals, xml_bytes, errors, prefix=None):
         logger.info('Start analyse_xml_schematron_cdar (profile=%s)', vals.get('xml_profile'))
         if vals['xml_profile'] != 'cdar_ctc_fr':
             raise UserError(_("Wrong XML profile %s. Must be cdar_ctc_fr. This should never happen.") % vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
+        logger.info('End analyse_xml_schematron_cdar: sch_errors=%d', len(errors.get('4_xml_schematron', [])))
 
     def schematron_result_analysis(self, vals, svrl_root, errors):
         logger.info('Start schematron_result_analysis')
@@ -1021,6 +1029,9 @@ class FacturxAnalysis(models.Model):
                 "or empty value for this parameter."))
         cmd_list = [
             '/usr/bin/java',
+            '-Xmx512m',
+            '-XX:ReservedCodeCacheSize=32m',
+            '-XX:TieredStopAtLevel=1',
             '-classpath',
             classpath,
             #  '-Dfile.encoding=UTF8',  # MARCHE
