@@ -705,9 +705,7 @@ def get_flavor(xml_etree):
                         xml_file_subdict['/Subtype'] not in ['/text#2Fxml', '/text#2fxml', '/text/xml']):
                     errors['1_pdfa3'].append({
                         'name': 'Wrong value for /EF/F/Subtype',
-                        'comment': "Value for /EF/F/Subtype should be '/text/xml'. "        elif flavor == 'factur-x':
-            vals['doc_type'] = 'facturx'
-            namespaces = FACTURX_XML_FX_NAMESPACES
+                        'comment': "Value for /EF/F/Subtype should be '/text/xml'. "
                                    "Current value is '%s'." % xml_file_subdict.get('/Subtype')
                         })
                 if '/Type' not in xml_file_subdict:
