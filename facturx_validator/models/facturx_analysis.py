@@ -395,6 +395,8 @@ def get_flavor(xml_etree):
                 vals['xml_filename'] = '%s-x_%s.xml' % (vals['doc_type'][:-1], self.name.replace('/', '_'))
         if vals.get('xml_profile') and vals['xml_profile'].startswith('facturx_') and xml_bytes:
             self.analyse_xml_schematron_facturx(vals, xml_bytes, errors, prefix)
+        elif vals.get('xml_profile') and vals['xml_profile'].startswith('cii_') and xml_bytes:
+            self.analyse_xml_schematron_cii(vals, xml_bytes, errors, prefix)
         elif vals.get('xml_profile') and vals['xml_profile'].startswith('orderx_') and xml_root is not None:
             self.analyse_xml_schematron_orderx(vals, xml_root, errors, prefix)
         elif vals.get('xml_profile') and vals['xml_profile'].startswith('ubl_') and xml_bytes:
@@ -907,8 +909,8 @@ def get_flavor(xml_etree):
         else:
             logger.info('file is valid according to Schematron')
 
-    def _run_schematron_saxon(self, vals, xml_bytes, errors, prefix=None):
-        profile = vals['xml_profile']
+    def _run_schematron_saxon(self, vals, xml_bytes, errors, prefix=None, profile=None):
+        profile = profile or vals['xml_profile']
         if profile not in XSL_PATHS:
             errors['4_xml_schematron'].append({
                 'name': 'Schematron validation not available for profile %s' % profile,
@@ -937,13 +939,24 @@ def get_flavor(xml_etree):
         if not vals['xml_profile'].startswith('facturx_'):
             raise UserError(_("Wrong XML profile %s. Must be a Factur-X profile. This should never happen.") % vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
+        if vals['xml_profile'] != 'facturx_minimum':
+            self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='cii_extended_ctc_fr')
         logger.info('End analyse_xml_schematron_facturx: sch_errors=%d', len(errors.get('4_xml_schematron', [])))
+
+    def analyse_xml_schematron_cii(self, vals, xml_bytes, errors, prefix=None):
+        logger.info('Start analyse_xml_schematron_cii (profile=%s)', vals.get('xml_profile'))
+        if not vals['xml_profile'].startswith('cii_'):
+            raise UserError(_("Wrong XML profile %s. Must be a CII profile. This should never happen.") % vals['xml_profile'])
+        self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
+        self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='cii_extended_ctc_fr')
+        logger.info('End analyse_xml_schematron_cii: sch_errors=%d', len(errors.get('4_xml_schematron', [])))
 
     def analyse_xml_schematron_ubl(self, vals, xml_bytes, errors, prefix=None):
         logger.info('Start analyse_xml_schematron_ubl (profile=%s)', vals.get('xml_profile'))
         if not vals['xml_profile'].startswith('ubl_'):
             raise UserError(_("Wrong XML profile %s. Must be a UBL profile. This should never happen.") % vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
+        self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='ubl_extended_ctc_fr')
         logger.info('End analyse_xml_schematron_ubl: sch_errors=%d', len(errors.get('4_xml_schematron', [])))
 
     def analyse_xml_schematron_cdar(self, vals, xml_bytes, errors, prefix=None):
