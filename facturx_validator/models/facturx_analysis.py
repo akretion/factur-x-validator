@@ -107,12 +107,6 @@ UBL_PROFILE_MAP = [(p[2], p[0]) for p in _PROFILES_DEF if len(p) == 3]
 
 
 SCH_PATHS = {
-    # Factur-X 1.07.2 (former release)
-    'facturx_107_minimum': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_MINIMUM.sch',
-    'facturx_107_basicwl': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_BASICWL.sch',
-    'facturx_107_basic': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_BASIC.sch',
-    'facturx_107_en16931': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_EN16931.sch',
-    'facturx_107_extended': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_EXTENDED.sch',
     # Factur-X 1.08 (CII)
     'facturx_minimum': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_MINIMUM.sch',
     'facturx_basicwl': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_BASICWL.sch',
@@ -139,12 +133,6 @@ SCH_PATHS = {
 # Compiled XSLT stylesheets for Saxon-based schematron validation.
 # Separate from SCH_PATHS because the compiled XSL lives in a different folder.
 XSL_PATHS = {
-    # Factur-X 1.07.2 (compiled XSL colocated with SCH)
-    'facturx_107_minimum':  'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_MINIMUM-compiled-saxonc.xsl',
-    'facturx_107_basicwl':  'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_BASICWL-compiled-saxonc.xsl',
-    'facturx_107_basic':    'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_BASIC-compiled-saxonc.xsl',
-    'facturx_107_en16931':  'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_EN16931-compiled-saxonc.xsl',
-    'facturx_107_extended': 'facturx_validator/schemas/Factur-X/former-release/1.07.2/Factur-X_1.07.2_EXTENDED-compiled-saxonc.xsl',
     # Factur-X 1.08
     'facturx_minimum':         'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_MINIMUM-compiled-saxonc.xsl',
     'facturx_basicwl':         'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_BASICWL-compiled-saxonc.xsl',
@@ -725,7 +713,9 @@ class FacturxAnalysis(models.Model):
                         xml_file_subdict['/Subtype'] not in ['/text#2Fxml', '/text#2fxml', '/text/xml']):
                     errors['1_pdfa3'].append({
                         'name': 'Wrong value for /EF/F/Subtype',
-                        'comment': "Value for /EF/F/Subtype should be '/text/xml'. "
+                        'comment': "Value for /EF/F/Subtype should be '/text/xml'. "        elif flavor == 'factur-x':
+            vals['doc_type'] = 'facturx'
+            namespaces = FACTURX_XML_FX_NAMESPACES
                                    "Current value is '%s'." % xml_file_subdict.get('/Subtype')
                         })
                 if '/Type' not in xml_file_subdict:
@@ -818,7 +808,7 @@ class FacturxAnalysis(models.Model):
                 })
             return
         elif flavor == 'factur-x':
-            vals['doc_type'] = 'facturx'
+            vals['doc_type'] = 'facturx' if vals.get('file_type') == 'pdf' else 'cii'
             namespaces = FACTURX_XML_FX_NAMESPACES
         elif flavor == 'order-x':
             vals['doc_type'] = 'orderx'
