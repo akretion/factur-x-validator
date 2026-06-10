@@ -36,7 +36,7 @@ CDAR_FILENAME = 'cdar.xml'
 EREPORTING_FILENAME = 'ereporting.xml'
 ALL_FILENAMES = [FACTURX_FILENAME, ORDERX_FILENAME,UBL_FILENAME,CII_FILENAME,CDAR_FILENAME,EREPORTING_FILENAME]
 
-FACTURX_XML_FX_NAMESPACES = {
+FacturX-CII_XML_FX_NAMESPACES = {
     'qdt': 'urn:un:unece:uncefact:data:standard:QualifiedDataType:100',
     'ram': 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100',
     'rsm': 'urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100',
@@ -241,6 +241,28 @@ class FacturxAnalysis(models.Model):
     xmp_orderx_type = fields.Selection(
         ORDERX_TYPES, string='XMP Order-X Type', readonly=True, copy=False)
     afrelationship = fields.Char(string='AFRelationship', readonly=True, copy=False)
+
+
+def get_flavor(xml_etree):
+    """Extension locale de get_flavor() (upstream: akretion/factur-x).
+    Ajoute la détection des formats non couverts par la lib pip."""
+    logger.debug('get_flavor: tag=%s', xml_etree.tag)
+    tag = xml_etree.tag
+    if '{' in tag:
+        ns = tag[1:tag.index('}')]
+        if ns in UBL_ROOT_NAMESPACES:
+            logger.debug('get_flavor: result=ubl')
+            return 'ubl'
+        if ns == CDAR_XML_NAMESPACES['rsm']:
+            logger.debug('get_flavor: result=cdar')
+            return 'cdar'
+        # TODO e-Reporting: ajouter ici le root namespace quand le cahier des charges sera disponible
+        # if ns == 'urn:...:e-Reporting:...':
+        #     return 'ereporting'
+    flavor = _get_flavor_orig(xml_etree)
+    logger.debug('get_flavor: result=%s', flavor)
+    return flavor
+
 
     @api.model
     def create(self, vals):
@@ -935,25 +957,37 @@ class FacturxAnalysis(models.Model):
         logger.info('Start analyse_xml_schematron_facturx (profile=%s)', vals.get('xml_profile'))
         if not vals['xml_profile'].startswith('facturx_'):
             raise UserError(_("Wrong XML profile %s. Must be a Factur-X profile. This should never happen.") % vals['xml_profile'])
+        logger.info('Schematron pass 1 start (profile=%s)', vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
+        logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
         if vals['xml_profile'] != 'facturx_minimum':
+            logger.info('Schematron pass 2 start (profile=cii_extended_ctc_fr)')
             self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='cii_extended_ctc_fr')
+            logger.info('Schematron pass 2 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
         logger.info('End analyse_xml_schematron_facturx: sch_errors=%d', len(errors.get('4_xml_schematron', [])))
 
     def analyse_xml_schematron_cii(self, vals, xml_bytes, errors, prefix=None):
         logger.info('Start analyse_xml_schematron_cii (profile=%s)', vals.get('xml_profile'))
         if not vals['xml_profile'].startswith('cii_'):
             raise UserError(_("Wrong XML profile %s. Must be a CII profile. This should never happen.") % vals['xml_profile'])
+        logger.info('Schematron pass 1 start (profile=%s)', vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
+        logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
+        logger.info('Schematron pass 2 start (profile=cii_extended_ctc_fr)')
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='cii_extended_ctc_fr')
+        logger.info('Schematron pass 2 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
         logger.info('End analyse_xml_schematron_cii: sch_errors=%d', len(errors.get('4_xml_schematron', [])))
 
     def analyse_xml_schematron_ubl(self, vals, xml_bytes, errors, prefix=None):
         logger.info('Start analyse_xml_schematron_ubl (profile=%s)', vals.get('xml_profile'))
         if not vals['xml_profile'].startswith('ubl_'):
             raise UserError(_("Wrong XML profile %s. Must be a UBL profile. This should never happen.") % vals['xml_profile'])
+        logger.info('Schematron pass 1 start (profile=%s)', vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
+        logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
+        logger.info('Schematron pass 2 start (profile=ubl_extended_ctc_fr)')
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='ubl_extended_ctc_fr')
+        logger.info('Schematron pass 2 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
         logger.info('End analyse_xml_schematron_ubl: sch_errors=%d', len(errors.get('4_xml_schematron', [])))
 
     def analyse_xml_schematron_cdar(self, vals, xml_bytes, errors, prefix=None):
