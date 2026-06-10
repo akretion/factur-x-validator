@@ -36,7 +36,7 @@ CDAR_FILENAME = 'cdar.xml'
 EREPORTING_FILENAME = 'ereporting.xml'
 ALL_FILENAMES = [FACTURX_FILENAME, ORDERX_FILENAME,UBL_FILENAME,CII_FILENAME,CDAR_FILENAME,EREPORTING_FILENAME]
 
-FacturX-CII_XML_FX_NAMESPACES = {
+FACTURX_XML_FX_NAMESPACES = {
     'qdt': 'urn:un:unece:uncefact:data:standard:QualifiedDataType:100',
     'ram': 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100',
     'rsm': 'urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100',
