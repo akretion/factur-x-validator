@@ -242,28 +242,6 @@ class FacturxAnalysis(models.Model):
         ORDERX_TYPES, string='XMP Order-X Type', readonly=True, copy=False)
     afrelationship = fields.Char(string='AFRelationship', readonly=True, copy=False)
 
-
-def get_flavor(xml_etree):
-    """Extension locale de get_flavor() (upstream: akretion/factur-x).
-    Ajoute la détection des formats non couverts par la lib pip."""
-    logger.debug('get_flavor: tag=%s', xml_etree.tag)
-    tag = xml_etree.tag
-    if '{' in tag:
-        ns = tag[1:tag.index('}')]
-        if ns in UBL_ROOT_NAMESPACES:
-            logger.debug('get_flavor: result=ubl')
-            return 'ubl'
-        if ns == CDAR_XML_NAMESPACES['rsm']:
-            logger.debug('get_flavor: result=cdar')
-            return 'cdar'
-        # TODO e-Reporting: ajouter ici le root namespace quand le cahier des charges sera disponible
-        # if ns == 'urn:...:e-Reporting:...':
-        #     return 'ereporting'
-    flavor = _get_flavor_orig(xml_etree)
-    logger.debug('get_flavor: result=%s', flavor)
-    return flavor
-
-
     @api.model
     def create(self, vals):
         if vals.get('name', '/') == '/':
