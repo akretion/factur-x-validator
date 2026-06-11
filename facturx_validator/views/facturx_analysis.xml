@@ -91,7 +91,7 @@
             <field name="pdfa3_valid" attrs="{'invisible': [('file_type', '!=', 'pdf')]}" optional="hide"/>
             <field name="xmp_valid" attrs="{'invisible': [('file_type', '!=', 'pdf')]}" optional="hide"/>
             <field name="xml_valid" optional="hide"/>
-            <field name="xml_schematron_valid" optional="hide"/>
+            <field name="xml_schematron_valid" attrs="{'invisible': [('state', '!=', 'done')]}" optional="hide"/>
             <field name="valid"/>
             <field name="date"/>
             <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'done'"/>
