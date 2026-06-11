@@ -97,25 +97,25 @@ UBL_PROFILE_MAP = [(p[2], p[0]) for p in _PROFILES_DEF if len(p) == 3]
 
 
 SCH_PATHS = {
-    # Factur-X 1.08 (CII)
-    'facturx_minimum': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_MINIMUM.sch',
-    'facturx_basicwl': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_BASICWL.sch',
-    'facturx_basic': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_BASIC.sch',
-    'facturx_en16931': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_EN16931.sch',
-    'facturx_extended': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_EXTENDED.sch',
-    'facturx_extended_ctc_fr': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_EXTENDED-CTC-FR-CII-V1.3.1.sch',
+    # Factur-X 1.09 (CII)
+    'facturx_minimum': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/_deprecated/MINIMUM/sch/Factur-X_1.09_MINIMUM.sch',
+    'facturx_basicwl': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/BASIC-WL/sch/Factur-X_1.09_BASICWL.sch',
+    'facturx_basic': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/_deprecated/BASIC/sch/Factur-X_1.09_BASIC.sch',
+    'facturx_en16931': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/EN16931/sch/Factur-X_1.09_EN16931.sch',
+    'facturx_extended': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/EXTENDED/sch/Factur-X_1.09_EXTENDED.sch',
+    'facturx_extended_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/CII/EXTENDED-CTC-FR/sch/EXTENDED-CTC-FR-CII-V1.4.0.sch',
     # Order-X
     'orderx_basic': 'facturx_validator/schemas/Order-X/SCH/SCRDMCCBDACIOMessageStructure_100pD20B_BASIC.sch',
     'orderx_comfort': 'facturx_validator/schemas/Order-X/SCH/SCRDMCCBDACIOMessageStructure_100pD20B_COMFORT.sch',
     'orderx_extended': 'facturx_validator/schemas/Order-X/SCH/SCRDMCCBDACIOMessageStructure_100pD20B_EXTENDED.sch',
     # CII (standalone)
-    'cii_en16931': 'facturx_validator/schemas/CII/SCH/CII_EN16931_validation-preprocessed.sch',
-    'cii_extended_ctc_fr': 'facturx_validator/schemas/CII/SCH/CII_1.08_EXTENDED-CTC-FR-CII-V1.3.1.sch',
+    'cii_en16931': 'facturx_validator/schemas-RFE-1.4.0/CII/EN16931/sch/EN16931-CII-validation-preprocessed.sch',
+    'cii_extended_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/CII/EXTENDED-CTC-FR/sch/EXTENDED-CTC-FR-CII-V1.4.0.sch',
     # UBL
-    'ubl_en16931': 'facturx_validator/schemas/UBL/SCH/UBL_EN16931_validation-preprocessed.sch',
-    'ubl_extended_ctc_fr': 'facturx_validator/schemas/UBL/SCH/UBL_1.08_EXTENDED-CTC-FR-UBL-V1.3.1.sch',
+    'ubl_en16931': 'facturx_validator/schemas-RFE-1.4.0/UBL/EN16931/sch/EN16931-UBL-validation-preprocessed.sch',
+    'ubl_extended_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/UBL/EXTENDED-CTC-FR/sch/EXTENDED-CTC-FR-UBL-V1.4.0.sch',
     # CDAR
-    'cdar_ctc_fr': 'facturx_validator/schemas/CDAR/SCH/20260430_BR-FR-CDV-Schematron-CDAR_V1.3.1.sch',
+    'cdar_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/CDAR/sch/BR-FR-CDV-Schematron-CDAR_V1.4.0.sch',
     # e-Reporting
     # expecting the specifications
     }
@@ -123,21 +123,21 @@ SCH_PATHS = {
 # Compiled XSLT stylesheets for Saxon-based schematron validation.
 # Separate from SCH_PATHS because the compiled XSL lives in a different folder.
 XSL_PATHS = {
-    # Factur-X 1.08
-    'facturx_minimum':         'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_MINIMUM-compiled-saxonc.xsl',
-    'facturx_basicwl':         'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_BASICWL-compiled-saxonc.xsl',
-    'facturx_basic':           'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_BASIC-compiled-saxonc.xsl',
-    'facturx_en16931':         'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_EN16931-compiled-saxonc.xsl',
-    'facturx_extended':        'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_EXTENDED-compiled-saxonc.xsl',
-    'facturx_extended_ctc_fr': 'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_EXTENDED-CTC-FR-CII-V1.3.1-compiled-saxonc.xsl',
+    # Factur-X 1.09
+    'facturx_minimum':         'facturx_validator/schemas-RFE-1.4.0/Factur-X/_deprecated/MINIMUM/xsl/FACTUR-X_MINIMUM.xslt',
+    'facturx_basicwl':         'facturx_validator/schemas-RFE-1.4.0/Factur-X/BASIC-WL/xsl/Factur-X_1.09_BASICWL.xslt',
+    'facturx_basic':           'facturx_validator/schemas-RFE-1.4.0/Factur-X/_deprecated/BASIC/xsl/FACTUR-X_BASIC.xslt',
+    'facturx_en16931':         'facturx_validator/schemas-RFE-1.4.0/Factur-X/EN16931/xsl/Factur-X_1.09_EN16931.xslt',
+    'facturx_extended':        'facturx_validator/schemas-RFE-1.4.0/Factur-X/EXTENDED/xsl/Factur-X_1.09_EXTENDED.xslt',
+    'facturx_extended_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/CII/EXTENDED-CTC-FR/xsl/EXTENDED-CTC-FR-CII-V1.4.0.xsl',
     # UBL
-    'ubl_en16931':         'facturx_validator/schemas/UBL/XSLT/UBL_EN16931_validation.xslt',
-    'ubl_extended_ctc_fr': 'facturx_validator/schemas/UBL/XSLT/UBL_EXTENDED-CTC-FR_V1.3.1_20260430.xsl',
+    'ubl_en16931':         'facturx_validator/schemas-RFE-1.4.0/UBL/EN16931/xsl/EN16931-UBL-validation.xslt',
+    'ubl_extended_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/UBL/EXTENDED-CTC-FR/xsl/EXTENDED-CTC-FR-UBL-V1.4.0.xsl',
     # CII
-    'cii_en16931':         'facturx_validator/schemas/CII/XSLT/CII_EN16931-CII-validation.xslt',
-    'cii_extended_ctc_fr': 'facturx_validator/schemas/CII/XSLT/CII_EXTENDED-CTC-FR-CII-V1.3.1_20260430.xsl',
+    'cii_en16931':         'facturx_validator/schemas-RFE-1.4.0/CII/EN16931/xsl/EN16931-CII-validation.xslt',
+    'cii_extended_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/CII/EXTENDED-CTC-FR/xsl/EXTENDED-CTC-FR-CII-V1.4.0.xsl',
     # CDAR
-    'cdar_ctc_fr':         'facturx_validator/schemas/CDAR/XSLT/20260430_BR-FR-CDV-Schematron-CDAR_V1.3.1.xsl',
+    'cdar_ctc_fr':         'facturx_validator/schemas-RFE-1.4.0/CDAR/xsl/BR-FR-CDV-Schematron-CDAR_V1.4.0.xsl',
     }
 
 ORDERX_TYPES = [
