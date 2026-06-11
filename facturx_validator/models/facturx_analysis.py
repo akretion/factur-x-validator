@@ -83,11 +83,9 @@ _PROFILES_DEF = [
     ('orderx_comfort',          'Comfort (Order-X)'),
     ('orderx_extended',         'Extended (Order-X)'),
     ('cii_en16931',             'EN 16931 (CII)'),
-    ('cii_extended',            'Extended (CII)'),
     ('cii_extended_ctc_fr',     'Extended-CTC-FR (CII)'),
     ('ubl_en16931',             'EN 16931 (UBL)',         'urn:cen.eu:en16931:2017'),
     ('ubl_extended_ctc_fr',     'Extended-CTC-FR (UBL)', 'urn:cen.eu:en16931:2017#conformant#urn.cpro.gouv.fr:1p0:extended-ctc-fr'),
-    ('ubl_extended',            'Extended (UBL)'),
     ('cdar_ctc_fr',             'CDAR CTC-FR'),
     ('ereporting',              'e-Reporting'),
     ]
@@ -116,8 +114,7 @@ SCH_PATHS = {
     'ubl_extended_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/UBL/EXTENDED-CTC-FR/sch/EXTENDED-CTC-FR-UBL-V1.4.0.sch',
     # CDAR
     'cdar_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/CDAR/sch/BR-FR-CDV-Schematron-CDAR_V1.4.0.sch',
-    # e-Reporting
-    # expecting the specifications
+    # e-Reporting: expecting the specifications
     }
 
 # Compiled XSLT stylesheets for Saxon-based schematron validation.
@@ -138,6 +135,10 @@ XSL_PATHS = {
     'cii_extended_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/CII/EXTENDED-CTC-FR/xsl/EXTENDED-CTC-FR-CII-V1.4.0.xsl',
     # CDAR
     'cdar_ctc_fr':         'facturx_validator/schemas-RFE-1.4.0/CDAR/xsl/BR-FR-CDV-Schematron-CDAR_V1.4.0.xsl',
+    # BR-FR Flux2 — pass systématique RFE (profil le plus exigeant)
+    'facturx_br_fr': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/EXTENDED/xsl/BR-FR-Flux2-Schematron-CII_V1.4.0.xsl',
+    'cii_br_fr':     'facturx_validator/schemas-RFE-1.4.0/CII/EXTENDED-CTC-FR/xsl/BR-FR-Flux2-Schematron-CII_V1.4.0.xsl',
+    'ubl_br_fr':     'facturx_validator/schemas-RFE-1.4.0/UBL/EXTENDED-CTC-FR/xsl/BR-FR-Flux2-Schematron-UBL_V1.4.0.xsl',
     }
 
 ORDERX_TYPES = [
@@ -839,6 +840,8 @@ class FacturxAnalysis(models.Model):
             return
         doc_id_split = doc_id.split(':')
         xml_profile = '%s_%s' % (vals['doc_type'], doc_id_split[-1])
+        if xml_profile == 'cii_extended':
+            xml_profile = 'facturx_extended'
         PROFILES_LIST = [x[0] for x in PROFILES]
         if xml_profile not in PROFILES_LIST and len(doc_id_split) > 1:
             xml_profile = '%s_%s' % (vals['doc_type'], doc_id.split(':')[-2])
@@ -937,8 +940,8 @@ class FacturxAnalysis(models.Model):
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
         logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
         if vals['xml_profile'] != 'facturx_minimum':
-            logger.info('Schematron pass 2 start (profile=cii_extended_ctc_fr)')
-            self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='cii_extended_ctc_fr')
+            logger.info('Schematron pass 2 start (profile=facturx_br_fr)')
+            self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='facturx_br_fr')
             logger.info('Schematron pass 2 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
         logger.info('End analyse_xml_schematron_facturx: sch_errors=%d', len(errors.get('4_xml_schematron', [])))
 
@@ -949,8 +952,8 @@ class FacturxAnalysis(models.Model):
         logger.info('Schematron pass 1 start (profile=%s)', vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
         logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
-        logger.info('Schematron pass 2 start (profile=cii_extended_ctc_fr)')
-        self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='cii_extended_ctc_fr')
+        logger.info('Schematron pass 2 start (profile=cii_br_fr)')
+        self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='cii_br_fr')
         logger.info('Schematron pass 2 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
         logger.info('End analyse_xml_schematron_cii: sch_errors=%d', len(errors.get('4_xml_schematron', [])))
 
@@ -961,8 +964,8 @@ class FacturxAnalysis(models.Model):
         logger.info('Schematron pass 1 start (profile=%s)', vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
         logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
-        logger.info('Schematron pass 2 start (profile=ubl_extended_ctc_fr)')
-        self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='ubl_extended_ctc_fr')
+        logger.info('Schematron pass 2 start (profile=ubl_br_fr)')
+        self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='ubl_br_fr')
         logger.info('Schematron pass 2 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
         logger.info('End analyse_xml_schematron_ubl: sch_errors=%d', len(errors.get('4_xml_schematron', [])))
 
