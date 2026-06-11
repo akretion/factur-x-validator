@@ -771,13 +771,16 @@ class FacturxAnalysis(models.Model):
                 return
             vals['xml_profile'] = ubl_profile
             xsd_rel = (
-                'facturx_validator/schemas-RFE-1.4.0/UBL/xsd/maindoc/UBL-CreditNote-2.1.xsd'
+                'facturx_validator/schemas-RFE-1.4.0/UBL/xsd_UBL2.1/maindoc/UBL-CreditNote-2.1.xsd'
                 if 'CreditNote' in xml_root.tag else
-                'facturx_validator/schemas-RFE-1.4.0/UBL/xsd/maindoc/UBL-Invoice-2.1.xsd'
+                'facturx_validator/schemas-RFE-1.4.0/UBL/xsd_UBL2.1/maindoc/UBL-Invoice-2.1.xsd'
             )
+            logger.info('analyse_xml_xsd: XSD validation start (profile=%s, xsd=%s)', ubl_profile, xsd_rel)
             try:
                 etree.XMLSchema(file=self.file_path(xsd_rel)).assertValid(xml_root)
+                logger.info('analyse_xml_xsd: XSD validation done — valid')
             except Exception as e:
+                logger.info('analyse_xml_xsd: XSD validation done — invalid: %s', e)
                 errors['3_xml'].append({
                     'name': 'XML file invalid against UBL 2.1 XSD',
                     'comment': '%s' % e,
@@ -787,9 +790,12 @@ class FacturxAnalysis(models.Model):
             vals['doc_type'] = 'cdar'
             vals['xml_profile'] = 'cdar_ctc_fr'
             xsd_rel = 'facturx_validator/schemas-RFE-1.4.0/CDAR/xsd-CDAR_D22B_uncoupled/CrossDomainAcknowledgementAndResponse_100pD22B.xsd'
+            logger.info('analyse_xml_xsd: XSD validation start (profile=cdar_ctc_fr, xsd=%s)', xsd_rel)
             try:
                 etree.XMLSchema(file=self.file_path(xsd_rel)).assertValid(xml_root)
+                logger.info('analyse_xml_xsd: XSD validation done — valid')
             except Exception as e:
+                logger.info('analyse_xml_xsd: XSD validation done — invalid: %s', e)
                 errors['3_xml'].append({
                     'name': 'XML file invalid against CDAR XSD',
                     'comment': '%s' % e,
@@ -855,11 +861,13 @@ class FacturxAnalysis(models.Model):
             return
         vals['xml_profile'] = xml_profile
         logger.info('analyse_xml_xsd: profile=%s', xml_profile)
-        # check XSD
+        logger.info('analyse_xml_xsd: XSD validation start (profile=%s)', xml_profile)
         try:
             xml_check_xsd(
                 xml_root, flavor=flavor, level=xml_profile.split('_')[1])
+            logger.info('analyse_xml_xsd: XSD validation done — valid')
         except Exception as e:
+            logger.info('analyse_xml_xsd: XSD validation done — invalid: %s', e)
             errors['3_xml'].append({
                 'name': 'XML file invalid against XSD',
                 'comment': '%s' % e,
