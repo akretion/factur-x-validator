@@ -786,7 +786,7 @@ class FacturxAnalysis(models.Model):
         elif flavor == 'cdar':
             vals['doc_type'] = 'cdar'
             vals['xml_profile'] = 'cdar_ctc_fr'
-            xsd_rel = 'facturx_validator/schemas/CDAR/XSD/CrossDomainAcknowledgementAndResponse_100pD22B.xsd'
+            xsd_rel = 'facturx_validator/schemas-RFE-1.4.0/CDAR/xsd-CDAR_D22B_uncoupled/CrossDomainAcknowledgementAndResponse_100pD22B.xsd'
             try:
                 xsd_doc = etree.parse(self.file_path(xsd_rel))
                 etree.XMLSchema(xsd_doc).assertValid(xml_root)
