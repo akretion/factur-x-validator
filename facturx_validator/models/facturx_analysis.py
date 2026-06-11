@@ -770,13 +770,12 @@ class FacturxAnalysis(models.Model):
                 return
             vals['xml_profile'] = ubl_profile
             xsd_rel = (
-                'facturx_validator/schemas/UBL/XSD/UBL-2.1/xsd/maindoc/UBL-CreditNote-2.1.xsd'
+                'facturx_validator/schemas-RFE-1.4.0/UBL/xsd/maindoc/UBL-CreditNote-2.1.xsd'
                 if 'CreditNote' in xml_root.tag else
-                'facturx_validator/schemas/UBL/XSD/UBL-2.1/xsd/maindoc/UBL-Invoice-2.1.xsd'
+                'facturx_validator/schemas-RFE-1.4.0/UBL/xsd/maindoc/UBL-Invoice-2.1.xsd'
             )
             try:
-                xsd_doc = etree.parse(self.file_path(xsd_rel))
-                etree.XMLSchema(xsd_doc).assertValid(xml_root)
+                etree.XMLSchema(file=self.file_path(xsd_rel)).assertValid(xml_root)
             except Exception as e:
                 errors['3_xml'].append({
                     'name': 'XML file invalid against UBL 2.1 XSD',
@@ -788,8 +787,7 @@ class FacturxAnalysis(models.Model):
             vals['xml_profile'] = 'cdar_ctc_fr'
             xsd_rel = 'facturx_validator/schemas-RFE-1.4.0/CDAR/xsd-CDAR_D22B_uncoupled/CrossDomainAcknowledgementAndResponse_100pD22B.xsd'
             try:
-                xsd_doc = etree.parse(self.file_path(xsd_rel))
-                etree.XMLSchema(xsd_doc).assertValid(xml_root)
+                etree.XMLSchema(file=self.file_path(xsd_rel)).assertValid(xml_root)
             except Exception as e:
                 errors['3_xml'].append({
                     'name': 'XML file invalid against CDAR XSD',
