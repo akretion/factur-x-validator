@@ -96,9 +96,9 @@ UBL_PROFILE_MAP = [(p[2], p[0]) for p in _PROFILES_DEF if len(p) == 3]
 
 SCH_PATHS = {
     # Factur-X 1.09 (CII)
-    'facturx_minimum': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/_deprecated/MINIMUM/sch/Factur-X_1.09_MINIMUM.sch',
+    'facturx_minimum': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/_autres/MINIMUM/sch/Factur-X_1.09_MINIMUM.sch',
     'facturx_basicwl': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/BASIC-WL/sch/Factur-X_1.09_BASICWL.sch',
-    'facturx_basic': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/_deprecated/BASIC/sch/Factur-X_1.09_BASIC.sch',
+    'facturx_basic': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/_autres/BASIC/sch/Factur-X_1.09_BASIC.sch',
     'facturx_en16931': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/EN16931/sch/Factur-X_1.09_EN16931.sch',
     'facturx_extended': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/EXTENDED/sch/Factur-X_1.09_EXTENDED.sch',
     'facturx_extended_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/CII/EXTENDED-CTC-FR/sch/EXTENDED-CTC-FR-CII-V1.4.0.sch',
@@ -121,11 +121,11 @@ SCH_PATHS = {
 # Separate from SCH_PATHS because the compiled XSL lives in a different folder.
 XSL_PATHS = {
     # Factur-X 1.09
-    'facturx_minimum':         'facturx_validator/schemas-RFE-1.4.0/Factur-X/_deprecated/MINIMUM/xsl/FACTUR-X_MINIMUM.xslt',
+    'facturx_minimum':         'facturx_validator/schemas-RFE-1.4.0/Factur-X/_autres/MINIMUM/xsl/Factur-X_MINIMUM.xslt',
     'facturx_basicwl':         'facturx_validator/schemas-RFE-1.4.0/Factur-X/BASIC-WL/xsl/Factur-X_1.09_BASICWL.xslt',
-    'facturx_basic':           'facturx_validator/schemas-RFE-1.4.0/Factur-X/_deprecated/BASIC/xsl/FACTUR-X_BASIC.xslt',
+    'facturx_basic':           'facturx_validator/schemas-RFE-1.4.0/Factur-X/_autres/BASIC/xsl/Factur-X_BASIC.xslt',
     'facturx_en16931':         'facturx_validator/schemas-RFE-1.4.0/Factur-X/EN16931/xsl/Factur-X_1.09_EN16931.xslt',
-    'facturx_extended':        'facturx_validator/schemas-RFE-1.4.0/Factur-X/EXTENDED/xsl/Factur-X_1.09_EXTENDED.xslt',
+    'facturx_extended':        'facturx_validator/schemas-RFE-1.4.0/Factur-X/EXTENDED/xsl/Factur-X_1.09_EXTENDED.xsl',
     'facturx_extended_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/CII/EXTENDED-CTC-FR/xsl/EXTENDED-CTC-FR-CII-V1.4.0.xsl',
     # UBL
     'ubl_en16931':         'facturx_validator/schemas-RFE-1.4.0/UBL/EN16931/xsl/EN16931-UBL-validation.xslt',
