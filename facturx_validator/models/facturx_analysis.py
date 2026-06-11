@@ -125,7 +125,7 @@ XSL_PATHS = {
     'facturx_basicwl':         'facturx_validator/schemas-RFE-1.4.0/Factur-X/BASIC-WL/xsl/Factur-X_1.09_BASICWL.xslt',
     'facturx_basic':           'facturx_validator/schemas-RFE-1.4.0/Factur-X/_autres/BASIC/xsl/Factur-X_BASIC.xslt',
     'facturx_en16931':         'facturx_validator/schemas-RFE-1.4.0/Factur-X/EN16931/xsl/Factur-X_1.09_EN16931.xslt',
-    'facturx_extended':        'facturx_validator/schemas-RFE-1.4.0/Factur-X/EXTENDED/xsl/Factur-X_1.09_EXTENDED.xsl',
+    'facturx_extended':        'facturx_validator/schemas-RFE-1.4.0/Factur-X/EXTENDED/xsl/Factur-X_1.09_EXTENDED.xslt',
     'facturx_extended_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/CII/EXTENDED-CTC-FR/xsl/EXTENDED-CTC-FR-CII-V1.4.0.xsl',
     # UBL
     'ubl_en16931':         'facturx_validator/schemas-RFE-1.4.0/UBL/EN16931/xsl/EN16931-UBL-validation.xslt',
