@@ -73,19 +73,19 @@ CDAR_XML_NAMESPACES = {
 #------------------END NAMESPACES MODIFICTION-------------------
 
 _PROFILES_DEF = [
-    ('facturx_minimum',         'Minimum'),
-    ('facturx_basicwl',         'Basic WL'),
-    ('facturx_basic',           'Basic'),
-    ('facturx_en16931',         'EN 16931 (Comfort)'),
-    ('facturx_extended',        'Extended'),
-    ('facturx_extended_ctc_fr', 'Extended-CTC-FR'),
-    ('orderx_basic',            'Basic (Order-X)'),
-    ('orderx_comfort',          'Comfort (Order-X)'),
-    ('orderx_extended',         'Extended (Order-X)'),
-    ('cii_en16931',             'EN 16931 (CII)'),
-    ('cii_extended_ctc_fr',     'Extended-CTC-FR (CII)'),
-    ('ubl_en16931',             'EN 16931 (UBL)',         'urn:cen.eu:en16931:2017'),
-    ('ubl_extended_ctc_fr',     'Extended-CTC-FR (UBL)', 'urn:cen.eu:en16931:2017#conformant#urn.cpro.gouv.fr:1p0:extended-ctc-fr'),
+    ('facturx_minimum',         'Factur-X Minimum'),
+    ('facturx_basicwl',         'Factur-X Basic WL'),
+    ('facturx_basic',           'Factur-X Basic'),
+    ('facturx_en16931',         'Factur-X EN 16931'),
+    ('facturx_extended',        'Factur-X Extended'),
+    ('facturx_extended_ctc_fr', 'Factur-X Extended-CTC-FR'),
+    ('orderx_basic',            'Order-X Basic'),
+    ('orderx_comfort',          'Order-X Comfort'),
+    ('orderx_extended',         'Order-X Extended'),
+    ('cii_en16931',             'CII EN 16931'),
+    ('cii_extended_ctc_fr',     'CII Extended-CTC-FR'),
+    ('ubl_en16931',             'UBL EN 16931',             'urn:cen.eu:en16931:2017'),
+    ('ubl_extended_ctc_fr',     'UBL Extended-CTC-FR',      'urn:cen.eu:en16931:2017#conformant#urn.cpro.gouv.fr:1p0:extended-ctc-fr'),
     ('cdar_ctc_fr',             'CDAR CTC-FR'),
     ('ereporting',              'e-Reporting'),
     ]
@@ -236,6 +236,7 @@ class FacturxAnalysis(models.Model):
         ('ubl', 'UBL'),
         ('cii', 'CII'),
         ('cdar', 'CDAR'),
+        ('ereporting', 'e-Reporting'),
         ], readonly=True, tracking=True)
     xml_orderx_type = fields.Selection(
         ORDERX_TYPES, string='XML Order-X Type', readonly=True, copy=False)
