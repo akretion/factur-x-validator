@@ -83,6 +83,7 @@ _PROFILES_DEF = [
     ('orderx_comfort',          'Order-X Comfort'),
     ('orderx_extended',         'Order-X Extended'),
     ('cii_en16931',             'CII EN 16931'),
+    ('cii_extended',            'CII Extended'),
     ('cii_extended_ctc_fr',     'CII Extended-CTC-FR'),
     ('ubl_en16931',             'UBL EN 16931',             'urn:cen.eu:en16931:2017'),
     ('ubl_extended_ctc_fr',     'UBL Extended-CTC-FR',      'urn:cen.eu:en16931:2017#conformant#urn.cpro.gouv.fr:1p0:extended-ctc-fr'),
@@ -107,7 +108,8 @@ SCH_PATHS = {
     'orderx_comfort': 'facturx_validator/schemas/Order-X/SCH/SCRDMCCBDACIOMessageStructure_100pD20B_COMFORT.sch',
     'orderx_extended': 'facturx_validator/schemas/Order-X/SCH/SCRDMCCBDACIOMessageStructure_100pD20B_EXTENDED.sch',
     # CII (standalone)
-    'cii_en16931': 'facturx_validator/schemas-RFE-1.4.0/CII/EN16931/sch/EN16931-CII-validation-preprocessed.sch',
+    'cii_en16931':         'facturx_validator/schemas-RFE-1.4.0/CII/EN16931/sch/EN16931-CII-validation-preprocessed.sch',
+    'cii_extended':        'facturx_validator/schemas-RFE-1.4.0/Factur-X/EXTENDED/sch/Factur-X_1.09_EXTENDED.sch',
     'cii_extended_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/CII/EXTENDED-CTC-FR/sch/EXTENDED-CTC-FR-CII-V1.4.0.sch',
     # UBL
     'ubl_en16931': 'facturx_validator/schemas-RFE-1.4.0/UBL/EN16931/sch/EN16931-UBL-validation-preprocessed.sch',
@@ -132,6 +134,7 @@ XSL_PATHS = {
     'ubl_extended_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/UBL/EXTENDED-CTC-FR/xsl/EXTENDED-CTC-FR-UBL-V1.4.0.xsl',
     # CII
     'cii_en16931':         'facturx_validator/schemas-RFE-1.4.0/CII/EN16931/xsl/EN16931-CII-validation.xslt',
+    'cii_extended':        'facturx_validator/schemas-RFE-1.4.0/Factur-X/EXTENDED/xsl/Factur-X_1.09_EXTENDED.xslt',
     'cii_extended_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/CII/EXTENDED-CTC-FR/xsl/EXTENDED-CTC-FR-CII-V1.4.0.xsl',
     # CDAR
     'cdar_ctc_fr':         'facturx_validator/schemas-RFE-1.4.0/CDAR/xsl/BR-FR-CDV-Schematron-CDAR_V1.4.0.xsl',
@@ -847,8 +850,6 @@ class FacturxAnalysis(models.Model):
             return
         doc_id_split = doc_id.split(':')
         xml_profile = '%s_%s' % (vals['doc_type'], doc_id_split[-1])
-        if xml_profile == 'cii_extended':
-            xml_profile = 'facturx_extended'
         PROFILES_LIST = [x[0] for x in PROFILES]
         if xml_profile not in PROFILES_LIST and len(doc_id_split) > 1:
             xml_profile = '%s_%s' % (vals['doc_type'], doc_id.split(':')[-2])
