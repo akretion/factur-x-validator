@@ -78,7 +78,6 @@ _PROFILES_DEF = [
     ('facturx_basic',           'Factur-X Basic'),
     ('facturx_en16931',         'Factur-X EN 16931'),
     ('facturx_extended',        'Factur-X Extended'),
-    ('facturx_extended_ctc_fr', 'Factur-X Extended-CTC-FR'),
     ('orderx_basic',            'Order-X Basic'),
     ('orderx_comfort',          'Order-X Comfort'),
     ('orderx_extended',         'Order-X Extended'),
@@ -102,7 +101,6 @@ SCH_PATHS = {
     'facturx_basic': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/_autres/BASIC/sch/Factur-X_1.09_BASIC.sch',
     'facturx_en16931': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/EN16931/sch/Factur-X_1.09_EN16931.sch',
     'facturx_extended': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/EXTENDED/sch/Factur-X_1.09_EXTENDED.sch',
-    'facturx_extended_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/CII/EXTENDED-CTC-FR/sch/EXTENDED-CTC-FR-CII-V1.4.0.sch',
     # Order-X
     'orderx_basic': 'facturx_validator/schemas/Order-X/SCH/SCRDMCCBDACIOMessageStructure_100pD20B_BASIC.sch',
     'orderx_comfort': 'facturx_validator/schemas/Order-X/SCH/SCRDMCCBDACIOMessageStructure_100pD20B_COMFORT.sch',
@@ -128,7 +126,6 @@ XSL_PATHS = {
     'facturx_basic':           'facturx_validator/schemas-RFE-1.4.0/Factur-X/_autres/BASIC/xsl/Factur-X_BASIC.xslt',
     'facturx_en16931':         'facturx_validator/schemas-RFE-1.4.0/Factur-X/EN16931/xsl/Factur-X_1.09_EN16931.xslt',
     'facturx_extended':        'facturx_validator/schemas-RFE-1.4.0/Factur-X/EXTENDED/xsl/Factur-X_1.09_EXTENDED.xslt',
-    'facturx_extended_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/CII/EXTENDED-CTC-FR/xsl/EXTENDED-CTC-FR-CII-V1.4.0.xsl',
     # UBL
     'ubl_en16931':         'facturx_validator/schemas-RFE-1.4.0/UBL/EN16931/xsl/EN16931-UBL-validation.xslt',
     'ubl_extended_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/UBL/EXTENDED-CTC-FR/xsl/EXTENDED-CTC-FR-UBL-V1.4.0.xsl',
@@ -156,7 +153,6 @@ FACTURX_xmp2level = {
     'BASIC': 'facturx_basic',
     'EN 16931': 'facturx_en16931',
     'EXTENDED': 'facturx_extended',
-    'EXTENDED CTC FR': 'facturx_extended_ctc_fr',
     }
 
 ORDERX_xmp2level = {
@@ -949,7 +945,7 @@ class FacturxAnalysis(models.Model):
         logger.info('Schematron pass 1 start (profile=%s)', vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
         logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
-        if vals['xml_profile'] != 'facturx_minimum':
+        if vals['xml_profile'] not in ('facturx_minimum', 'facturx_extended'):
             logger.info('Schematron pass 2 start (profile=facturx_br_fr)')
             self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='facturx_br_fr')
             logger.info('Schematron pass 2 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
