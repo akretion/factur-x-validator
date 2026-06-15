@@ -945,7 +945,7 @@ class FacturxAnalysis(models.Model):
         logger.info('Schematron pass 1 start (profile=%s)', vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
         logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
-        if vals['xml_profile'] not in ('facturx_minimum', 'facturx_extended'):
+        if vals['xml_profile'] != ('facturx_minimum'):
             logger.info('Schematron pass 2 start (profile=facturx_br_fr)')
             self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='facturx_br_fr')
             logger.info('Schematron pass 2 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
