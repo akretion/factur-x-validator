@@ -83,15 +83,15 @@ _PROFILES_DEF = [
     ('orderx_extended',         'Order-X Extended'),
     ('cii_en16931',             'CII EN 16931'),
     ('cii_extended',            'CII Extended'),
-    ('cii_extended_ctc_fr',     'CII Extended-CTC-FR',      'urn:cen.eu:en16931:2017#conformant#urn.cpro.gouv.fr:1p0:extended-ctc-fr'),
-    ('ubl_en16931',             'UBL EN 16931',             'urn:cen.eu:en16931:2017'),
-    ('ubl_extended_ctc_fr',     'UBL Extended-CTC-FR',      'urn:cen.eu:en16931:2017#conformant#urn.cpro.gouv.fr:1p0:extended-ctc-fr'),
+    ('cii_extended_ctc_fr',     'CII Extended-CTC-FR',      'urn:cen.eu:en16931:2017#conformant#urn.cpro.gouv.fr:1p0:extended-ctc-fr', 'cii'),
+    ('ubl_en16931',             'UBL EN 16931',             'urn:cen.eu:en16931:2017',                                                  'ubl'),
+    ('ubl_extended_ctc_fr',     'UBL Extended-CTC-FR',      'urn:cen.eu:en16931:2017#conformant#urn.cpro.gouv.fr:1p0:extended-ctc-fr', 'ubl'),
     ('cdar_ctc_fr',             'CDAR CTC-FR'),
     ('ereporting',              'e-Reporting'),
     ]
 
 PROFILES = [(p[0], p[1]) for p in _PROFILES_DEF]
-UBL_PROFILE_MAP = [(p[2], p[0]) for p in _PROFILES_DEF if len(p) == 3]
+UBL_PROFILE_MAP = [(p[2], p[0]) for p in _PROFILES_DEF if len(p) >= 4 and p[3] == 'ubl']
 
 
 SCH_PATHS = {
