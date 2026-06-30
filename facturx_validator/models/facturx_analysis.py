@@ -92,6 +92,7 @@ _PROFILES_DEF = [
 
 PROFILES = [(p[0], p[1]) for p in _PROFILES_DEF]
 UBL_PROFILE_MAP = [(p[2], p[0]) for p in _PROFILES_DEF if len(p) >= 4 and p[3] == 'ubl']
+CII_PROFILE_MAP = [(p[2], p[0]) for p in _PROFILES_DEF if len(p) >= 4 and p[3] == 'cii']
 
 
 SCH_PATHS = {
@@ -845,10 +846,14 @@ class FacturxAnalysis(models.Model):
                 })
             return
         doc_id_split = doc_id.split(':')
-        xml_profile = '%s_%s' % (vals['doc_type'], doc_id_split[-1])
         PROFILES_LIST = [x[0] for x in PROFILES]
-        if xml_profile not in PROFILES_LIST and len(doc_id_split) > 1:
-            xml_profile = '%s_%s' % (vals['doc_type'], doc_id.split(':')[-2])
+        cii_mapped = dict(CII_PROFILE_MAP).get(doc_id)
+        if cii_mapped:
+            xml_profile = cii_mapped
+        else:
+            xml_profile = '%s_%s' % (vals['doc_type'], doc_id_split[-1])
+            if xml_profile not in PROFILES_LIST and len(doc_id_split) > 1:
+                xml_profile = '%s_%s' % (vals['doc_type'], doc_id.split(':')[-2])
         if xml_profile not in PROFILES_LIST:
             errors['3_xml'].append({
                 'name': "Invalid URN",
