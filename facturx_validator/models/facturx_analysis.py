@@ -103,9 +103,9 @@ SCH_PATHS = {
     'facturx_en16931': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/EN16931/sch/Factur-X_1.09_EN16931.sch',
     'facturx_extended': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/EXTENDED/sch/Factur-X_1.09_EXTENDED.sch',
     # Order-X
-    'orderx_basic': 'facturx_validator/schemas/Order-X/SCH/SCRDMCCBDACIOMessageStructure_100pD20B_BASIC.sch',
-    'orderx_comfort': 'facturx_validator/schemas/Order-X/SCH/SCRDMCCBDACIOMessageStructure_100pD20B_COMFORT.sch',
-    'orderx_extended': 'facturx_validator/schemas/Order-X/SCH/SCRDMCCBDACIOMessageStructure_100pD20B_EXTENDED.sch',
+    'orderx_basic':    'facturx_validator/schemas-RFE-1.4.0/Order-X/Basic/Schematron/SCRDMCCBDACIOMessageStructure_100pD20B_BASIC.sch',
+    'orderx_comfort':  'facturx_validator/schemas-RFE-1.4.0/Order-X/Comfort/Schematron/SCRDMCCBDACIOMessageStructure_100pD20B_COMFORT.sch',
+    'orderx_extended': 'facturx_validator/schemas-RFE-1.4.0/Order-X/Extended/Schematron/SCRDMCCBDACIOMessageStructure_100pD20B_EXTENDED.sch',
     # CII (standalone)
     'cii_en16931':         'facturx_validator/schemas-RFE-1.4.0/CII/EN16931/sch/EN16931-CII-validation-preprocessed.sch',
     'cii_extended':        'facturx_validator/schemas-RFE-1.4.0/Factur-X/EXTENDED/sch/Factur-X_1.09_EXTENDED.sch',
@@ -134,6 +134,10 @@ XSL_PATHS = {
     'cii_en16931':         'facturx_validator/schemas-RFE-1.4.0/CII/EN16931/xsl/EN16931-CII-validation.xslt',
     'cii_extended':        'facturx_validator/schemas-RFE-1.4.0/Factur-X/EXTENDED/xsl/Factur-X_1.09_EXTENDED.xslt',
     'cii_extended_ctc_fr': 'facturx_validator/schemas-RFE-1.4.0/CII/EXTENDED-CTC-FR/xsl/EXTENDED-CTC-FR-CII-V1.4.0.xsl',
+    # Order-X (compiled)
+    'orderx_basic':    'facturx_validator/schemas-RFE-1.4.0/Order-X/Basic/Schematron/SCRDMCCBDACIOMessageStructure_100pD20B_BASIC-compiled.xsl',
+    'orderx_comfort':  'facturx_validator/schemas-RFE-1.4.0/Order-X/Comfort/Schematron/SCRDMCCBDACIOMessageStructure_100pD20B_COMFORT-compiled.xsl',
+    'orderx_extended': 'facturx_validator/schemas-RFE-1.4.0/Order-X/Extended/Schematron/SCRDMCCBDACIOMessageStructure_100pD20B_EXTENDED-compiled.xsl',
     # CDAR
     'cdar_ctc_fr':         'facturx_validator/schemas-RFE-1.4.0/CDAR/xsl/BR-FR-CDV-Schematron-CDAR_V1.4.0.xsl',
     # BR-FR Flux2 — pass systématique RFE (profil le plus exigeant)
