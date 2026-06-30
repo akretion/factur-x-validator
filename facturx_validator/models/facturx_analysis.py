@@ -97,9 +97,9 @@ CII_PROFILE_MAP = [(p[2], p[0]) for p in _PROFILES_DEF if len(p) >= 4 and p[3] =
 
 SCH_PATHS = {
     # Factur-X 1.09 (CII)
-    'facturx_minimum': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/_autres/MINIMUM/sch/Factur-X_1.09_MINIMUM.sch',
+    'facturx_minimum': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/MINIMUM/sch/Factur-X_1.09_MINIMUM.sch',
     'facturx_basicwl': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/BASIC-WL/sch/Factur-X_1.09_BASICWL.sch',
-    'facturx_basic': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/_autres/BASIC/sch/Factur-X_1.09_BASIC.sch',
+    'facturx_basic': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/BASIC/sch/Factur-X_1.09_BASIC.sch',
     'facturx_en16931': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/EN16931/sch/Factur-X_1.09_EN16931.sch',
     'facturx_extended': 'facturx_validator/schemas-RFE-1.4.0/Factur-X/EXTENDED/sch/Factur-X_1.09_EXTENDED.sch',
     # Order-X
@@ -122,9 +122,9 @@ SCH_PATHS = {
 # Separate from SCH_PATHS because the compiled XSL lives in a different folder.
 XSL_PATHS = {
     # Factur-X 1.09
-    'facturx_minimum':         'facturx_validator/schemas-RFE-1.4.0/Factur-X/_autres/MINIMUM/xsl/Factur-X_MINIMUM.xslt',
+    'facturx_minimum':         'facturx_validator/schemas-RFE-1.4.0/Factur-X/MINIMUM/xsl/Factur-X_MINIMUM.xslt',
     'facturx_basicwl':         'facturx_validator/schemas-RFE-1.4.0/Factur-X/BASIC-WL/xsl/Factur-X_1.09_BASICWL.xslt',
-    'facturx_basic':           'facturx_validator/schemas-RFE-1.4.0/Factur-X/_autres/BASIC/xsl/Factur-X_BASIC.xslt',
+    'facturx_basic':           'facturx_validator/schemas-RFE-1.4.0/Factur-X/BASIC/xsl/Factur-X_BASIC.xslt',
     'facturx_en16931':         'facturx_validator/schemas-RFE-1.4.0/Factur-X/EN16931/xsl/Factur-X_1.09_EN16931.xslt',
     'facturx_extended':        'facturx_validator/schemas-RFE-1.4.0/Factur-X/EXTENDED/xsl/Factur-X_1.09_EXTENDED.xslt',
     # UBL
