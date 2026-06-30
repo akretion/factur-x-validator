@@ -1,0 +1,12 @@
+[submodule "facturx_validator/facturx_validator/schemas"]
+	path = facturx_validator/facturx_validator/schemas
+	url = https://github.com/fnfempe/France_RFE
+[submodule "schemas"]
+	path = schemas
+	url = https://github.com/fnfempe/France_RFE
+[submodule "facturx"]
+	path = facturx
+	url = https://github.com/fnfempe/France_RFE
+[submodule "facturx_validator/schemas-RFE-1.4.0"]
+	path = facturx_validator/schemas-RFE-1.4.0
+	url = https://github.com/fnfempe/France_RFE
