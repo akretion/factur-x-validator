@@ -84,7 +84,7 @@
             <field name="facturx_filename"/>
             <field name="partner_id" optional="show"/>
             <field name="file_type" widget="badge" decoration-info="file_type == 'xml'"/>
-            <field name="doc_type" widget="badge" decoration-warning="doc_type == 'facturx'" decoration-danger="doc_type == 'orderx'" decoration-info="doc_type == 'ubl'" decoration-success="doc_type == 'cii'" decoration-secondary="doc_type == 'cdar'"/>
+            <field name="doc_type" widget="badge" decoration-warning="doc_type == 'facturx'" decoration-danger="doc_type == 'orderx'" decoration-info="doc_type == 'ubl'" decoration-success="doc_type == 'cii'" decoration-muted="doc_type == 'cdar'"/>
             <field name="xml_orderx_type" string="Order Type" optional="show"/>
             <field name="xml_profile" string="Profile"/>
             <field name="xmp_profile" attrs="{'invisible': [('file_type', '!=', 'pdf')]}" optional="hide"/>
