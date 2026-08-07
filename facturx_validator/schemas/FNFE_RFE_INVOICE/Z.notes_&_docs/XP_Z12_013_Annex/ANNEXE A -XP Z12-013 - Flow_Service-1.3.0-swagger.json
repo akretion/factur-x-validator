@@ -1,0 +1,1333 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "AFNOR Flow Service",
+    "description": "The __Flow Service API__ allows to:\n  - Upload a flow.\n  - Retrieve information related to a set of flows.\n  - Download a flow given its identifier\n\nThe resources of the API are :\n  - `/flows` : with creation and retrieval methods.\n  - `/flows/webhooks` : creation, update, delete, list\n\nWorflow example:\n  - `POST /flows` : provide the flow information & content\n  - `POST /flows/search` : retrieve flows given multiple criterias.\n  - `GET /flows/{id}` : download a flow based on its id.\n  - `POST /flows/webhooks` : subscribe to a channel of event\n \nHistory:\n  - `1.0.0` : First release\n  - `1.0.1` : Fixes following 2025/04/15 SG5 plenary meeting\n    - Remove AcknowledgementXXX enumerates from FlowType\n    - Acknowledgement is now based upon details (level, item, reason)\n    - Add the attachment number in the flow information\n    - Add query parameters docType & docIndex to aim a specific download\n    - Change pagination method, from cursors to offsets\n  - `1.0.2` : Fixes following 2025/05/06 SG5 plenary meeting\n    - FlowId & TrackingId as not only UUID for more flexibility\n    - Add sha256 fingerprint to allow integrity check\n    - Add trackingId as a filter criteria and in the Flow object\n    - Add full FlowInfo object + submission date in POST response\n    - Add comments\n  - `1.1.0` : Fixes following 2025/05/20 SG5 meeting\n    - Get operation: allows also to return the flow data when docType is set to Metadata\n    - Search operation: flowId is no longer a criteria, prefer too use the Get by Id operation\n    - Remove any reference to any attached document to the flow\n    - Refactor FullFlowInfo schema\n    - FlowType update (FRR 10.*) for reporting\n    - AcknowledgementDetail update to add a message and a code\n    - offset removal, do pagination using updatedAfter\n    - remove 206 status code\n    - Add StateInvoice & associated LC in FlowType enum\n    - Add extensible reason codes related to Life cycle errors\n    - Add ProcessingRule to the flow object & criteria\n    - Add webhooks callback contents\n  - `1.2.0` : \n    - Webhook management, create, update, list, delete, get\n    - Add new flow types: B2G, B2GInt, B2GOutOfScope\n    - Add new client credentials OAuth2 workflow\n    - Optimized FlowInfo/FullFlowInfo/Flow schemas\n    - Add name in Flow schema\n    - Add OAuth2 securityScheme\n    - Add Header parameter Organization-Id to ease delegation\n  - `1.3.0` :\n    - Increase NotOnlyUuid to 64 characters\n    - Update Webhook configuration:\n      - remove processingRule from Metadata\n      - remove any required metadata field (metadat can be empty)\n      - simplify configuration (remove headers, auth & signature block)\n      - enrich URL path flexibility\n    - Added missing required for : processingRule & flowProfile in Flow schema in responses\n    - Add base path and service name as variables in server URL\n    - Remove StateInvoice flow type\n    - Add new flowtypes related to e-reporting flows sent to DFH\n      - StateCustomerInvoice\n      - StateSupplierInvoice\n      - StateTransactionReport\n      - StateTransactionReportLC\n      - StatePaymentReport\n      - StatePaymentReportLC\n    - Use a cursor-based pagination, more efficient than using just dates\n      - cursor in request\n      - nextCursor in response\n    - Add Undefined values for ProfileType, FlowType & ProcessingRule\n      - These 3 properties may not be defined in Pending & Error states\n",
+    "contact": {
+      "name": "AFNOR",
+      "email": "sg5@afnor.org"
+    },
+    "version": "1.3.0"
+  },
+  "servers": [
+    {
+      "url": "https://{sub-domain}.{domain}{base-path}/{service-name}",
+      "description": "Prod public URLs",
+      "variables": {
+        "sub-domain": {
+          "description": "Sub domain related to the Flow API if any",
+          "default": "api.flow"
+        },
+        "domain": {
+          "description": "Domain name",
+          "default": "company.com"
+        },
+        "base-path": {
+          "description": "Custom path that may be used for routing, customer, PA, API",
+          "default": ""
+        },
+        "service-name": {
+          "description": "If service name is not the default one",
+          "default": "flow-service"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    },
+    {
+      "OAuth2": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Flow",
+      "description": "Flow management"
+    },
+    {
+      "name": "Supervisor",
+      "description": "Service supervision"
+    },
+    {
+      "name": "Webhook",
+      "description": "Webhook management"
+    }
+  ],
+  "paths": {
+    "/v1/flows": {
+      "post": {
+        "tags": [
+          "Flow"
+        ],
+        "summary": "Submit a new flow",
+        "description": "Submit a flow. A flow is a single-invoice file, with :\n  - an XML/PDF file with the data of the invoice\n\nThe flow is created with a `flowInfo` object, allowing to qualify the flow.\n  \nA flow can be :\n  - an invoice (CII, UBL, Factur-X,...) \n  - a lifecycle (CDAR) \n  - or a e-reporting file\n",
+        "operationId": "createFlow",
+        "parameters": [
+          {
+            "name": "Request-Id",
+            "in": "header",
+            "description": "Header parameter used to correlate logs from several components",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Organization-Id",
+            "in": "header",
+            "description": "The organization that is aimed in a multi tenancy context",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/FlowPostRequest"
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/FlowPostResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400Response"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403Response"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413Response"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422Response"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500Response"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503Response"
+          }
+        }
+      }
+    },
+    "/v1/flows/search": {
+      "post": {
+        "tags": [
+          "Flow"
+        ],
+        "summary": "Select flows upon criteria",
+        "description": "Retrieves a set of flows matching the provided search criteria:\n  - Need at least one criterion to be specified\n  - Assuming a logical AND when combining criteria\n  - Assuming a logical OR for criteria allowing a list of values\n\nPagination works with 2 different ways:\n  - with dates and the updatedAfter property\n    - the comparison with current date is strict : updatedAt > updatedAfter\n  - with cursors (more secure)\n    - in case of pagination a nextCursor will be returned\n    - next pagination call shall set cursor value to nextCursor value of last call\n",
+        "operationId": "searchFlows",
+        "parameters": [
+          {
+            "name": "Request-Id",
+            "in": "header",
+            "description": "Header parameter used to correlate logs from several components",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Organization-Id",
+            "in": "header",
+            "description": "The organization that is aimed in a multi tenancy context",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/FlowSearchRequest"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/FlowSearchResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400Response"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403Response"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500Response"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503Response"
+          }
+        }
+      }
+    },
+    "/v1/flows/{flowId}": {
+      "get": {
+        "tags": [
+          "Flow"
+        ],
+        "summary": "Download the file of a flow",
+        "description": "Download a file related to a given flow:\n  - an invoice\n  - a life cycle\n  - an e-reporting\n",
+        "operationId": "getFlow",
+        "parameters": [
+          {
+            "name": "Request-Id",
+            "in": "header",
+            "description": "Header parameter used to correlate logs from several components",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Organization-Id",
+            "in": "header",
+            "description": "The organization that is aimed in a multi tenancy context",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "flowId",
+            "in": "path",
+            "description": "Flow identifier",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/NotOnlyUuid"
+            }
+          },
+          {
+            "name": "docType",
+            "in": "query",
+            "description": "This parameter allows to provide the type of file to be downloaded, can be either one:\n  - Metadata [Default]: provides the flow metadata as a JSON payload, no download\n  - Original: the document that has been initially sent/provided by the emitter\n  - Converted: the document that has been optionally converted by the system\n  - ReadableView: the document that has been optionally generated as the readable file\n",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Metadata",
+                "Original",
+                "Converted",
+                "ReadableView"
+              ],
+              "default": "Metadata"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/FlowGetResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400Response"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403Response"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404Response"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500Response"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503Response"
+          }
+        }
+      }
+    },
+    "/v1/webhooks": {
+      "get": {
+        "tags": [
+          "Webhook"
+        ],
+        "summary": "Retrieve the list of webhooks created by the owner of the token",
+        "operationId": "listWebhooks",
+        "parameters": [
+          {
+            "name": "Request-Id",
+            "in": "header",
+            "description": "Header parameter used to correlate logs from several components",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Organization-Id",
+            "in": "header",
+            "description": "The organization that is aimed in a multi tenancy context",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/WebhookListResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400Response"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500Response"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503Response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Webhook"
+        ],
+        "summary": "Subscribe to a webhook",
+        "description": "This operation creates and configures a new webhook, providing:\n- The callback URL\n- The metadata to filter on subsets of events\n\nThe webhook belongs to the owner of the token and cannot be seen from others:\n- It returns an id and a signing key (256 or 512 bits) that should be kept\n- The signing key allows to validate the signature of each received event.\n\nHow the signature is managed:\n- At webhook creation a signing Key is randomly generated in a secure way\n  - 256 bits are enough if the random generator is secure \n  - 512 bits are necessary if the generator is not secure\n- Each time an event is sent:\n  - a SHA-256 fingerprint is generated based on the concatenation of:\n    - the JSON payload of the response (as is, no canonical format)\n    - a separator : @\n    - the current epoch time in seconds\n  - a HMAC signature is computed over the fingerprint with the callback signing key\n  - the signature is base64 encoded for the transport\n  \nThe signature and the timestamp are returned in the following headers of the callback:\n  - Afnor-Signature is the signature (base64)\n  - Afnor-Signature-Timestamp is the epoch timestamp in seconds\n",
+        "operationId": "createWebhook",
+        "parameters": [
+          {
+            "name": "Request-Id",
+            "in": "header",
+            "description": "Header parameter used to correlate logs from several components",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Organization-Id",
+            "in": "header",
+            "description": "The organization that is aimed in a multi tenancy context",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/WebhookPostRequest"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/WebhookLightResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400Response"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500Response"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503Response"
+          }
+        },
+        "callbacks": {
+          "WebhookCallback": {
+            "$ref": "#/components/callbacks/WebhookCallback"
+          }
+        }
+      }
+    },
+    "/v1/webhooks/{webhookUid}": {
+      "delete": {
+        "tags": [
+          "Webhook"
+        ],
+        "summary": "Unsubscribe to a webhook",
+        "description": "- Delete a subscription owned by the owner of the token\n- The operation is allowed only buy the owner of the token\n",
+        "operationId": "deleteWebhook",
+        "parameters": [
+          {
+            "name": "Request-Id",
+            "in": "header",
+            "description": "Header parameter used to correlate logs from several components",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "webhookUid",
+            "in": "path",
+            "description": "The webhook unique ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/WebhookId"
+            }
+          },
+          {
+            "name": "Organization-Id",
+            "in": "header",
+            "description": "The organization that is aimed in a multi tenancy context",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/Ok204EmptyResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400Response"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403Response"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500Response"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503Response"
+          }
+        }
+      }
+    },
+    "/v1/healthcheck": {
+      "get": {
+        "tags": [
+          "Supervisor"
+        ],
+        "summary": "Check whether the API service is up and running.",
+        "operationId": "getHealth",
+        "parameters": [
+          {
+            "name": "Request-Id",
+            "in": "header",
+            "description": "Header parameter used to correlate logs from several components",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Organization-Id",
+            "in": "header",
+            "description": "The organization that is aimed in a multi tenancy context",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok200EmptyResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500Response"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503Response"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "NotOnlyUuid": {
+        "maxLength": 64,
+        "type": "string",
+        "description": "Unique identifier supporting UUID but not only, for flexibility purpose"
+      },
+      "Cursor": {
+        "type": "string",
+        "description": "Pagination, Opaque cursor for pagination management, acts as a bookmark",
+        "example": "eyJjcmVhdGVkX2F0IjoiMjAyNS0wNi0wOVQxMDowMDowMFoiLCJpZCI6MTIzNH0="
+      },
+      "Limit": {
+        "maximum": 100,
+        "type": "integer",
+        "description": "Pagination, Maximum number of results that may be returned",
+        "default": 25
+      },
+      "ProcessingRule": {
+        "type": "string",
+        "description": "- B2B                 : e-invoicing\n- B2BInt              : International B2B e-reporting\n- B2C                 : B2C e-reporting\n- B2G                 : e-invoicing for B2G sales\n- B2GInt\n- OutOfScope          : Out of scope (not regulated flow)\n- B2GOutOfScope\n- ArchiveOnly         : Archive only, no transmission\n- NotApplicable       : Not Applicable\n- Undefined           : Not yet defined when in Pending state or unable to define when in Error state\n",
+        "enum": [
+          "B2B",
+          "B2BInt",
+          "B2C",
+          "B2G",
+          "B2GInt",
+          "OutOfScope",
+          "B2GOutOfScope",
+          "ArchiveOnly",
+          "NotApplicable",
+          "Undefined"
+        ]
+      },
+      "FlowSyntax": {
+        "type": "string",
+        "description": "Syntax of the original file belonging to a flow",
+        "example": "CII",
+        "enum": [
+          "CII",
+          "UBL",
+          "Factur-X",
+          "CDAR",
+          "FRR"
+        ]
+      },
+      "FlowProfile": {
+        "type": "string",
+        "enum": [
+          "Basic",
+          "CIUS",
+          "Extended-CTC-FR",
+          "Undefined"
+        ]
+      },
+      "FlowType": {
+        "type": "string",
+        "description": "- `CustomerInvoice`: a non-self-billed outgoing invoice or a self-billed incoming invoice\n- `SupplierInvoice`: a non-self-billed incoming invoice or self-billed outgoing invoice\n- `CustomerInvoiceLC`: a lifecycle (CDAR) related to a customer invoice\n- `SupplierInvoiceLC`: a lifecycle (CDAR) related to supplier invoice\n- `StateCustomerInvoiceLC`: a customer invoice LC sent to DFH\n- `StateSupplierInvoiceLC`: a supplier invoice LC sent to DFH\n- `AggregatedCustomerTransactionReport` : a transaction e-reporting flow containing aggregated B2C sales (FRR 10.3)\n- `UnitaryCustomerTransactionReport`: a transaction e-reporting flow containing international B2B sales or a B2C transaction flow reported individually (FRR 10.1)\n- `AggregatedCustomerPaymentReport` : an e-reporting of collections flow containing collections linked to B2C sales (FRR 10.4)\n- `UnitaryCustomerPaymentReport` : an e-reporting of collections flow containing collections linked to unit international B2B sales or B2C sales (FRR 10.2)\n- `UnitarySupplierTransactionReport`: a transaction e-reporting flow containing international B2B purchases (FRR 10.1)\n- `MultiFlowReport`: an e-reporting flow which contains at least 2 different flow types (FRR 10)\n- `StateCustomerInvoice` : a reporting flow 1 sent to DFH related to an invoice of type ‘CustomerInvoice’\n- `StateSupplierInvoice` : a reporting flow 1 sent to DFH related to an invoice of type ‘SupplierInvoice’ for self-billing\n- `StateTransactionReport` : a transaction e-reporting flow 10.1 or 10.3 sent to the DFH\n- `StateTransactionReportLC` : a lifecycle for a StateTransactionReport flow\n- `StatePaymentReport` : a payment e-reporting flow 10.2 or 10.4 sent to DFH\n- `StatePaymentReportLC` : a lifecycle for a StatePaymentReport flow\n- `Undefined`            : Not yet defined when in Pending state or unable to define when in Error state\n",
+        "example": "SupplierInvoice",
+        "enum": [
+          "CustomerInvoice",
+          "SupplierInvoice",
+          "CustomerInvoiceLC",
+          "SupplierInvoiceLC",
+          "StateCustomerInvoiceLC",
+          "StateSupplierInvoiceLC",
+          "AggregatedCustomerTransactionReport",
+          "UnitaryCustomerTransactionReport",
+          "AggregatedCustomerPaymentReport",
+          "UnitaryCustomerPaymentReport",
+          "UnitarySupplierTransactionReport",
+          "MultiFlowReport",
+          "StateCustomerInvoice",
+          "StateSupplierInvoice",
+          "StateTransactionReport",
+          "StateTransactionReportLC",
+          "StatePaymentReport",
+          "StatePaymentReportLC",
+          "Undefined"
+        ]
+      },
+      "FlowDirection": {
+        "type": "string",
+        "description": "Direction of the flow:\n  - `In`:  Incoming flow, from the PDP to the OD\n  - `Out`: Outgoing flow, from the OD to the PDP\n",
+        "example": "Out",
+        "enum": [
+          "In",
+          "Out"
+        ]
+      },
+      "FlowAckStatus": {
+        "type": "string",
+        "description": "- `Ok`: the following checks have passed:\n  - Anti virus\n  - Integrity checks\n  - Technical rules checks\n  - Unicity checks\n- `Error`: one of the previous test has failed\n- `Pending` : the flow is not yet integrated\n",
+        "enum": [
+          "Pending",
+          "Ok",
+          "Error"
+        ]
+      },
+      "ReasonCode": {
+        "description": "A predefined set of reason code values + ability to extend this set",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ReasonCodeEnum"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "ReasonCodeEnum": {
+        "type": "string",
+        "description": "- `EmptyAttachement`      : One or more attachments are empty. (ie IRR_VID_PJ)\n- `AttachmentTypeError`   : The type and/or extension of one or more attachments is not compliant. (ie IRR_EXT_DOC)\n- `EmptyFlow`             : The binary flow is empty. (ie IRR_VID_F)\n- `OtherTechnicalError`   : Other technical error. (ie AUTRE)\n- `InvalidSchema`         : Invalid XML schema. (ie IRR_SYNTAX)\n- `FileSizeExceeded`      : File size limit reached. (ie IRR_TAILLE_F)\n- `FlowTypeError`         : The flow type and/or extension are not compliant. (ie IRR_TYPE_F)\n- `AlreadyExistingFlow`   : The flow has already been sent and received. (ie N/A)\n- `VirusFound`            : Presence of a virus. (ie IRR_ANTIVIRUS)\n- `ChecksumMismatch`      : Checksum provided is different from computed one\n- `InvoiceLCInvalidStatus`: One or more statuses are inconsistent\n- `InvoiceLCStatusError`  : One or more statuses are incorrect or not allowed\n- `InvoiceLCRuleError`    : One or more rules are not matched\n- `InvoiceLCAccessDenied` : One of the request is not authorized and requests permissions\n- `InvoiceLCAmountError`  : One or more amounts are not consistent in regards to the VAT\n",
+        "enum": [
+          "EmptyAttachement",
+          "AttachmentTypeError",
+          "EmptyFlow",
+          "OtherTechnicalError",
+          "InvalidSchema",
+          "FileSizeExceeded",
+          "FlowTypeError",
+          "AlreadyExistingFlow",
+          "VirusFound",
+          "ChecksumMismatch",
+          "InvoiceLCInvalidStatus",
+          "InvoiceLCStatusError",
+          "InvoiceLCRuleError",
+          "InvoiceLCAccessDenied",
+          "InvoiceLCAmountError"
+        ]
+      },
+      "CoreFlowInfo": {
+        "required": [
+          "flowSyntax",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "trackingId": {
+            "description": "The tracking id is an external identifier and is used to track the flow by the sender",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotOnlyUuid"
+              }
+            ]
+          },
+          "name": {
+            "maxLength": 255,
+            "type": "string",
+            "description": "Name of the file"
+          },
+          "processingRule": {
+            "$ref": "#/components/schemas/ProcessingRule"
+          },
+          "flowSyntax": {
+            "$ref": "#/components/schemas/FlowSyntax"
+          },
+          "flowProfile": {
+            "$ref": "#/components/schemas/FlowProfile"
+          }
+        },
+        "description": "Core schema to build FlowInfo, FullFlowInfo, Flow schemas"
+      },
+      "FlowInfoExtension": {
+        "type": "object",
+        "properties": {
+          "sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string",
+            "description": "The sha256 is the fingerprint of the attached file:\n- if provided in the request: it should be checked once received\n- if not provided in the request: it may be computed and returned in the response\n",
+            "format": "byte"
+          }
+        },
+        "description": "Extension to build the FlowInfo"
+      },
+      "FlowInfo": {
+        "description": "Signaling of the flow",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CoreFlowInfo"
+          },
+          {
+            "$ref": "#/components/schemas/FlowInfoExtension"
+          }
+        ]
+      },
+      "SearchFlowParams": {
+        "required": [
+          "where"
+        ],
+        "type": "object",
+        "properties": {
+          "limit": {
+            "$ref": "#/components/schemas/Limit"
+          },
+          "cursor": {
+            "description": "If cursor is provided, then start search starting from that cursor",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Cursor"
+              }
+            ]
+          },
+          "where": {
+            "$ref": "#/components/schemas/SearchFlowFilters"
+          }
+        }
+      },
+      "SearchFlowFilters": {
+        "type": "object",
+        "properties": {
+          "updatedAfter": {
+            "type": "string",
+            "description": "The comparison with current date is strict : updatedAt > updatedAfter",
+            "format": "date-time"
+          },
+          "updatedBefore": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "processingRule": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProcessingRule"
+            }
+          },
+          "flowType": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FlowType"
+            }
+          },
+          "flowDirection": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FlowDirection"
+            }
+          },
+          "trackingId": {
+            "$ref": "#/components/schemas/NotOnlyUuid"
+          },
+          "ackStatus": {
+            "$ref": "#/components/schemas/FlowAckStatus"
+          }
+        },
+        "description": "Filtering criteria, at least one is required"
+      },
+      "FullFlowInfoExtension": {
+        "required": [
+          "flowId",
+          "submittedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "flowId": {
+            "$ref": "#/components/schemas/NotOnlyUuid"
+          },
+          "submittedAt": {
+            "type": "string",
+            "description": "The flow submission date and time (the date and time when the flow was created on the system)\nThis property should be used by the API consumer as a time reference to avoid clock synchronization issues\n",
+            "format": "date-time"
+          }
+        },
+        "description": "Extension schema to build FullFlowInfo, Flow schemas"
+      },
+      "FullFlowInfo": {
+        "description": "Identified Flow info: flow info + id + timestamp",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/FullFlowInfoExtension"
+          },
+          {
+            "$ref": "#/components/schemas/FlowInfo"
+          }
+        ]
+      },
+      "AcknowledgementDetail": {
+        "required": [
+          "item",
+          "level",
+          "reasonCode",
+          "reasonMessage"
+        ],
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": [
+              "Error",
+              "Warning"
+            ]
+          },
+          "item": {
+            "type": "string",
+            "description": "Item on which the error refers"
+          },
+          "reasonCode": {
+            "$ref": "#/components/schemas/ReasonCode"
+          },
+          "reasonMessage": {
+            "type": "string"
+          }
+        }
+      },
+      "AcknowledgementDetails": {
+        "minItems": 1,
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/AcknowledgementDetail"
+        }
+      },
+      "Acknowledgement": {
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/FlowAckStatus"
+          },
+          "details": {
+            "$ref": "#/components/schemas/AcknowledgementDetails"
+          }
+        }
+      },
+      "FlowExtension": {
+        "required": [
+          "acknowledgement",
+          "flowDirection",
+          "flowType",
+          "processingRuleSource",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "updatedAt": {
+            "type": "string",
+            "description": "The last update date and time of the flow. When the flow is submitted updatedAt is equal to submittedAt.\nWhen the flow acknowledgment status is changed updatedAt date and time is updated.\n",
+            "format": "date-time"
+          },
+          "flowType": {
+            "$ref": "#/components/schemas/FlowType"
+          },
+          "processingRuleSource": {
+            "type": "string",
+            "description": "Says whether the processing rule has been computed or the processing rule was an input parameter",
+            "enum": [
+              "Input",
+              "Computed"
+            ]
+          },
+          "flowDirection": {
+            "$ref": "#/components/schemas/FlowDirection"
+          },
+          "acknowledgement": {
+            "$ref": "#/components/schemas/Acknowledgement"
+          }
+        },
+        "description": "Extension schema to build Flow schema"
+      },
+      "Flow": {
+        "required": [
+          "flowProfile",
+          "processingRule"
+        ],
+        "description": "The properties of a Flow resource",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CoreFlowInfo"
+          },
+          {
+            "$ref": "#/components/schemas/FullFlowInfoExtension"
+          },
+          {
+            "$ref": "#/components/schemas/FlowExtension"
+          }
+        ]
+      },
+      "SearchFlowContent": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "$ref": "#/components/schemas/Limit"
+          },
+          "nextCursor": {
+            "description": "Pagination management:\n- If present, says where to start for next page, set nextCursor as the cursor in the next request\n- If omitted, says that pagination is finished\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Cursor"
+              }
+            ]
+          },
+          "filters": {
+            "$ref": "#/components/schemas/SearchFlowFilters"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Flow"
+            }
+          }
+        },
+        "description": "A set of flows matching criterias, provided into the request"
+      },
+      "WebhookParams": {
+        "required": [
+          "callbackUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "callbackUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "flowTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FlowType"
+            }
+          },
+          "flowDirection": {
+            "$ref": "#/components/schemas/FlowDirection"
+          },
+          "ackStatus": {
+            "$ref": "#/components/schemas/FlowAckStatus"
+          }
+        }
+      },
+      "WebhookId": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "WebhookIdParam": {
+        "type": "object",
+        "properties": {
+          "webhookId": {
+            "$ref": "#/components/schemas/WebhookId"
+          },
+          "signingKey": {
+            "type": "string",
+            "format": "byte"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Webhook": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WebhookIdParam"
+          },
+          {
+            "$ref": "#/components/schemas/WebhookParams"
+          }
+        ]
+      },
+      "Error": {
+        "required": [
+          "errorCode"
+        ],
+        "type": "object",
+        "properties": {
+          "errorCode": {
+            "type": "string",
+            "description": "Short numerical or alphanumerical code that identifies precisely a unique error.",
+            "example": "MISSING_REQUIRED_FIELD"
+          },
+          "errorMessage": {
+            "type": "string",
+            "description": "Contains information on the error. Not intended to be displayed to an end user. For security reasons, a tradeoff between clarity & security shall be found.",
+            "example": "Invalid request format"
+          },
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "example": "/path/reference-url",
+            "default": "about:blank"
+          },
+          "details": {
+            "type": "string",
+            "example": "Error detailed description"
+          },
+          "instance": {
+            "type": "string",
+            "format": "uri-reference",
+            "example": "/chemin/url-de-reference#instance-du-contexte"
+          }
+        },
+        "description": "Error code"
+      }
+    },
+    "responses": {
+      "FlowSearchResponse": {
+        "description": "OK - Response message when returning the results of a search request.\n",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SearchFlowContent"
+            }
+          }
+        }
+      },
+      "FlowPostResponse": {
+        "description": "OK - Response message once the flow has been uploaded.\n",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/FullFlowInfo"
+            }
+          }
+        }
+      },
+      "FlowGetResponse": {
+        "description": "OK - Response message once the flow has been downloaded.",
+        "headers": {
+          "Content-Disposition": {
+            "description": "Header specifying attached file name",
+            "schema": {
+              "pattern": "attachment;filename=*",
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/octet-stream": {},
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Flow"
+            }
+          }
+        }
+      },
+      "WebhookLightResponse": {
+        "description": "OK - Webhook Created",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WebhookIdParam"
+            }
+          }
+        }
+      },
+      "WebhookListResponse": {
+        "description": "OK - Webhook List Response",
+        "content": {
+          "application/json": {
+            "schema": {
+              "required": [
+                "count",
+                "webhookIds"
+              ],
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "integer"
+                },
+                "webhooks": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Webhook"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error400Response": {
+        "description": "Error 400 : Bad request.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "errorCode": "MISSING_REQUIRED_FIELD",
+              "errorMessage": "Invalid request format"
+            }
+          }
+        }
+      },
+      "Error401Response": {
+        "description": "Error 401 : Authentication error.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "errorCode": "MISSING_TOKEN",
+              "errorMessage": null
+            }
+          }
+        }
+      },
+      "Error403Response": {
+        "description": "Error 403 : Forbidden.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "errorCode": "FORBIDDEN_ACCESS",
+              "errorMessage": null
+            }
+          }
+        }
+      },
+      "Error413Response": {
+        "description": "Error 413 : Payload Too Large.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "errorCode": "FILE_SIZE_EXCEEDED",
+              "errorMessage": "Provided file is too big"
+            }
+          }
+        }
+      },
+      "Error422Response": {
+        "description": "Error 422 : Unprocessable entity.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "errorCode": "UNPROCESSABLE_ENTITY",
+              "errorMessage": "Entity consistency error"
+            }
+          }
+        }
+      },
+      "Error429Response": {
+        "description": "Error 429 : Too many requests.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "errorCode": "TOO_MANY_REQUESTS",
+              "errorMessage": "The client emitted too many requests"
+            }
+          }
+        }
+      },
+      "Error500Response": {
+        "description": "Error 500 : Server Internal Error.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "errorCode": "INTERNAL_ERROR",
+              "errorMessage": null
+            }
+          }
+        }
+      },
+      "Error503Response": {
+        "description": "Error 503 : Unavailable Resource.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "errorCode": "RESOURCE_ERROR",
+              "errorMessage": null
+            }
+          }
+        }
+      },
+      "Error404Response": {
+        "description": "Error 404 : Resource Not Found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "errorCode": "MISSING_RESOURCE",
+              "errorMessage": "Requested resource is Not Found"
+            }
+          }
+        }
+      },
+      "Ok204EmptyResponse": {
+        "description": "No Content - No content expected"
+      },
+      "Ok200EmptyResponse": {
+        "description": "OK - Operation succeeded"
+      }
+    },
+    "parameters": {
+      "WebhookUidPathParam": {
+        "name": "webhookUid",
+        "in": "path",
+        "description": "The webhook unique ID",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/WebhookId"
+        }
+      },
+      "OrganizationIdHeaderParam": {
+        "name": "Organization-Id",
+        "in": "header",
+        "description": "The organization that is aimed in a multi tenancy context",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "RequestIdHeader": {
+        "name": "Request-Id",
+        "in": "header",
+        "description": "Header parameter used to correlate logs from several components",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "requestBodies": {
+      "FlowSearchRequest": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SearchFlowParams"
+            }
+          }
+        }
+      },
+      "FlowPostRequest": {
+        "content": {
+          "multipart/form-data": {
+            "schema": {
+              "required": [
+                "file",
+                "flowInfo"
+              ],
+              "type": "object",
+              "properties": {
+                "flowInfo": {
+                  "$ref": "#/components/schemas/FlowInfo"
+                },
+                "file": {
+                  "type": "string",
+                  "description": "Flow file: Max size = 100 MB",
+                  "format": "binary"
+                }
+              }
+            },
+            "encoding": {
+              "file": {
+                "contentType": "application/pdf, application/xml"
+              },
+              "flowInfo": {
+                "contentType": "application/json"
+              }
+            }
+          }
+        }
+      },
+      "WebhookPostRequest": {
+        "description": "Create a webhook",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WebhookParams"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "OAuth2": {
+        "type": "oauth2",
+        "description": "Implements only OAuth2 Client Credentials workflow requiring a client id/secret pair",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://auth.company.com/auth-service/{custId}/token",
+            "scopes": {}
+          }
+        }
+      }
+    },
+    "callbacks": {
+      "WebhookCallback": {
+        "{$request.body#/callback.url}": {
+          "post": {
+            "parameters": [
+              {
+                "name": "Afnor-Signature",
+                "in": "header",
+                "description": "The HMAC-SHA-256 signature payload\n",
+                "required": false,
+                "schema": {
+                  "type": "string",
+                  "description": "Base 64 encoded string",
+                  "format": "byte"
+                }
+              },
+              {
+                "name": "Afnor-Signature-Timestamp",
+                "in": "header",
+                "description": "The timestamp is an epoch time in seconds \nEncoded as a 64 bit integer to avoid the limitation reached in 2038\n",
+                "required": true,
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            ],
+            "requestBody": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Flow"
+                  }
+                }
+              },
+              "required": true
+            },
+            "responses": {
+              "200": {
+                "$ref": "#/components/responses/Ok200EmptyResponse"
+              },
+              "400": {
+                "$ref": "#/components/responses/Error400Response"
+              },
+              "401": {
+                "$ref": "#/components/responses/Error401Response"
+              },
+              "403": {
+                "$ref": "#/components/responses/Error403Response"
+              },
+              "500": {
+                "$ref": "#/components/responses/Error500Response"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
