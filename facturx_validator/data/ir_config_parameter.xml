@@ -15,7 +15,7 @@
 
 <record id="verapdf_rest_url" model="ir.config_parameter">
     <field name="key">facturx.verapdf.rest.url</field>
-    <field name="value">http://localhost:8080/api/validate/3b</field>
+    <field name="value">http://verapdf:8080/api/validate/3b</field>
 </record>
 
 
