@@ -18,5 +18,9 @@
     <field name="value">http://verapdf:8080/api/validate/3b</field>
 </record>
 
+<record id="url" model="py3o.server">
+    <field name="value">http://py3o:8765/form</field>
+</record>
+
 
 </odoo>

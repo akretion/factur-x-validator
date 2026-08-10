@@ -3,7 +3,7 @@
 
 {
     'name': 'Factur-X Validator 14.1.3',
-    'version': '14.1.3-all-upgrade',
+    'version': '14.1.3',
     'category': 'Tools',
     'license': 'AGPL-3',
     'summary': 'Analyse and validate Factur-X invoices',
