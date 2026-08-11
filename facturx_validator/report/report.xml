@@ -7,6 +7,7 @@
       <field name="report_name">facturx.analysis.report</field>
       <field name="report_type">py3o</field>
       <field name="py3o_filetype">pdf</field>
+      <field name="py3o_server_id" ref="url"/>
       <field name="module">facturx_validator</field>
       <field name="py3o_template_fallback">report/analysis.odt</field>
       <field name="binding_model_id" ref="model_facturx_analysis" />
