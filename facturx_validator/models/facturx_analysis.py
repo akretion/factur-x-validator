@@ -195,7 +195,7 @@ class FacturxAnalysis(models.Model):
     title = fields.Char(string='Title', tracking=True)
     date = fields.Datetime(string='Analysis Date', readonly=True, copy=False)
     facturx_file = fields.Binary(
-        string='File', copy=False, states={'done': [('readonly', True)]})
+        string='File', copy=False)
     facturx_filename = fields.Char(
         string='Filename', copy=False, tracking=True)
     facturx_file_sha1 = fields.Char(
