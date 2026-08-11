@@ -95,7 +95,7 @@
             <field name="valid"/>
             <field name="date"/>
             <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'done'"/>
-       </list>
+        </list>
     </field>
 </record>
 
@@ -153,7 +153,7 @@
 <record id="facturx_analysis_action" model="ir.actions.act_window">
     <field name="name">Analysis</field>
     <field name="res_model">facturx.analysis</field>
-    <field name="view_mode">tree,form,pivot,graph</field>
+    <field name="view_mode">list,form,pivot,graph</field>
     <field name="context">{'search_default_my_analysis': True}</field>
 </record>
 
@@ -166,7 +166,7 @@
 <record id="partner_tree_action" model="ir.actions.act_window">
     <field name="name">Partners</field>
     <field name="res_model">res.partner</field>
-    <field name="view_mode">tree,form,kanban</field>
+    <field name="view_mode">list,form,kanban</field>
 </record>
 
 <menuitem id="facturx_partner_menu" action="partner_tree_action" parent="facturx_analysis_parent" sequence="20"/>
