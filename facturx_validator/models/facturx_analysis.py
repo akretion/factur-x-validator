@@ -296,8 +296,10 @@ class FacturxAnalysis(models.Model):
             '1_pdfa3': [],
             '2_xmp': [],
             '3_xml': [],
-            '4_xml_schematron': [],
-            }
+            '_xml_schematron_profile': [],
+            '5_xml_schematron_br-fr': [],
+            #'6_xml_schematron_cpro': [],
+        }
         if filetype:
             if filetype[0] == 'application/xml':
                 vals['file_type'] = 'xml'
@@ -411,7 +413,8 @@ class FacturxAnalysis(models.Model):
         logger.info(
             'vals after schematron: xml_valid=%s xml_schematron_valid=%s valid=%s sch_errors=%d',
             vals.get('xml_valid'), vals.get('xml_schematron_valid', False),
-            vals.get('valid', False), len(errors['4_xml_schematron'])
+            vals.get('valid', False), len(errors['4_xml_schematron_profile'])
+            vals.get('valid', False), len(errors['5_xml_br-fr'])
         )
         if vals['file_type'] == 'pdf':
             if not errors['1_pdfa3']:
