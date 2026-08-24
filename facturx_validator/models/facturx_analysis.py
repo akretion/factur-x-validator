@@ -948,7 +948,7 @@ class FacturxAnalysis(models.Model):
             raise UserError(_("Wrong XML profile %s. Must be a Factur-X profile. This should never happen.") % vals['xml_profile'])
         logger.info('Schematron pass 1 start (profile=%s)', vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
-        logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron_profile', len(errors.get('4_xml_schematron', [])))
+        logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron_profile', len(errors.get('4_xml_schematron_profile', [])))
         if vals['xml_profile'] != 'facturx_minimum':
             logger.info('Schematron pass 2 start (profile=facturx_br_fr)')
             self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='facturx_br_fr')
@@ -961,7 +961,7 @@ class FacturxAnalysis(models.Model):
             raise UserError(_("Wrong XML profile %s. Must be a CII profile. This should never happen.") % vals['xml_profile'])
         logger.info('Schematron pass 1 start (profile=%s)', vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
-        logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron_profile', len(errors.get('4_xml_schematron', [])))
+        logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron_profile', len(errors.get('4_xml_schematron_profile', [])))
         logger.info('Schematron pass 2 start (profile=cii_br_fr)')
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='cii_br_fr')
         logger.info('Schematron pass 2 done: %d error(s) in 5_xml_schematron_br_fr', len(errors.get('_xml_schematron_br-fr', [])))
@@ -973,11 +973,11 @@ class FacturxAnalysis(models.Model):
             raise UserError(_("Wrong XML profile %s. Must be a UBL profile. This should never happen.") % vals['xml_profile'])
         logger.info('Schematron pass 1 start (profile=%s)', vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
-        logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron_profile', [])))
+        logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron_profile', len(errors.get('4_xml_schematron_profile', [])))
         logger.info('Schematron pass 2 start (profile=ubl_br_fr)')
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='ubl_br_fr')
         logger.info('Schematron pass 2 done: %d error(s) in 5_xml_schematron_br_fr', len(errors.get('5_xml_schematron_br_fr', [])))
-        logger.info('End analyse_xml_schematron_ubl: sch_errors=%d', len(errors.get('5_xml_schematron_br-fr', [])))
+        logger.info('End analyse_xml_schematron_ubl: sch_errors=%d', len(errors.get('5_xml_schematron_br_fr', [])))
 
     def analyse_xml_schematron_cdar(self, vals, xml_bytes, errors, prefix=None):
         logger.info('Start analyse_xml_schematron_cdar (profile=%s)', vals.get('xml_profile'))
