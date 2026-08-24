@@ -284,7 +284,7 @@ class FacturxAnalysis(models.Model):
     def errors2errors_write(self, errors):
         errors_write = []
         for error_group, err_list in errors.items():
-            foo err in err_list:
+            for err in err_list:
                 assert isinstance(err, dict)
                 errors_write.append((0, 0, dict(err, error_group=error_group)))
         return errors_write
@@ -413,7 +413,7 @@ class FacturxAnalysis(models.Model):
             self.analyse_xml_schematron_cdar(vals, xml_bytes, errors, prefix)
         if not errors['3_xml']:
             vals['xml_valid'] = True
-        if not errors['4_xml_schematron_profile'] and not errors ['5_xml_schematronbr_br_fr']:
+        if not errors['4_xml_schematron_profile'] and not errors['5_xml_schematron_br_fr']:
             vals['xml_schematron_valid'] = True
         logger.info(
             'vals after schematron: xml_valid=%s xml_schematron_valid=%s valid=%s sch_errors=%d',
@@ -917,10 +917,10 @@ class FacturxAnalysis(models.Model):
         else:
             logger.info('file is valid according to Schematron')
 
-    def _run_schematron_saxon(self, vals, xml_bytes, errors, prefix=None, profile=None):
+    def _run_schematron_saxon(self, vals, xml_bytes, errors, prefix=None, profile=None, group='4_xml_schematron_profile'):
         profile = profile or vals['xml_profile']
         if profile not in XSL_PATHS:
-            errors['4_xml_schematron'].append({
+            errors[group].append({
                 'name': 'Schematron validation not available for profile %s' % profile,
                 'comment': 'No compiled XSLT stylesheet found for this profile. '
                            'Please compile the schematron source first.',
@@ -939,7 +939,7 @@ class FacturxAnalysis(models.Model):
                 result_str = xslt_processor.transform_to_string(
                     source_file=xml_file.name, stylesheet_file=stylesheet_file)
                 svrl_root = etree.fromstring(result_str.encode('utf-8'))
-                self.schematron_result_analysis(vals, svrl_root, errors)
+                self.schematron_result_analysis(vals, svrl_root, errors, group=group)
         logger.info('End schematron validation (saxon) for profile %s', profile)
 
     def analyse_xml_schematron_facturx(self, vals, xml_bytes, errors, prefix=None):
@@ -951,7 +951,7 @@ class FacturxAnalysis(models.Model):
         logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron_profile', len(errors.get('4_xml_schematron_profile', [])))
         if vals['xml_profile'] != 'facturx_minimum':
             logger.info('Schematron pass 2 start (profile=facturx_br_fr)')
-            self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='facturx_br_fr')
+            self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='facturx_br_fr', group='5_xml_schematron_br_fr')
             logger.info('Schematron pass 2 done: %d error(s) in 5_xml_schematron_br_fr', len(errors.get('5_xml_schematron_br_fr', [])))
         logger.info('End analyse_xml_schematron_facturx: sch_errors=%d', len(errors.get('5_xml_schematron_br_fr', [])))
 
@@ -963,8 +963,8 @@ class FacturxAnalysis(models.Model):
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
         logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron_profile', len(errors.get('4_xml_schematron_profile', [])))
         logger.info('Schematron pass 2 start (profile=cii_br_fr)')
-        self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='cii_br_fr')
-        logger.info('Schematron pass 2 done: %d error(s) in 5_xml_schematron_br_fr', len(errors.get('_xml_schematron_br-fr', [])))
+        self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='cii_br_fr', group='5_xml_schematron_br_fr')
+        logger.info('Schematron pass 2 done: %d error(s) in 5_xml_schematron_br_fr', len(errors.get('5_xml_schematron_br_fr', [])))
         logger.info('End analyse_xml_schematron_cii: sch_errors=%d', len(errors.get('5_xml_schematron_br_fr', [])))
 
     def analyse_xml_schematron_ubl(self, vals, xml_bytes, errors, prefix=None):
@@ -975,7 +975,7 @@ class FacturxAnalysis(models.Model):
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
         logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron_profile', len(errors.get('4_xml_schematron_profile', [])))
         logger.info('Schematron pass 2 start (profile=ubl_br_fr)')
-        self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='ubl_br_fr')
+        self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='ubl_br_fr', group='5_xml_schematron_br_fr')
         logger.info('Schematron pass 2 done: %d error(s) in 5_xml_schematron_br_fr', len(errors.get('5_xml_schematron_br_fr', [])))
         logger.info('End analyse_xml_schematron_ubl: sch_errors=%d', len(errors.get('5_xml_schematron_br_fr', [])))
 
@@ -986,7 +986,7 @@ class FacturxAnalysis(models.Model):
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
         logger.info('End analyse_xml_schematron_cdar: sch_errors=%d', len(errors.get('4_xml_schematron_profile', [])))
 
-    def schematron_result_analysis(self, vals, svrl_root, errors):
+    def schematron_result_analysis(self, vals, svrl_root, errors, group='4_xml_schematron_profile'):
         logger.info('Start schematron_result_analysis')
         namespaces = svrl_root.nsmap
         sch_errors = svrl_root.xpath(
@@ -1003,7 +1003,7 @@ class FacturxAnalysis(models.Model):
                 if comment:
                     # analysis via java for Factur-X will have an 'id' attrib
                     # but analysis via lxml for Order-X won't, so we use the 'test' attrib
-                    errors['4_xml_schematron'].append({
+                    errors[group].append({
                         'name': sch_error.attrib.get('test') or "Schematron error",
                         'comment': comment,
                         })
