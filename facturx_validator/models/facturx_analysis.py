@@ -139,8 +139,13 @@ XSL_PATHS = {
     # CDAR
     'cdar_ctc_fr':         'facturx_validator/schemas/CDAR/XSLT/20260430_BR-FR-CDV-Schematron-CDAR_V1.3.1.xsl',
     }
+    # BR-FR systematic passage for all profiles only not executable on the MINIMUM profile
+    'facturx_br_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/2xslt/BR-FR-Flux2-Schematron-CII.xslt',
+    'cii_br_fr':     'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EXTENDED-CTC-FR/2xslt/BR-FR-Flux2-Schematron-CII.xslt',
+    'ubl_br_fr':     'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/EXTENDED-CTC-FR/2xslt/BR-FR-Flux2-Schematron-UBL.xslt',
 
-ORDERX_TYPES = [
+
+    ORDERX_TYPES = [
     ('order', 'Order'),
     ('order_response', 'Order Response'),
     ('order_change', 'Order Change'),
@@ -235,6 +240,7 @@ class FacturxAnalysis(models.Model):
         ('ubl', 'UBL'),
         ('cii', 'CII'),
         ('cdar', 'CDAR'),
+        ('ereporting', 'E-Reporting')
         ], readonly=True, tracking=True)
     xml_orderx_type = fields.Selection(
         ORDERX_TYPES, string='XML Order-X Type', readonly=True, copy=False)
@@ -296,7 +302,7 @@ class FacturxAnalysis(models.Model):
             '1_pdfa3': [],
             '2_xmp': [],
             '3_xml': [],
-            '_xml_schematron_profile': [],
+            '4_xml_schematron_profile': [],
             '5_xml_schematron_br-fr': [],
             #'6_xml_schematron_cpro': [],
         }
@@ -414,7 +420,8 @@ class FacturxAnalysis(models.Model):
             'vals after schematron: xml_valid=%s xml_schematron_valid=%s valid=%s sch_errors=%d',
             vals.get('xml_valid'), vals.get('xml_schematron_valid', False),
             vals.get('valid', False), len(errors['4_xml_schematron_profile'])
-            vals.get('valid', False), len(errors['5_xml_br-fr'])
+            #vals.get('valid', False), len(errors['5_xml_schematronbr_br_fr'])
+            #vals.get('valid', False), len(errors['6_xml_schematronbr_cpro'])
         )
         if vals['file_type'] == 'pdf':
             if not errors['1_pdfa3']:
@@ -944,10 +951,10 @@ class FacturxAnalysis(models.Model):
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
         logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
         if vals['xml_profile'] != 'facturx_minimum':
-            logger.info('Schematron pass 2 start (profile=cii_extended_ctc_fr)')
-            self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='cii_extended_ctc_fr')
-            logger.info('Schematron pass 2 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
-        logger.info('End analyse_xml_schematron_facturx: sch_errors=%d', len(errors.get('4_xml_schematron', [])))
+            logger.info('Schematron pass 2 start (profile=facturx_br_fr)')
+            self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='facturx_br_fr')
+            logger.info('Schematron pass 2 done: %d error(s) in 5_xml_schematron_br_fr', len(errors.get('5_xml_schematron_br_fr', [])))
+        logger.info('End analyse_xml_schematron_facturx: sch_errors=%d', len(errors.get('5_xml_schematron_br_fr', [])))
 
     def analyse_xml_schematron_cii(self, vals, xml_bytes, errors, prefix=None):
         logger.info('Start analyse_xml_schematron_cii (profile=%s)', vals.get('xml_profile'))
@@ -956,10 +963,10 @@ class FacturxAnalysis(models.Model):
         logger.info('Schematron pass 1 start (profile=%s)', vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
         logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
-        logger.info('Schematron pass 2 start (profile=cii_extended_ctc_fr)')
-        self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='cii_extended_ctc_fr')
-        logger.info('Schematron pass 2 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
-        logger.info('End analyse_xml_schematron_cii: sch_errors=%d', len(errors.get('4_xml_schematron', [])))
+        logger.info('Schematron pass 2 start (profile=cii_br_fr)')
+        self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='cii_br_fr')
+        logger.info('Schematron pass 2 done: %d error(s) in 5_xml_schematron_br_fr', len(errors.get('_xml_schematron_br-fr', [])))
+        logger.info('End analyse_xml_schematron_cii: sch_errors=%d', len(errors.get('5_xml_schematron_br_fr', [])))
 
     def analyse_xml_schematron_ubl(self, vals, xml_bytes, errors, prefix=None):
         logger.info('Start analyse_xml_schematron_ubl (profile=%s)', vals.get('xml_profile'))
@@ -968,10 +975,10 @@ class FacturxAnalysis(models.Model):
         logger.info('Schematron pass 1 start (profile=%s)', vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
         logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
-        logger.info('Schematron pass 2 start (profile=ubl_extended_ctc_fr)')
-        self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='ubl_extended_ctc_fr')
-        logger.info('Schematron pass 2 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
-        logger.info('End analyse_xml_schematron_ubl: sch_errors=%d', len(errors.get('4_xml_schematron', [])))
+        logger.info('Schematron pass 2 start (profile=ubl_br_fr)')
+        self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='ubl_br_fr')
+        logger.info('Schematron pass 2 done: %d error(s) in 5_xml_schematron_br_fr', len(errors.get('5_xml_schematron_br_fr', [])))
+        logger.info('End analyse_xml_schematron_ubl: sch_errors=%d', len(errors.get('5_xml_schematron_br-fr', [])))
 
     def analyse_xml_schematron_cdar(self, vals, xml_bytes, errors, prefix=None):
         logger.info('Start analyse_xml_schematron_cdar (profile=%s)', vals.get('xml_profile'))
@@ -1247,9 +1254,9 @@ class FacturxAnalysisError(models.Model):
         ('1_pdfa3', 'PDF/A-3'),
         ('2_xmp', 'XMP'),
         ('3_xml', 'XML XSD'),
-        ('4_xml_schematron', 'XML Schematron Profile'),
-        ('5_xml_schematron', 'XML Schematron BR-FR')
-#        ('6_xml_schematron', 'XML Schematron CPRO')
+        ('4_xml_schematron_profile', 'XML Schematron Profile'),
+        ('5_xml_schematron_br_fr', 'XML Schematron BR-FR')
+#        ('6_xml_schematron_cpro', 'XML Schematron CPRO')
     ], string='Group', required=True)
     name = fields.Char(required=True)
     comment = fields.Text()
