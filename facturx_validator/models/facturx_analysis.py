@@ -279,7 +279,7 @@ class FacturxAnalysis(models.Model):
     def errors2errors_write(self, errors):
         errors_write = []
         for error_group, err_list in errors.items():
-            for err in err_list:
+            foo err in err_list:
                 assert isinstance(err, dict)
                 errors_write.append((0, 0, dict(err, error_group=error_group)))
         return errors_write
@@ -1237,7 +1237,6 @@ class FacturxAnalysisError(models.Model):
     _name = 'facturx.analysis.error'
     _description = 'Factur-X Analysis Errors'
     _order = 'parent_id, error_group, id'
-
     parent_id = fields.Many2one('facturx.analysis', ondelete='cascade')
     # It's not a good idea to name that field 'group' because
     # it's a special word in SQL
@@ -1245,7 +1244,9 @@ class FacturxAnalysisError(models.Model):
         ('1_pdfa3', 'PDF/A-3'),
         ('2_xmp', 'XMP'),
         ('3_xml', 'XML XSD'),
-        ('4_xml_schematron', 'XML Schematron'),
-        ], string='Group', required=True)
+        ('4_xml_schematron', 'XML Schematron Profile'),
+        ('5_xml_schematron', 'XML Schematron BR-FR')
+#        ('6_xml_schematron', 'XML Schematron CPRO')
+    ], string='Group', required=True)
     name = fields.Char(required=True)
     comment = fields.Text()
