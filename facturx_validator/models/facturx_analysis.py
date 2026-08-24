@@ -138,14 +138,13 @@ XSL_PATHS = {
     'cii_extended_ctc_fr': 'facturx_validator/schemas/CII/XSLT/CII_EXTENDED-CTC-FR-CII-V1.3.1_20260430.xsl',
     # CDAR
     'cdar_ctc_fr':         'facturx_validator/schemas/CDAR/XSLT/20260430_BR-FR-CDV-Schematron-CDAR_V1.3.1.xsl',
-    }
     # BR-FR systematic passage for all profiles only not executable on the MINIMUM profile
     'facturx_br_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/2xslt/BR-FR-Flux2-Schematron-CII.xslt',
     'cii_br_fr':     'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EXTENDED-CTC-FR/2xslt/BR-FR-Flux2-Schematron-CII.xslt',
     'ubl_br_fr':     'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/EXTENDED-CTC-FR/2xslt/BR-FR-Flux2-Schematron-UBL.xslt',
+    }
 
-
-    ORDERX_TYPES = [
+ORDERX_TYPES = [
     ('order', 'Order'),
     ('order_response', 'Order Response'),
     ('order_change', 'Order Change'),
@@ -303,7 +302,7 @@ class FacturxAnalysis(models.Model):
             '2_xmp': [],
             '3_xml': [],
             '4_xml_schematron_profile': [],
-            '5_xml_schematron_br-fr': [],
+            '5_xml_schematron_br_fr': [],
             #'6_xml_schematron_cpro': [],
         }
         if filetype:
@@ -414,7 +413,7 @@ class FacturxAnalysis(models.Model):
             self.analyse_xml_schematron_cdar(vals, xml_bytes, errors, prefix)
         if not errors['3_xml']:
             vals['xml_valid'] = True
-        if not errors['4_xml_schematron']:
+        if not errors['4_xml_schematron_profile'] and not errors ['5_xml_schematronbr_br_fr']:
             vals['xml_schematron_valid'] = True
         logger.info(
             'vals after schematron: xml_valid=%s xml_schematron_valid=%s valid=%s sch_errors=%d',
@@ -949,7 +948,7 @@ class FacturxAnalysis(models.Model):
             raise UserError(_("Wrong XML profile %s. Must be a Factur-X profile. This should never happen.") % vals['xml_profile'])
         logger.info('Schematron pass 1 start (profile=%s)', vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
-        logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
+        logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron_profile', len(errors.get('4_xml_schematron', [])))
         if vals['xml_profile'] != 'facturx_minimum':
             logger.info('Schematron pass 2 start (profile=facturx_br_fr)')
             self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='facturx_br_fr')
@@ -962,7 +961,7 @@ class FacturxAnalysis(models.Model):
             raise UserError(_("Wrong XML profile %s. Must be a CII profile. This should never happen.") % vals['xml_profile'])
         logger.info('Schematron pass 1 start (profile=%s)', vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
-        logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
+        logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron_profile', len(errors.get('4_xml_schematron', [])))
         logger.info('Schematron pass 2 start (profile=cii_br_fr)')
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='cii_br_fr')
         logger.info('Schematron pass 2 done: %d error(s) in 5_xml_schematron_br_fr', len(errors.get('_xml_schematron_br-fr', [])))
@@ -974,7 +973,7 @@ class FacturxAnalysis(models.Model):
             raise UserError(_("Wrong XML profile %s. Must be a UBL profile. This should never happen.") % vals['xml_profile'])
         logger.info('Schematron pass 1 start (profile=%s)', vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
-        logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron', [])))
+        logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron', len(errors.get('4_xml_schematron_profile', [])))
         logger.info('Schematron pass 2 start (profile=ubl_br_fr)')
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='ubl_br_fr')
         logger.info('Schematron pass 2 done: %d error(s) in 5_xml_schematron_br_fr', len(errors.get('5_xml_schematron_br_fr', [])))
@@ -985,7 +984,7 @@ class FacturxAnalysis(models.Model):
         if vals['xml_profile'] != 'cdar_ctc_fr':
             raise UserError(_("Wrong XML profile %s. Must be cdar_ctc_fr. This should never happen.") % vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
-        logger.info('End analyse_xml_schematron_cdar: sch_errors=%d', len(errors.get('4_xml_schematron', [])))
+        logger.info('End analyse_xml_schematron_cdar: sch_errors=%d', len(errors.get('4_xml_schematron_profile', [])))
 
     def schematron_result_analysis(self, vals, svrl_root, errors):
         logger.info('Start schematron_result_analysis')
