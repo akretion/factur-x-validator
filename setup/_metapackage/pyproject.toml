@@ -1,0 +1,11 @@
+[project]
+name = "odoo-addons-akretion-factur-x-validator"
+version = "14.0.20260825.0"
+dependencies = [
+    "odoo14-addon-facturx_validator",
+]
+classifiers=[
+    "Programming Language :: Python",
+    "Framework :: Odoo",
+    "Framework :: Odoo :: 14.0",
+]
