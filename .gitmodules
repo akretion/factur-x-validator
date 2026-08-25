@@ -1,0 +1,3 @@
+[submodule "facturx_validator/schemas"]
+	path = facturx_validator/schemas
+	url = https://github.com/fnfempe/France_RFE.git

@@ -10,9 +10,9 @@
     <field name="arch" type="xml">
         <form string="Factur-X Analysis">
             <header>
-                <button name="analyse" type="object" string="Analyse" states="draft" class="btn-primary"/>
-                <button name="print_report" type="object" string="Print Report" states="done" class="btn-primary"/>
-                <button name="back_to_draft" type="object" string="Back to Draft" states="done" groups="base.group_system"/>
+                <button name="analyse" type="object" string="Analyse" invisible="state != 'draft'" class="btn-primary"/>
+                <button name="print_report" type="object" string="Print Report" invisible="state != 'done'" class="btn-primary"/>
+                <button name="back_to_draft" type="object" string="Back to Draft" invisible="state != 'done'" groups="base.group_system"/>
                 <field name="state" widget="statusbar"/>
             </header>
             <sheet>
@@ -26,7 +26,7 @@
                     <group name="input" string="Input">
                         <field name="title"/>
                         <field name="partner_id"/>
-                        <field name="facturx_file" filename="facturx_filename"/>
+                        <field name="facturx_file" filename="facturx_filename" readonly="state == 'done'"/>
                         <field name="facturx_filename" invisible="1"/>
                         <label for="facturx_file_size"/>
                         <div name="facturx_file_size">
@@ -35,41 +35,36 @@
                         </div>
                         <field name="facturx_file_sha1"/>
                         <field name="file_type" widget="badge" decoration-info="file_type == 'xml'"/>
-                        <field name="date" states="done"/>
+                        <field name="date" invisible="state != 'done'"/>
                     </group>
-                    <group name="result" string="Results" attrs="{'invisible': [('state', '=', 'draft')]}">
-                        <field name="doc_type" widget="badge" decoration-warning="doc_type == 'facturx'" decoration-danger="doc_type == 'orderx'"/>
-                        <field name="xmp_file" filename="xmp_filename" attrs="{'invisible': [('file_type', '!=', 'pdf')]}"/>
+                    <group name="result" string="Results" invisible="state == 'draft'">
+                        <field name="doc_type" widget="badge" decoration-warning="doc_type == 'facturx'" decoration-danger="doc_type == 'orderx'" decoration-info="doc_type == 'ubl'" decoration-success="doc_type == 'cii'" decoration-secondary="doc_type == 'cdar'"/>
+                        <field name="xmp_file" filename="xmp_filename" invisible="file_type != 'pdf'"/>
                         <field name="xmp_filename" invisible="1"/>
-                        <field name="xml_file" filename="xml_filename" attrs="{'invisible': [('file_type', '!=', 'pdf')]}"/>
+                        <field name="xml_file" filename="xml_filename" invisible="file_type != 'pdf'"/>
                         <field name="xml_filename" invisible="1"/>
                         <field name="valid"/>
-                        <field name="pdfa3_valid" attrs="{'invisible': [('file_type', '!=', 'pdf')]}"/>
-                        <field name="xmp_valid" attrs="{'invisible': [('file_type', '!=', 'pdf')]}"/>
+                        <field name="pdfa3_valid" invisible="file_type != 'pdf'"/>
+                        <field name="xmp_valid" invisible="file_type != 'pdf'"/>
                         <field name="xml_valid"/>
-                        <field name="xml_schematron_valid" attrs="{'invisible': [('xml_profile', 'not in', ('facturx_en16931', 'facturx_basic', 'orderx_basic', 'orderx_comfort', 'orderx_extended'))]}"/>
-                        <field name="xmp_profile" attrs="{'invisible': [('file_type', '!=', 'pdf')]}"/>
+                        <field name="xml_schematron_valid" invisible="xml_profile not in ('facturx_minimum', 'facturx_basicwl', 'facturx_basic', 'facturx_en16931', 'facturx_extended', 'facturx_extended_ctc_fr', 'facturx_107_minimum', 'facturx_107_basicwl', 'facturx_107_basic', 'facturx_107_en16931', 'facturx_107_extended', 'orderx_basic', 'orderx_comfort', 'orderx_extended', 'ubl_en16931', 'ubl_extended_ctc_fr', 'ubl_extended', 'cdar_ctc_fr', 'cii_en16931', 'cii_extended_ctc_fr', 'cii_extended')"/>
+                        <field name="xmp_profile" invisible="file_type != 'pdf'"/>
                         <field name="xml_profile"/>
-                        <field name="afrelationship" attrs="{'invisible': [('file_type', '!=', 'pdf')]}"/>
-                        <field name="xmp_orderx_type" attrs="{'invisible': ['|', ('doc_type', '!=', 'orderx'), ('file_type', '!=', 'pdf')]}"/>
-                        <field name="xml_orderx_type" attrs="{'invisible': [('doc_type', '!=', 'orderx')]}"/>
+                        <field name="afrelationship" invisible="file_type != 'pdf'"/>
+                        <field name="xmp_orderx_type" invisible="doc_type != 'orderx' or file_type != 'pdf'"/>
+                        <field name="xml_orderx_type" invisible="doc_type != 'orderx'"/>
                     </group>
                 </group>
-                <group name="errors" string="Errors" attrs="{'invisible': [('state', '=', 'done'), ('valid', '=', True)]}">
-                    <field name="error_ids" nolabel="1">
-                        <tree>
+                <group name="errors" string="Errors" invisible="state == 'done' and valid == True">
+                    <field name="error_group" nolabel="1">
+                       <list>
                             <field name="error_group"/>
                             <field name="name"/>
                             <field name="comment"/>
-                        </tree>
+                       </list>
                     </field>
                 </group>
             </sheet>
-            <div class="oe_chatter">
-                <field name="message_follower_ids" widget="mail_followers"/>
-                <field name="activity_ids" widget="mail_activity"/>
-                <field name="message_ids" widget="mail_thread"/>
-            </div>
         </form>
     </field>
 </record>
@@ -77,25 +72,25 @@
 <record id="facturx_analysis_tree" model="ir.ui.view">
     <field name="model">facturx.analysis</field>
     <field name="arch" type="xml">
-        <tree string="Factur-X Analysis" decoration-bf="valid == True">
+        <list string="Factur-X Analysis" decoration-bf="valid == True">
             <field name="name"/>
             <field name="create_uid"/>
             <field name="title"/>
             <field name="facturx_filename"/>
             <field name="partner_id" optional="show"/>
             <field name="file_type" widget="badge" decoration-info="file_type == 'xml'"/>
-            <field name="doc_type" widget="badge" decoration-warning="doc_type == 'facturx'" decoration-danger="doc_type == 'orderx'"/>
+            <field name="doc_type" widget="badge" decoration-warning="doc_type == 'facturx'" decoration-danger="doc_type == 'orderx'" decoration-info="doc_type == 'ubl'" decoration-success="doc_type == 'cii'" decoration-muted="doc_type == 'cdar'"/>
             <field name="xml_orderx_type" string="Order Type" optional="show"/>
             <field name="xml_profile" string="Profile"/>
-            <field name="xmp_profile" attrs="{'invisible': [('file_type', '!=', 'pdf')]}" optional="hide"/>
-            <field name="pdfa3_valid" attrs="{'invisible': [('file_type', '!=', 'pdf')]}" optional="hide"/>
-            <field name="xmp_valid" attrs="{'invisible': [('file_type', '!=', 'pdf')]}" optional="hide"/>
+            <field name="xmp_profile" invisible="file_type != 'pdf'" optional="hide"/>
+            <field name="pdfa3_valid" invisible="file_type != 'pdf'" optional="hide"/>
+            <field name="xmp_valid" invisible="file_type != 'pdf'" optional="hide"/>
             <field name="xml_valid" optional="hide"/>
-            <field name="xml_schematron_valid" attrs="{'invisible': [('xml_profile', 'not in', ('facturx_en16931', 'facturx_basic', 'orderx_basic', 'orderx_comfort', 'orderx_extended'))]}" optional="hide"/>
+            <field name="xml_schematron_valid" invisible="xml_profile not in ('facturx_minimum', 'facturx_basicwl', 'facturx_basic', 'facturx_en16931', 'facturx_extended', 'facturx_extended_ctc_fr', 'orderx_basic', 'orderx_comfort', 'orderx_extended', 'ubl_en16931', 'ubl_extended_ctc_fr', 'ubl_extended', 'cdar_ctc_fr', 'cii_en16931', 'cii_extended_ctc_fr', 'cii_extended')" optional="hide"/>
             <field name="valid"/>
             <field name="date"/>
             <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'done'"/>
-        </tree>
+        </list>
     </field>
 </record>
 
@@ -112,6 +107,9 @@
             <separator/>
             <filter name="facturx" string="Factur-X" domain="[('doc_type', '=', 'facturx')]"/>
             <filter name="orderx" string="Order-X" domain="[('doc_type', '=', 'orderx')]"/>
+            <filter name="ubl"    string="UBL"     domain="[('doc_type', '=', 'ubl')]"/>
+            <filter name="cii"    string="CII"     domain="[('doc_type', '=', 'cii')]"/>
+            <filter name="cdar"   string="CDAR"    domain="[('doc_type', '=', 'cdar')]"/>
             <separator/>
             <filter name="pdf" string="PDF" domain="[('file_type', '=', 'pdf')]"/>
             <filter name="xml" string="XML" domain="[('file_type', '=', 'xml')]"/>
@@ -150,7 +148,7 @@
 <record id="facturx_analysis_action" model="ir.actions.act_window">
     <field name="name">Analysis</field>
     <field name="res_model">facturx.analysis</field>
-    <field name="view_mode">tree,form,pivot,graph</field>
+    <field name="view_mode">list,form,pivot,graph</field>
     <field name="context">{'search_default_my_analysis': True}</field>
 </record>
 
@@ -163,7 +161,7 @@
 <record id="partner_tree_action" model="ir.actions.act_window">
     <field name="name">Partners</field>
     <field name="res_model">res.partner</field>
-    <field name="view_mode">tree,form,kanban</field>
+    <field name="view_mode">list,form,kanban</field>
 </record>
 
 <menuitem id="facturx_partner_menu" action="partner_tree_action" parent="facturx_analysis_parent" sequence="20"/>
