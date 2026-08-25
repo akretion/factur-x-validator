@@ -98,24 +98,25 @@ UBL_PROFILE_MAP = [(p[2], p[0]) for p in _PROFILES_DEF if len(p) == 3]
 
 SCH_PATHS = {
     # Factur-X 1.08 (CII)
-    'facturx_minimum': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_MINIMUM.sch',
-    'facturx_basicwl': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_BASICWL.sch',
-    'facturx_basic': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_BASIC.sch',
-    'facturx_en16931': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_EN16931.sch',
-    'facturx_extended': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_EXTENDED.sch',
-    'facturx_extended_ctc_fr': 'facturx_validator/schemas/Factur-X/SCH/Factur-X_1.08_EXTENDED-CTC-FR-CII-V1.3.1.sch',
+    # 'facturx_minimum': dropped - the FNFE_RFE_INVOICE submodule no longer ships a MINIMUM profile
+    'facturx_basicwl': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/BASICWL/schematron/FACTUR-X_BASIC-WL.sch',
+    # 'facturx_basic': dropped - the FNFE_RFE_INVOICE submodule only ships BASICWL, not standalone BASIC
+    'facturx_en16931': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EN16931/schematron/FACTUR-X_EN16931.sch',
+    'facturx_extended': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/schematron/FACTUR-X_EXTENDED.sch',
+    # 'facturx_extended_ctc_fr': no dedicated EXTENDED-CTC-FR schematron for Factur-X in the submodule anymore;
+    # CTC-FR obligations are now covered by the systematic BR-FR pass 2 (see XSL_PATHS['facturx_br_fr']),
+    # so this reuses the plain EXTENDED schematron. TODO confirm with FNFE before merging.
+    'facturx_extended_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/schematron/FACTUR-X_EXTENDED.sch',
     # Order-X
-    'orderx_basic': 'facturx_validator/schemas/Order-X/SCH/SCRDMCCBDACIOMessageStructure_100pD20B_BASIC.sch',
-    'orderx_comfort': 'facturx_validator/schemas/Order-X/SCH/SCRDMCCBDACIOMessageStructure_100pD20B_COMFORT.sch',
-    'orderx_extended': 'facturx_validator/schemas/Order-X/SCH/SCRDMCCBDACIOMessageStructure_100pD20B_EXTENDED.sch',
+    # 'orderx_basic'/'orderx_comfort'/'orderx_extended': dropped - no Order-X schemas in the FNFE_RFE_INVOICE submodule
     # CII (standalone)
-    'cii_en16931': 'facturx_validator/schemas/CII/SCH/CII_EN16931_validation-preprocessed.sch',
-    'cii_extended_ctc_fr': 'facturx_validator/schemas/CII/SCH/CII_1.08_EXTENDED-CTC-FR-CII-V1.3.1.sch',
+    'cii_en16931': 'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EN16931/schematron/EN16931-CII-validation-preprocessed.sch',
+    'cii_extended_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EXTENDED-CTC-FR/schematron/EXTENDED-CTC-FR-CII.sch',
     # UBL
-    'ubl_en16931': 'facturx_validator/schemas/UBL/SCH/UBL_EN16931_validation-preprocessed.sch',
-    'ubl_extended_ctc_fr': 'facturx_validator/schemas/UBL/SCH/UBL_1.08_EXTENDED-CTC-FR-UBL-V1.3.1.sch',
+    'ubl_en16931': 'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/EN16931/schematron/EN16931-UBL-validation-preprocessed.sch',
+    'ubl_extended_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/EXTENDED-CTC-FR/schematron/EXTENDED-CTC-FR-UBL.sch',
     # CDAR
-    'cdar_ctc_fr': 'facturx_validator/schemas/CDAR/SCH/20260430_BR-FR-CDV-Schematron-CDAR_V1.3.1.sch',
+    'cdar_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/CDAR/schematron/BR-FR-CDV-Schematron-CDAR.sch',
     # e-Reporting
     # expecting the specifications
     }
@@ -124,21 +125,23 @@ SCH_PATHS = {
 # Separate from SCH_PATHS because the compiled XSL lives in a different folder.
 XSL_PATHS = {
     # Factur-X 1.08
-    'facturx_minimum':         'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_MINIMUM-compiled-saxonc.xsl',
-    'facturx_basicwl':         'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_BASICWL-compiled-saxonc.xsl',
-    'facturx_basic':           'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_BASIC-compiled-saxonc.xsl',
-    'facturx_en16931':         'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_EN16931-compiled-saxonc.xsl',
-    'facturx_extended':        'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_EXTENDED-compiled-saxonc.xsl',
-    'facturx_extended_ctc_fr': 'facturx_validator/schemas/Factur-X/XSLT/Factur-X_1.08_EXTENDED-CTC-FR-CII-V1.3.1-compiled-saxonc.xsl',
+    # 'facturx_minimum': dropped - the FNFE_RFE_INVOICE submodule no longer ships a MINIMUM profile
+    'facturx_basicwl':         'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/BASICWL/2xslt/FACTUR-X_BASIC-WL.xslt',
+    # 'facturx_basic': dropped - the FNFE_RFE_INVOICE submodule only ships BASICWL, not standalone BASIC
+    'facturx_en16931':         'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EN16931/2xslt/FACTUR-X_EN16931.xslt',
+    'facturx_extended':        'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/2xslt/FACTUR-X_EXTENDED.xslt',
+    # 'facturx_extended_ctc_fr': see note in SCH_PATHS above - reuses the plain EXTENDED stylesheet, TODO confirm before merging
+    'facturx_extended_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/2xslt/FACTUR-X_EXTENDED.xslt',
     # UBL
-    'ubl_en16931':         'facturx_validator/schemas/UBL/XSLT/UBL_EN16931_validation.xslt',
-    'ubl_extended_ctc_fr': 'facturx_validator/schemas/UBL/XSLT/UBL_EXTENDED-CTC-FR_V1.3.1_20260430.xsl',
+    'ubl_en16931':         'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/EN16931/2xslt/EN16931-UBL-validation.xslt',
+    'ubl_extended_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/EXTENDED-CTC-FR/2xslt/EXTENDED-CTC-FR-UBL.xslt',
     # CII
-    'cii_en16931':         'facturx_validator/schemas/CII/XSLT/CII_EN16931-CII-validation.xslt',
-    'cii_extended_ctc_fr': 'facturx_validator/schemas/CII/XSLT/CII_EXTENDED-CTC-FR-CII-V1.3.1_20260430.xsl',
+    'cii_en16931':         'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EN16931/2xslt/EN16931-CII-validation.xslt',
+    'cii_extended_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EXTENDED-CTC-FR/2xslt/EXTENDED-CTC-FR-CII.xslt',
     # CDAR
-    'cdar_ctc_fr':         'facturx_validator/schemas/CDAR/XSLT/20260430_BR-FR-CDV-Schematron-CDAR_V1.3.1.xsl',
-    # BR-FR systematic passage for all profiles only not executable on the MINIMUM profile
+    'cdar_ctc_fr':         'facturx_validator/schemas/FNFE_RFE_INVOICE/CDAR/2xslt/BR-FR-CDV-Schematron-CDAR.xslt',
+    # Order-X: dropped - no Order-X schemas in the FNFE_RFE_INVOICE submodule at all
+    # BR-FR systematic passage for all profiles, not executable on the MINIMUM profile
     'facturx_br_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/2xslt/BR-FR-Flux2-Schematron-CII.xslt',
     'cii_br_fr':     'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EXTENDED-CTC-FR/2xslt/BR-FR-Flux2-Schematron-CII.xslt',
     'ubl_br_fr':     'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/EXTENDED-CTC-FR/2xslt/BR-FR-Flux2-Schematron-UBL.xslt',
@@ -781,9 +784,9 @@ class FacturxAnalysis(models.Model):
                 return
             vals['xml_profile'] = ubl_profile
             xsd_rel = (
-                'facturx_validator/schemas/UBL/XSD/UBL-2.1/xsd/maindoc/UBL-CreditNote-2.1.xsd'
+                'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/1xsd_UBL2.1/maindoc/UBL-CreditNote-2.1.xsd'
                 if 'CreditNote' in xml_root.tag else
-                'facturx_validator/schemas/UBL/XSD/UBL-2.1/xsd/maindoc/UBL-Invoice-2.1.xsd'
+                'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/1xsd_UBL2.1/maindoc/UBL-Invoice-2.1.xsd'
             )
             try:
                 xsd_doc = etree.parse(self.file_path(xsd_rel))
@@ -797,7 +800,7 @@ class FacturxAnalysis(models.Model):
         elif flavor == 'cdar':
             vals['doc_type'] = 'cdar'
             vals['xml_profile'] = 'cdar_ctc_fr'
-            xsd_rel = 'facturx_validator/schemas/CDAR/XSD/CrossDomainAcknowledgementAndResponse_100pD22B.xsd'
+            xsd_rel = 'facturx_validator/schemas/FNFE_RFE_INVOICE/CDAR/1xsd-CDAR_D22B_uncoupled/CrossDomainAcknowledgementAndResponse_100pD22B.xsd'
             try:
                 xsd_doc = etree.parse(self.file_path(xsd_rel))
                 etree.XMLSchema(xsd_doc).assertValid(xml_root)
