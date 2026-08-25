@@ -58,7 +58,7 @@
                 <group name="errors" string="Errors" invisible="state == 'done' and valid == True">
                     <field name="error_group" nolabel="1">
                        <list>
-                            <field name="error_group"/>
+                            <field name="error_ids"/>
                             <field name="name"/>
                             <field name="comment"/>
                        </list>
