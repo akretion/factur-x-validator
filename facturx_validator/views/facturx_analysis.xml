@@ -55,15 +55,43 @@
                         <field name="xml_orderx_type" invisible="doc_type != 'orderx'"/>
                     </group>
                 </group>
-                <group name="errors" string="Errors" invisible="state == 'done' and valid == True">
-                    <field name="error_ids" nolabel="1">
-                       <list>
-                            <field name="error_group"/>
+                <div name="errors" invisible="state == 'done' and valid == True">
+                    <separator string="PDF/A-3 Errors" invisible="not error_pdfa3_ids"/>
+                    <field name="error_pdfa3_ids" nolabel="1" invisible="not error_pdfa3_ids">
+                        <list editable="false" create="false" delete="false">
                             <field name="name"/>
                             <field name="comment"/>
-                       </list>
+                        </list>
                     </field>
-                </group>
+                    <separator string="XMP Errors" invisible="not error_xmp_ids"/>
+                    <field name="error_xmp_ids" nolabel="1" invisible="not error_xmp_ids">
+                        <list editable="false" create="false" delete="false">
+                            <field name="name"/>
+                            <field name="comment"/>
+                        </list>
+                    </field>
+                    <separator string="XML XSD Errors" invisible="not error_xml_ids"/>
+                    <field name="error_xml_ids" nolabel="1" invisible="not error_xml_ids">
+                        <list editable="false" create="false" delete="false">
+                            <field name="name"/>
+                            <field name="comment"/>
+                        </list>
+                    </field>
+                    <separator string="XML Schematron Profile Errors" invisible="not error_schematron_profile_ids"/>
+                    <field name="error_schematron_profile_ids" nolabel="1" invisible="not error_schematron_profile_ids">
+                        <list editable="false" create="false" delete="false">
+                            <field name="name"/>
+                            <field name="comment"/>
+                        </list>
+                    </field>
+                    <separator string="XML Schematron BR-FR Errors" invisible="not error_schematron_br_fr_ids"/>
+                    <field name="error_schematron_br_fr_ids" nolabel="1" invisible="not error_schematron_br_fr_ids">
+                        <list editable="false" create="false" delete="false">
+                            <field name="name"/>
+                            <field name="comment"/>
+                        </list>
+                    </field>
+                </div>
             </sheet>
         </form>
     </field>

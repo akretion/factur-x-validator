@@ -232,6 +232,29 @@ class FacturxAnalysis(models.Model):
     error_ids = fields.One2many(
         'facturx.analysis.error', 'parent_id', string='Errors',
         readonly=True)
+    # Split of error_ids per error_group: the embedded list widget of a
+    # one2many field cannot group its rows in the form view (no native
+    # group_by support for x2many list views), so we expose one filtered
+    # sub-list per group and let the view show each one under its own
+    # header, matching the split already done for the printed report
+    # in report_get_errors().
+    error_pdfa3_ids = fields.One2many(
+        'facturx.analysis.error', 'parent_id', string='PDF/A-3 Errors',
+        compute='_compute_error_ids_by_group')
+    error_xmp_ids = fields.One2many(
+        'facturx.analysis.error', 'parent_id', string='XMP Errors',
+        compute='_compute_error_ids_by_group')
+    error_xml_ids = fields.One2many(
+        'facturx.analysis.error', 'parent_id', string='XML XSD Errors',
+        compute='_compute_error_ids_by_group')
+    error_schematron_profile_ids = fields.One2many(
+        'facturx.analysis.error', 'parent_id',
+        string='XML Schematron Profile Errors',
+        compute='_compute_error_ids_by_group')
+    error_schematron_br_fr_ids = fields.One2many(
+        'facturx.analysis.error', 'parent_id',
+        string='XML Schematron BR-FR Errors',
+        compute='_compute_error_ids_by_group')
     xmp_file = fields.Binary(string='XMP File', readonly=True, copy=False)
     xmp_filename = fields.Char(readonly=True, copy=False)
     xml_file = fields.Binary(string='XML File', readonly=True, copy=False)
@@ -256,6 +279,20 @@ class FacturxAnalysis(models.Model):
             vals['name'] = self.env['ir.sequence'].next_by_code(
                 'facturx.analysis')
         return super(FacturxAnalysis, self).create(vals)
+
+    @api.depends('error_ids.error_group')
+    def _compute_error_ids_by_group(self):
+        for rec in self:
+            rec.error_pdfa3_ids = rec.error_ids.filtered(
+                lambda e: e.error_group == '1_pdfa3')
+            rec.error_xmp_ids = rec.error_ids.filtered(
+                lambda e: e.error_group == '2_xmp')
+            rec.error_xml_ids = rec.error_ids.filtered(
+                lambda e: e.error_group == '3_xml')
+            rec.error_schematron_profile_ids = rec.error_ids.filtered(
+                lambda e: e.error_group == '4_xml_schematron_profile')
+            rec.error_schematron_br_fr_ids = rec.error_ids.filtered(
+                lambda e: e.error_group == '5_xml_schematron_br_fr')
 
     def back_to_draft(self):
         self.ensure_one()
