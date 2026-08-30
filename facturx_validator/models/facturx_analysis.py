@@ -224,6 +224,14 @@ class FacturxAnalysis(models.Model):
         'XML valid against XSD', readonly=True, copy=False)
     xml_schematron_valid = fields.Boolean(
         'XML valid against Schematron', readonly=True, copy=False)
+    # Per-pass schematron result: pass 1 is the profile schematron
+    # (4_xml_schematron_profile), pass 2 is the systematic BR-FR schematron
+    # (5_xml_schematron_br_fr). They must stay separate even when a pass
+    # finds no error, so each conformance result can be reported on its own.
+    xml_schematron_profile_valid = fields.Boolean(
+        'XML valid against Profile Schematron', readonly=True, copy=False)
+    xml_schematron_br_fr_valid = fields.Boolean(
+        'XML valid against BR-FR Schematron', readonly=True, copy=False)
     valid = fields.Boolean('Fully Valid', readonly=True, copy=False)
     xmp_profile = fields.Selection(
         PROFILES, string='XMP Profile', readonly=True, copy=False)
@@ -302,6 +310,8 @@ class FacturxAnalysis(models.Model):
             'xmp_valid': False,
             'xml_valid': False,
             'xml_schematron_valid': False,
+            'xml_schematron_profile_valid': False,
+            'xml_schematron_br_fr_valid': False,
             'valid': False,
             'xmp_profile': False,
             'xml_profile': False,
@@ -453,7 +463,11 @@ class FacturxAnalysis(models.Model):
             self.analyse_xml_schematron_cdar(vals, xml_bytes, errors, prefix)
         if not errors['3_xml']:
             vals['xml_valid'] = True
-        if not errors['4_xml_schematron_profile'] and not errors['5_xml_schematron_br_fr']:
+        if not errors['4_xml_schematron_profile']:
+            vals['xml_schematron_profile_valid'] = True
+        if not errors['5_xml_schematron_br_fr']:
+            vals['xml_schematron_br_fr_valid'] = True
+        if vals.get('xml_schematron_profile_valid') and vals.get('xml_schematron_br_fr_valid'):
             vals['xml_schematron_valid'] = True
         logger.info(
             'vals after schematron: xml_valid=%s xml_schematron_valid=%s valid=%s sch_errors=%d',

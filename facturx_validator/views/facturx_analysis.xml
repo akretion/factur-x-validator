@@ -48,6 +48,8 @@
                         <field name="xmp_valid" invisible="file_type != 'pdf'"/>
                         <field name="xml_valid"/>
                         <field name="xml_schematron_valid" invisible="xml_profile not in ('facturx_minimum', 'facturx_basicwl', 'facturx_basic', 'facturx_en16931', 'facturx_extended', 'facturx_extended_ctc_fr', 'facturx_107_minimum', 'facturx_107_basicwl', 'facturx_107_basic', 'facturx_107_en16931', 'facturx_107_extended', 'orderx_basic', 'orderx_comfort', 'orderx_extended', 'ubl_en16931', 'ubl_extended_ctc_fr', 'ubl_extended', 'cdar_ctc_fr', 'cii_en16931', 'cii_extended_ctc_fr', 'cii_extended')"/>
+                        <field name="xml_schematron_profile_valid" string="Schematron Profile valid" invisible="xml_profile not in ('facturx_minimum', 'facturx_basicwl', 'facturx_basic', 'facturx_en16931', 'facturx_extended', 'facturx_extended_ctc_fr', 'facturx_107_minimum', 'facturx_107_basicwl', 'facturx_107_basic', 'facturx_107_en16931', 'facturx_107_extended', 'orderx_basic', 'orderx_comfort', 'orderx_extended', 'ubl_en16931', 'ubl_extended_ctc_fr', 'ubl_extended', 'cdar_ctc_fr', 'cii_en16931', 'cii_extended_ctc_fr', 'cii_extended')"/>
+                        <field name="xml_schematron_br_fr_valid" string="Schematron BR-FR valid" invisible="xml_profile not in ('facturx_basicwl', 'facturx_basic', 'facturx_en16931', 'facturx_extended', 'facturx_extended_ctc_fr', 'facturx_107_basicwl', 'facturx_107_basic', 'facturx_107_en16931', 'facturx_107_extended', 'ubl_en16931', 'ubl_extended_ctc_fr', 'ubl_extended', 'cii_en16931', 'cii_extended_ctc_fr', 'cii_extended')"/>
                         <field name="xmp_profile" invisible="file_type != 'pdf'"/>
                         <field name="xml_profile"/>
                         <field name="afrelationship" invisible="file_type != 'pdf'"/>
@@ -115,6 +117,8 @@
             <field name="xmp_valid" invisible="file_type != 'pdf'" optional="hide"/>
             <field name="xml_valid" optional="hide"/>
             <field name="xml_schematron_valid" invisible="xml_profile not in ('facturx_minimum', 'facturx_basicwl', 'facturx_basic', 'facturx_en16931', 'facturx_extended', 'facturx_extended_ctc_fr', 'orderx_basic', 'orderx_comfort', 'orderx_extended', 'ubl_en16931', 'ubl_extended_ctc_fr', 'ubl_extended', 'cdar_ctc_fr', 'cii_en16931', 'cii_extended_ctc_fr', 'cii_extended')" optional="hide"/>
+            <field name="xml_schematron_profile_valid" string="Schematron Profile" optional="hide"/>
+            <field name="xml_schematron_br_fr_valid" string="Schematron BR-FR" optional="hide"/>
             <field name="valid"/>
             <field name="date"/>
             <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'done'"/>
