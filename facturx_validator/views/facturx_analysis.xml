@@ -50,6 +50,7 @@
                         <field name="xml_schematron_valid" invisible="xml_profile not in ('facturx_minimum', 'facturx_basicwl', 'facturx_basic', 'facturx_en16931', 'facturx_extended', 'facturx_extended_ctc_fr', 'facturx_107_minimum', 'facturx_107_basicwl', 'facturx_107_basic', 'facturx_107_en16931', 'facturx_107_extended', 'orderx_basic', 'orderx_comfort', 'orderx_extended', 'ubl_en16931', 'ubl_extended_ctc_fr', 'ubl_extended', 'cdar_ctc_fr', 'cii_en16931', 'cii_extended_ctc_fr', 'cii_extended')"/>
                         <field name="xml_schematron_profile_valid" string="Schematron Profile valid" invisible="xml_profile not in ('facturx_minimum', 'facturx_basicwl', 'facturx_basic', 'facturx_en16931', 'facturx_extended', 'facturx_extended_ctc_fr', 'facturx_107_minimum', 'facturx_107_basicwl', 'facturx_107_basic', 'facturx_107_en16931', 'facturx_107_extended', 'orderx_basic', 'orderx_comfort', 'orderx_extended', 'ubl_en16931', 'ubl_extended_ctc_fr', 'ubl_extended', 'cdar_ctc_fr', 'cii_en16931', 'cii_extended_ctc_fr', 'cii_extended')"/>
                         <field name="xml_schematron_br_fr_valid" string="Schematron BR-FR valid" invisible="xml_profile not in ('facturx_basicwl', 'facturx_basic', 'facturx_en16931', 'facturx_extended', 'facturx_extended_ctc_fr', 'facturx_107_basicwl', 'facturx_107_basic', 'facturx_107_en16931', 'facturx_107_extended', 'ubl_en16931', 'ubl_extended_ctc_fr', 'ubl_extended', 'cii_en16931', 'cii_extended_ctc_fr', 'cii_extended')"/>
+                        <field name="nonblocking_count" string="Schematron Warnings / Info" invisible="not nonblocking_count"/>
                         <field name="xmp_profile" invisible="file_type != 'pdf'"/>
                         <field name="xml_profile"/>
                         <field name="afrelationship" invisible="file_type != 'pdf'"/>
@@ -57,38 +58,48 @@
                         <field name="xml_orderx_type" invisible="doc_type != 'orderx'"/>
                     </group>
                 </group>
-                <div name="errors" invisible="state == 'done' and valid == True">
+                <div name="errors" invisible="not error_ids">
                     <separator string="PDF/A-3 Errors" invisible="not error_pdfa3_ids"/>
                     <field name="error_pdfa3_ids" nolabel="1" invisible="not error_pdfa3_ids">
-                        <list create="false" delete="false">
+                        <list create="false" delete="false" decoration-warning="severity == 'warning'" decoration-muted="severity == 'info'">
+                            <field name="severity" widget="badge" decoration-danger="severity == 'error'" decoration-warning="severity == 'warning'" decoration-info="severity == 'info'"/>
+                            <field name="rule_id" optional="hide"/>
                             <field name="name"/>
                             <field name="comment"/>
                         </list>
                     </field>
                     <separator string="XMP Errors" invisible="not error_xmp_ids"/>
                     <field name="error_xmp_ids" nolabel="1" invisible="not error_xmp_ids">
-                        <list create="false" delete="false">
+                        <list create="false" delete="false" decoration-warning="severity == 'warning'" decoration-muted="severity == 'info'">
+                            <field name="severity" widget="badge" decoration-danger="severity == 'error'" decoration-warning="severity == 'warning'" decoration-info="severity == 'info'"/>
+                            <field name="rule_id" optional="hide"/>
                             <field name="name"/>
                             <field name="comment"/>
                         </list>
                     </field>
                     <separator string="XML XSD Errors" invisible="not error_xml_ids"/>
                     <field name="error_xml_ids" nolabel="1" invisible="not error_xml_ids">
-                        <list create="false" delete="false">
+                        <list create="false" delete="false" decoration-warning="severity == 'warning'" decoration-muted="severity == 'info'">
+                            <field name="severity" widget="badge" decoration-danger="severity == 'error'" decoration-warning="severity == 'warning'" decoration-info="severity == 'info'"/>
+                            <field name="rule_id" optional="hide"/>
                             <field name="name"/>
                             <field name="comment"/>
                         </list>
                     </field>
-                    <separator string="XML Schematron Profile Errors" invisible="not error_schematron_profile_ids"/>
+                    <separator string="XML Schematron Profile Messages" invisible="not error_schematron_profile_ids"/>
                     <field name="error_schematron_profile_ids" nolabel="1" invisible="not error_schematron_profile_ids">
-                        <list create="false" delete="false">
+                        <list create="false" delete="false" decoration-warning="severity == 'warning'" decoration-muted="severity == 'info'">
+                            <field name="severity" widget="badge" decoration-danger="severity == 'error'" decoration-warning="severity == 'warning'" decoration-info="severity == 'info'"/>
+                            <field name="rule_id" optional="show"/>
                             <field name="name"/>
                             <field name="comment"/>
                         </list>
                     </field>
-                    <separator string="XML Schematron BR-FR Errors" invisible="not error_schematron_br_fr_ids"/>
+                    <separator string="XML Schematron BR-FR Messages" invisible="not error_schematron_br_fr_ids"/>
                     <field name="error_schematron_br_fr_ids" nolabel="1" invisible="not error_schematron_br_fr_ids">
-                        <list create="false" delete="false">
+                        <list create="false" delete="false" decoration-warning="severity == 'warning'" decoration-muted="severity == 'info'">
+                            <field name="severity" widget="badge" decoration-danger="severity == 'error'" decoration-warning="severity == 'warning'" decoration-info="severity == 'info'"/>
+                            <field name="rule_id" optional="show"/>
                             <field name="name"/>
                             <field name="comment"/>
                         </list>
@@ -119,6 +130,7 @@
             <field name="xml_schematron_valid" invisible="xml_profile not in ('facturx_minimum', 'facturx_basicwl', 'facturx_basic', 'facturx_en16931', 'facturx_extended', 'facturx_extended_ctc_fr', 'orderx_basic', 'orderx_comfort', 'orderx_extended', 'ubl_en16931', 'ubl_extended_ctc_fr', 'ubl_extended', 'cdar_ctc_fr', 'cii_en16931', 'cii_extended_ctc_fr', 'cii_extended')" optional="hide"/>
             <field name="xml_schematron_profile_valid" string="Schematron Profile" optional="hide"/>
             <field name="xml_schematron_br_fr_valid" string="Schematron BR-FR" optional="hide"/>
+            <field name="nonblocking_count" string="Warnings / Info" optional="hide"/>
             <field name="valid"/>
             <field name="date"/>
             <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'done'"/>
@@ -148,6 +160,7 @@
             <separator/>
             <filter name="valid" string="Valid" domain="[('state', '=', 'done'), ('valid', '=', True)]" />
             <filter name="invalid" string="Not Valid" domain="[('state', '=', 'done'), ('valid', '=', False)]" />
+            <filter name="with_warnings" string="With Warnings / Info" domain="[('nonblocking_count', '>', 0)]" />
             <group string="Group By" name="groupby">
                 <filter name="partner_groupby" string="Partner" context="{'group_by': 'partner_id'}"/>
                 <filter name="date_groupby" string="Analysis Date" context="{'group_by': 'date'}"/>

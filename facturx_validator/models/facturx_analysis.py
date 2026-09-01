@@ -280,6 +280,12 @@ class FacturxAnalysis(models.Model):
     xmp_orderx_type = fields.Selection(
         ORDERX_TYPES, string='XMP Order-X Type', readonly=True, copy=False)
     afrelationship = fields.Char(string='AFRelationship', readonly=True, copy=False)
+    # Count of non-blocking schematron messages (severity 'warning' or 'info').
+    # A document can be Fully Valid and still carry a non-zero count.
+    # Stored so it can be used in search filters / list columns.
+    nonblocking_count = fields.Integer(
+        string='Warnings / Info', compute='_compute_nonblocking_count',
+        store=True)
 
     @api.model
     def create(self, vals):
@@ -301,6 +307,12 @@ class FacturxAnalysis(models.Model):
                 lambda e: e.error_group == '4_xml_schematron_profile')
             rec.error_schematron_br_fr_ids = rec.error_ids.filtered(
                 lambda e: e.error_group == '5_xml_schematron_br_fr')
+
+    @api.depends('error_ids.severity')
+    def _compute_nonblocking_count(self):
+        for rec in self:
+            rec.nonblocking_count = len(rec.error_ids.filtered(
+                lambda e: e.severity != 'error'))
 
     def back_to_draft(self):
         self.ensure_one()
@@ -463,9 +475,13 @@ class FacturxAnalysis(models.Model):
             self.analyse_xml_schematron_cdar(vals, xml_bytes, errors, prefix)
         if not errors['3_xml']:
             vals['xml_valid'] = True
-        if not errors['4_xml_schematron_profile']:
+        # A schematron pass is valid when it has no blocking (severity 'error')
+        # entry; 'warning' and 'info' entries are reported but non-blocking.
+        def _blocking(err_list):
+            return [e for e in err_list if e.get('severity', 'error') == 'error']
+        if not _blocking(errors['4_xml_schematron_profile']):
             vals['xml_schematron_profile_valid'] = True
-        if not errors['5_xml_schematron_br_fr']:
+        if not _blocking(errors['5_xml_schematron_br_fr']):
             vals['xml_schematron_br_fr_valid'] = True
         if vals.get('xml_schematron_profile_valid') and vals.get('xml_schematron_br_fr_valid'):
             vals['xml_schematron_valid'] = True
@@ -1048,6 +1064,8 @@ class FacturxAnalysis(models.Model):
             namespaces=namespaces)
         logger.info('schematron_result_analysis: %d error(s) found', len(sch_errors))
         for sch_error in sch_errors:
+            # 'failed-assert' or 'successful-report'
+            localname = etree.QName(sch_error).localname
             detail_xpath = sch_error.xpath("*[local-name() = 'text']", namespaces=namespaces)
             if detail_xpath:
                 comment = detail_xpath[0].text and detail_xpath[0].text.strip()
@@ -1055,11 +1073,26 @@ class FacturxAnalysis(models.Model):
                 if location:
                     comment += '\nLocation of the error: %s' % location
                 if comment:
-                    # analysis via java for Factur-X will have an 'id' attrib
-                    # but analysis via lxml for Order-X won't, so we use the 'test' attrib
+                    # The 'flag' attribute is un-namespaced in the SVRL output.
+                    # A failed-assert flagged "warning" and any successful-report
+                    # (Schematron <report>) are non-blocking; everything else
+                    # (failed-assert with no flag or flag="fatal") is blocking.
+                    flag = (sch_error.attrib.get('flag') or '').strip().lower()
+                    if flag == 'warning':
+                        severity = 'warning'
+                    elif localname == 'successful-report':
+                        severity = 'info'
+                    else:
+                        severity = 'error'
+                    # Schematron analysis via Saxon has an 'id' attrib (the rule
+                    # id, more useful than the raw 'test' xpath); the lxml path
+                    # for Order-X has none, so we fall back to 'test'.
+                    rule_id = sch_error.attrib.get('id') or ''
                     errors[group].append({
-                        'name': sch_error.attrib.get('test') or "Schematron error",
+                        'name': rule_id or sch_error.attrib.get('test') or "Schematron error",
                         'comment': comment,
+                        'severity': severity,
+                        'rule_id': rule_id or False,
                         })
 
     def run_verapdf_rest(self, vals, f):
@@ -1256,13 +1289,26 @@ class FacturxAnalysis(models.Model):
         action = self.env.ref('facturx_validator.facturx_analysis_report').with_context({'discard_logo_check': True}).report_action(self)
         return action
 
+    # Prefix shown before a non-blocking schematron message in the printed
+    # report (the py3o template renders 'name' as-is).
+    SEVERITY_REPORT_PREFIX = {
+        'warning': '[WARNING] ',
+        'info': '[INFO] ',
+    }
+
     def report_get_errors(self):
         self.ensure_one()
         faeo = self.env['facturx.analysis.error']
         group2label = dict(faeo.fields_get('error_group', 'selection')['error_group']['selection'])
         res = defaultdict(list)
         for err in self.error_ids:
-            res[group2label[err.error_group]].append({'name': err.name, 'comment': err.comment})
+            prefix = self.SEVERITY_REPORT_PREFIX.get(err.severity, '')
+            res[group2label[err.error_group]].append({
+                'name': '%s%s' % (prefix, err.name or ''),
+                'comment': err.comment,
+                'severity': err.severity,
+                'rule_id': err.rule_id,
+            })
         return res
 
     # copy-pasted from Odoo v15
@@ -1299,7 +1345,8 @@ class FacturxAnalysis(models.Model):
 class FacturxAnalysisError(models.Model):
     _name = 'facturx.analysis.error'
     _description = 'Factur-X Analysis Errors'
-    _order = 'parent_id, error_group, id'
+    # 'error' < 'info' < 'warning' alphabetically, so blocking rows list first
+    _order = 'parent_id, error_group, severity, id'
     parent_id = fields.Many2one('facturx.analysis', ondelete='cascade')
     # It's not a good idea to name that field 'group' because
     # it's a special word in SQL
@@ -1313,3 +1360,15 @@ class FacturxAnalysisError(models.Model):
     ], string='Group', required=True)
     name = fields.Char(required=True)
     comment = fields.Text()
+    # Schematron assertions can be non-blocking: a failed-assert with
+    # flag="warning" and any successful-report (Schematron <report>) must not
+    # invalidate the document. Everything else stays 'error' (blocking).
+    severity = fields.Selection([
+        ('error', 'Error'),
+        ('warning', 'Warning'),
+        ('info', 'Info'),
+    ], string='Severity', required=True, default='error', index=True)
+    rule_id = fields.Char(
+        string='Rule ID',
+        help="Schematron rule id (svrl @id), e.g. BR-FXEXT-AE-08ini, "
+             "when available.")
