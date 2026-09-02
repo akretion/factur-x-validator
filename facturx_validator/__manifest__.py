@@ -2,13 +2,13 @@
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 
 {
-    'name': 'Factur-X Validator 14.2.1',
-    'version': '14.2.1',
+    'name': 'Factur-X Validator 18.0.1',
+    'version': '18.0.1',
     'category': 'Tools',
     'license': 'AGPL-3',
     'summary': 'Analyse and validate Factur-X invoices',
     'author': 'Akretion',
-    'website': 'https://github.com/ERK-SMV/factur-x-validator_UBL-CDAR-CTC/tree/14.1.3-all-upgrade',
+    'website': 'https://github.com/akretion/factur-x-validator/tree/18.0',
     'depends': [
         'mail',
         'base_company_extension',

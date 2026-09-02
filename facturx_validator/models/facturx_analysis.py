@@ -2,7 +2,7 @@
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 
 from odoo import api, fields, models, _
-from odoo.tools import file_open
+from odoo.tools import file_open, file_path
 from odoo.exceptions import UserError
 import lxml.etree as ET
 import requests
@@ -22,11 +22,6 @@ from pypdf.generic import IndirectObject
 from facturx import xml_check_xsd, get_flavor as _get_flavor_orig, get_orderx_type
 import logging
 logger = logging.getLogger(__name__)
-
-# for file_path
-# to remove when migrating to newer version
-import odoo
-from odoo.tools import config
 
 FACTURX_FILENAME = 'factur-x.xml'
 ORDERX_FILENAME = 'order-x.xml'
@@ -168,6 +163,14 @@ ORDERX_xmp2level = {
     'EXTENDED': 'orderx_extended',
     }
 
+# Prefix prepended to a non-blocking schematron message in the printed report
+# (the py3o template renders 'name' as-is). 'info' is kept for safety even
+# though info-level messages are currently dropped in schematron_result_analysis.
+SEVERITY_REPORT_PREFIX = {
+    'warning': '[WARNING] ',
+    'info': '[INFO] ',
+    }
+
 
 def get_flavor(xml_etree):
     """Extension locale de get_flavor() (upstream: akretion/factur-x).
@@ -224,7 +227,7 @@ class FacturxAnalysis(models.Model):
         'XML valid against XSD', readonly=True, copy=False)
     xml_schematron_valid = fields.Boolean(
         'XML valid against Schematron', readonly=True, copy=False)
-    # Per-pass schematron result: pass 1 is the profile schematron
+    # Per-pass schematron result: pass 1 is the Profile schematron
     # (4_xml_schematron_profile), pass 2 is the systematic BR-FR schematron
     # (5_xml_schematron_br_fr). They must stay separate even when a pass
     # finds no error, so each conformance result can be reported on its own.
@@ -284,7 +287,7 @@ class FacturxAnalysis(models.Model):
     # A document can be Fully Valid and still carry a non-zero count.
     # Stored so it can be used in search filters / list columns.
     nonblocking_count = fields.Integer(
-        string='Warnings / Info', compute='_compute_nonblocking_count',
+        string='Warnings', compute='_compute_nonblocking_count',
         store=True)
 
     @api.model
@@ -856,7 +859,7 @@ class FacturxAnalysis(models.Model):
                 'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/1xsd_UBL2.1/maindoc/UBL-Invoice-2.1.xsd'
             )
             try:
-                xsd_doc = etree.parse(self.file_path(xsd_rel))
+                xsd_doc = etree.parse(file_path(xsd_rel))
                 etree.XMLSchema(xsd_doc).assertValid(xml_root)
             except Exception as e:
                 errors['3_xml'].append({
@@ -869,7 +872,7 @@ class FacturxAnalysis(models.Model):
             vals['xml_profile'] = 'cdar_ctc_fr'
             xsd_rel = 'facturx_validator/schemas/FNFE_RFE_INVOICE/CDAR/1xsd-CDAR_D22B_uncoupled/CrossDomainAcknowledgementAndResponse_100pD22B.xsd'
             try:
-                xsd_doc = etree.parse(self.file_path(xsd_rel))
+                xsd_doc = etree.parse(file_path(xsd_rel))
                 etree.XMLSchema(xsd_doc).assertValid(xml_root)
             except Exception as e:
                 errors['3_xml'].append({
@@ -997,7 +1000,7 @@ class FacturxAnalysis(models.Model):
                 })
             return
         stylesheet_file_rel = XSL_PATHS[profile]
-        stylesheet_file = self.file_path(stylesheet_file_rel)
+        stylesheet_file = file_path(stylesheet_file_rel)
         logger.info('Start schematron validation (saxon) for profile %s', profile)
         logger.debug('stylesheet_file absolute path=%s', stylesheet_file)
         with NamedTemporaryFile('wb+', prefix=prefix, suffix='.xml') as xml_file:
@@ -1074,16 +1077,23 @@ class FacturxAnalysis(models.Model):
                     comment += '\nLocation of the error: %s' % location
                 if comment:
                     # The 'flag' attribute is un-namespaced in the SVRL output.
-                    # A failed-assert flagged "warning" and any successful-report
-                    # (Schematron <report>) are non-blocking; everything else
-                    # (failed-assert with no flag or flag="fatal") is blocking.
+                    # flag="warning" is a non-blocking warning; a plain
+                    # successful-report (Schematron <report> with no flag) is
+                    # purely informational; everything else (failed-assert with
+                    # no flag or flag="fatal") is a blocking error.
                     flag = (sch_error.attrib.get('flag') or '').strip().lower()
                     if flag == 'warning':
                         severity = 'warning'
-                    elif localname == 'successful-report':
+                    elif flag in ('info', 'information') or (
+                            localname == 'successful-report' and not flag):
                         severity = 'info'
                     else:
                         severity = 'error'
+                    # Info-level Schematron messages are noise for the end user
+                    # and never affect validity: don't record them at all, so
+                    # the report focuses on warnings and fatal errors only.
+                    if severity == 'info':
+                        continue
                     # Schematron analysis via Saxon has an 'id' attrib (the rule
                     # id, more useful than the raw 'test' xpath); the lxml path
                     # for Order-X has none, so we fall back to 'test'.
@@ -1289,20 +1299,13 @@ class FacturxAnalysis(models.Model):
         action = self.env.ref('facturx_validator.facturx_analysis_report').with_context({'discard_logo_check': True}).report_action(self)
         return action
 
-    # Prefix shown before a non-blocking schematron message in the printed
-    # report (the py3o template renders 'name' as-is).
-    SEVERITY_REPORT_PREFIX = {
-        'warning': '[WARNING] ',
-        'info': '[INFO] ',
-    }
-
     def report_get_errors(self):
         self.ensure_one()
         faeo = self.env['facturx.analysis.error']
         group2label = dict(faeo.fields_get('error_group', 'selection')['error_group']['selection'])
         res = defaultdict(list)
         for err in self.error_ids:
-            prefix = self.SEVERITY_REPORT_PREFIX.get(err.severity, '')
+            prefix = SEVERITY_REPORT_PREFIX.get(err.severity, '')
             res[group2label[err.error_group]].append({
                 'name': '%s%s' % (prefix, err.name or ''),
                 'comment': err.comment,
@@ -1310,37 +1313,6 @@ class FacturxAnalysis(models.Model):
                 'rule_id': err.rule_id,
             })
         return res
-
-    # copy-pasted from Odoo v15
-    # to remove when migrating to newer version
-    # This method is Copyright Odoo SA
-    def file_path(self, file_path, filter_ext=('',), env=None):
-        root_path = os.path.abspath(config['root_path'])
-        addons_paths = odoo.addons.__path__ + [root_path]
-        
-        if env and hasattr(env.transaction, '__file_open_tmp_paths'):
-            addons_paths += env.transaction.__file_open_tmp_paths
-        is_abs = os.path.isabs(file_path)
-        normalized_path = os.path.normpath(os.path.normcase(file_path))
-
-        if filter_ext and not normalized_path.lower().endswith(filter_ext):
-            raise ValueError("Unsupported file: " + file_path)
-
-        # ignore leading 'addons/' if present, it's the final component of root_path, but
-        # may sometimes be included in relative paths
-        if normalized_path.startswith('addons' + os.sep):
-            normalized_path = normalized_path[7:]
-
-        for addons_dir in addons_paths:
-            # final path sep required to avoid partial match
-            parent_path = os.path.normpath(os.path.normcase(addons_dir)) + os.sep
-            fpath = (normalized_path if is_abs else
-                     os.path.normpath(os.path.normcase(os.path.join(parent_path, normalized_path))))
-            if fpath.startswith(parent_path) and os.path.exists(fpath):
-                return fpath
-
-        raise FileNotFoundError("File not found: " + file_path)
-
 
 class FacturxAnalysisError(models.Model):
     _name = 'facturx.analysis.error'
