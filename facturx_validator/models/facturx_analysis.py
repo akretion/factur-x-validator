@@ -163,13 +163,18 @@ ORDERX_xmp2level = {
     'EXTENDED': 'orderx_extended',
     }
 
-# Prefix prepended to a non-blocking schematron message in the printed report
-# (the py3o template renders 'name' as-is). 'info' is kept for safety even
-# though info-level messages are currently dropped in schematron_result_analysis.
+# Prefix prepended to a schematron message name in the printed report, so the
+# severity is visible there the way the GUI shows it as a badge column (the
+# py3o template renders 'name' as-is). Only applied to the schematron groups,
+# whose sections mix 'error' and 'warning'; the other groups are all 'error'
+# and their section title already says so. 'info' is kept for safety even
+# though info-level messages are dropped in schematron_result_analysis.
 SEVERITY_REPORT_PREFIX = {
+    'error': '[ERROR] ',
     'warning': '[WARNING] ',
     'info': '[INFO] ',
     }
+SCHEMATRON_GROUPS = ('4_xml_schematron_profile', '5_xml_schematron_br_fr')
 
 
 def get_flavor(xml_etree):
@@ -1305,7 +1310,9 @@ class FacturxAnalysis(models.Model):
         group2label = dict(faeo.fields_get('error_group', 'selection')['error_group']['selection'])
         res = defaultdict(list)
         for err in self.error_ids:
-            prefix = SEVERITY_REPORT_PREFIX.get(err.severity, '')
+            prefix = ''
+            if err.error_group in SCHEMATRON_GROUPS:
+                prefix = SEVERITY_REPORT_PREFIX.get(err.severity, '')
             res[group2label[err.error_group]].append({
                 'name': '%s%s' % (prefix, err.name or ''),
                 'comment': err.comment,
@@ -1322,13 +1329,17 @@ class FacturxAnalysisError(models.Model):
     parent_id = fields.Many2one('facturx.analysis', ondelete='cascade')
     # It's not a good idea to name that field 'group' because
     # it's a special word in SQL
+    # These labels double as the section headers of the printed report
+    # (report_get_errors -> group2label), so they must match the form-view
+    # separators one-for-one. "Messages" (not "Errors") for the schematron
+    # groups because those can carry non-blocking 'warning' rows too.
     error_group = fields.Selection([
-        ('1_pdfa3', 'PDF/A-3'),
-        ('2_xmp', 'XMP'),
-        ('3_xml', 'XML XSD'),
-        ('4_xml_schematron_profile', 'XML Schematron Profile'),
-        ('5_xml_schematron_br_fr', 'XML Schematron BR-FR')
-#        ('6_xml_schematron_cpro', 'XML Schematron CPRO')
+        ('1_pdfa3', 'PDF/A-3 Errors'),
+        ('2_xmp', 'XMP Errors'),
+        ('3_xml', 'XML XSD Errors'),
+        ('4_xml_schematron_profile', 'XML Schematron Profile Messages'),
+        ('5_xml_schematron_br_fr', 'XML Schematron BR-FR Messages')
+#        ('6_xml_schematron_cpro', 'XML Schematron CPRO Messages')
     ], string='Group', required=True)
     name = fields.Char(required=True)
     comment = fields.Text()
