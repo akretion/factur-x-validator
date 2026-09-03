@@ -1,0 +1,58 @@
+﻿<?xml version='1.0' encoding='UTF-8'?>
+<rsm:CrossIndustryInvoice xmlns:qdt="urn:un:unece:uncefact:data:standard:QualifiedDataType:100"
+xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100"
+xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+     <rsm:ExchangedDocumentContext>
+          <ram:BusinessProcessSpecifiedDocumentContextParameter>
+               <ram:ID>S1</ram:ID>  <!-- BT-23 (Identifiant de type de processus métier) : S1 -->
+          </ram:BusinessProcessSpecifiedDocumentContextParameter>
+          <ram:GuidelineSpecifiedDocumentContextParameter>
+               <ram:ID>urn:factur-x.eu:1p0:minimum</ram:ID>  <!-- BT-24 (Identification de spécification) : urn:factur-x.eu:1p0:minimum -->
+          </ram:GuidelineSpecifiedDocumentContextParameter>
+     </rsm:ExchangedDocumentContext>
+     <rsm:ExchangedDocument>
+          <ram:ID>F20260028</ram:ID>  <!-- BT-1 (Numéro de facture) : F20260028 -->
+          <ram:TypeCode>381</ram:TypeCode>  <!-- BT-3 (Type de facture en code) : 381 -->
+          <ram:IssueDateTime>
+               <udt:DateTimeString format="102">20260131</udt:DateTimeString>  <!-- BT-2 (Date d'émission de la facture) : 20260131 -->
+          </ram:IssueDateTime>
+     </rsm:ExchangedDocument>
+     <rsm:SupplyChainTradeTransaction>
+          <ram:ApplicableHeaderTradeAgreement>
+               <ram:BuyerReference>SERVEXEC</ram:BuyerReference>  <!-- BT-10 (Référence de l’acheteur) : SERVEXEC -->
+               <ram:SellerTradeParty>
+                    <ram:Name>LE FOURNISSEUR</ram:Name>  <!-- BT-27 (Raison sociale du vendeur) : LE FOURNISSEUR -->
+                    <ram:SpecifiedLegalOrganization>
+                         <ram:ID schemeID="0002">123456782</ram:ID>  <!-- BT-30 (Identifiant d’enregistrement légal du vendeur) : 123456782 -->
+                    </ram:SpecifiedLegalOrganization>
+                    <ram:PostalTradeAddress>
+                         <ram:CountryID>FR</ram:CountryID>  <!-- BT-40 (Code de pays du vendeur) : FR -->
+                    </ram:PostalTradeAddress>
+                    <ram:SpecifiedTaxRegistration>
+                         <ram:ID schemeID="VA">FR11123456782</ram:ID>  <!-- BT-31 (Identifiant à la TVA du vendeur) : FR11123456782 -->
+                    </ram:SpecifiedTaxRegistration>
+               </ram:SellerTradeParty>
+               <ram:BuyerTradeParty>
+                    <ram:Name>LE CLIENT</ram:Name>  <!-- BT-44 (Raison sociale de l'acheteur) : LE CLIENT -->
+                    <ram:SpecifiedLegalOrganization>
+                         <ram:ID schemeID="0002">987654321</ram:ID>  <!-- BT-47 (Identifiant d’enregistrement  légal de l'acheteur) : 987654321 -->
+                    </ram:SpecifiedLegalOrganization>
+               </ram:BuyerTradeParty>
+               <ram:BuyerOrderReferencedDocument>
+                    <ram:IssuerAssignedID>PO201925478</ram:IssuerAssignedID>  <!-- BT-13 (Identifiant de bon de commande) : PO201925478 -->
+               </ram:BuyerOrderReferencedDocument>
+          </ram:ApplicableHeaderTradeAgreement>
+<ram:ApplicableHeaderTradeDelivery/>
+          <ram:ApplicableHeaderTradeSettlement>
+               <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>  <!-- BT-5 (Code de devise de facturation) : EUR -->
+               <ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+                    <ram:TaxBasisTotalAmount>100.00</ram:TaxBasisTotalAmount>  <!-- BT-109 (Montant total de la facture hors TVA) : 100.00 -->
+                    <ram:TaxTotalAmount currencyID="EUR">10.00</ram:TaxTotalAmount>  <!-- BT-110 (Montant total de TVA) : 10.00 -->
+                    <ram:GrandTotalAmount>110.00</ram:GrandTotalAmount>  <!-- BT-112 (Montant total de la facture avec TVA comprise) : 110.00 -->
+                    <ram:DuePayableAmount>100.00</ram:DuePayableAmount>  <!-- BT-115 (Montant à payer) : 100.00 -->
+               </ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+          </ram:ApplicableHeaderTradeSettlement>
+     </rsm:SupplyChainTradeTransaction>
+</rsm:CrossIndustryInvoice>

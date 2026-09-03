@@ -1103,15 +1103,22 @@ class FacturxAnalysis(models.Model):
                     # the report focuses on warnings and fatal errors only.
                     if severity == 'info':
                         continue
-                    # Schematron analysis via Saxon has an 'id' attrib (the rule
-                    # id, more useful than the raw 'test' xpath); the lxml path
-                    # for Order-X has none, so we fall back to 'test'.
+                    # Saxon output has an 'id' attrib (the rule id); the lxml
+                    # path for Order-X has none.
                     rule_id = sch_error.attrib.get('id') or ''
+                    # svrl:text usually repeats the id as a "[BR-CO-09]-" prefix;
+                    # drop it, the report already shows the id as the title.
+                    if rule_id and comment.startswith('[%s]' % rule_id):
+                        comment = comment[len(rule_id) + 2:].lstrip(' -')
+                    # name = the assertion kind (failed-assert / successful-report),
+                    # test_condition = its "when"/@test xpath (the condition that
+                    # must hold for the assertion to pass).
                     errors[group].append({
-                        'name': rule_id or sch_error.attrib.get('test') or "Schematron error",
+                        'name': localname or "Schematron error",
                         'comment': comment,
                         'severity': severity,
                         'rule_id': rule_id or False,
+                        'test_condition': sch_error.attrib.get('test') or False,
                         })
 
     def run_verapdf_rest(self, vals, f):
@@ -1314,14 +1321,19 @@ class FacturxAnalysis(models.Model):
         group2label = dict(faeo.fields_get('error_group', 'selection')['error_group']['selection'])
         res = defaultdict(list)
         for err in self.error_ids:
-            prefix = ''
             if err.error_group in SCHEMATRON_GROUPS:
-                prefix = SEVERITY_REPORT_PREFIX.get(err.severity, '')
+                # PDF heading line: 1. severity  2. rule id  3. "when"/@test
+                bits = [SEVERITY_REPORT_PREFIX.get(err.severity, '').strip(),
+                        err.rule_id or '', err.test_condition or '']
+                name = '  '.join(b for b in bits if b)
+            else:
+                name = err.name or ''
             res[group2label[err.error_group]].append({
-                'name': '%s%s' % (prefix, err.name or ''),
+                'name': name,
                 'comment': err.comment,
                 'severity': err.severity,
                 'rule_id': err.rule_id,
+                'test_condition': err.test_condition,
             })
         return res
 
@@ -1359,3 +1371,7 @@ class FacturxAnalysisError(models.Model):
         string='Rule ID',
         help="Schematron rule id (svrl @id), e.g. BR-FXEXT-AE-08ini, "
              "when available.")
+    test_condition = fields.Char(
+        string='When',
+        help="The assertion's 'when'/@test condition: the xpath that must "
+             "hold true for the schematron rule to pass.")
