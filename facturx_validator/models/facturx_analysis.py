@@ -106,6 +106,8 @@ SCH_PATHS = {
     # 'orderx_basic'/'orderx_comfort'/'orderx_extended': dropped - no Order-X schemas in the FNFE_RFE_INVOICE submodule
     # CII (standalone)
     'cii_en16931': 'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EN16931/schematron/EN16931-CII-validation-preprocessed.sch',
+    # cii_extended: no dedicated schematron in the submodule, reuse Factur-X EXTENDED
+    'cii_extended': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/schematron/FACTUR-X_EXTENDED.sch',
     'cii_extended_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EXTENDED-CTC-FR/schematron/EXTENDED-CTC-FR-CII.sch',
     # UBL
     'ubl_en16931': 'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/EN16931/schematron/EN16931-UBL-validation-preprocessed.sch',
@@ -132,6 +134,8 @@ XSL_PATHS = {
     'ubl_extended_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/EXTENDED-CTC-FR/2xslt/EXTENDED-CTC-FR-UBL.xslt',
     # CII
     'cii_en16931':         'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EN16931/2xslt/EN16931-CII-validation.xslt',
+    # cii_extended: no dedicated stylesheet in the submodule, reuse Factur-X EXTENDED
+    'cii_extended':        'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/2xslt/FACTUR-X_EXTENDED.xslt',
     'cii_extended_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EXTENDED-CTC-FR/2xslt/EXTENDED-CTC-FR-CII.xslt',
     # CDAR
     'cdar_ctc_fr':         'facturx_validator/schemas/FNFE_RFE_INVOICE/CDAR/2xslt/BR-FR-CDV-Schematron-CDAR.xslt',
@@ -1327,7 +1331,7 @@ class FacturxAnalysisError(models.Model):
     # 'error' < 'info' < 'warning' alphabetically, so blocking rows list first
     _order = 'parent_id, error_group, severity, id'
     parent_id = fields.Many2one('facturx.analysis', ondelete='cascade')
-    # It's not a good idea to name that field 'group' because
+    # It's/odoo/external-src/France_RFE to name that field 'group' because
     # it's a special word in SQL
     # These labels double as the section headers of the printed report
     # (report_get_errors -> group2label), so they must match the form-view
