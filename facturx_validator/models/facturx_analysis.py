@@ -212,6 +212,12 @@ class FacturxAnalysis(models.Model):
     partner_id = fields.Many2one(
         'res.partner', string='Partner', ondelete='restrict', tracking=True)
     title = fields.Char(string='Title', tracking=True)
+    br_fr_check = fields.Boolean(
+        string='France', default=True, tracking=True,
+        help="Enabled (default): the systematic French CTC rules (BR-FR "
+             "schematron, pass 2) are blocking -- a violation fails the "
+             "analysis. Disabled: the BR-FR schematron still runs and its "
+             "findings are still listed, but only as non-blocking warnings.")
     date = fields.Datetime(string='Analysis Date', readonly=True, copy=False)
     facturx_file = fields.Binary(
         string='File', copy=False)
@@ -491,6 +497,14 @@ class FacturxAnalysis(models.Model):
         # entry; 'warning' and 'info' entries are reported but non-blocking.
         def _blocking(err_list):
             return [e for e in err_list if e.get('severity', 'error') == 'error']
+        # "France" toggle off: the systematic BR-FR schematron (pass 2) still
+        # ran and its findings are still listed, but every blocking entry is
+        # downgraded to a non-blocking 'warning' so it never fails the
+        # analysis (the BR-FR pass then reports as valid).
+        if not self.br_fr_check:
+            for err in errors['5_xml_schematron_br_fr']:
+                if err.get('severity', 'error') == 'error':
+                    err['severity'] = 'warning'
         if not _blocking(errors['4_xml_schematron_profile']):
             vals['xml_schematron_profile_valid'] = True
         if not _blocking(errors['5_xml_schematron_br_fr']):

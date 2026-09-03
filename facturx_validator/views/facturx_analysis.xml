@@ -25,6 +25,7 @@
                 <group name="top">
                     <group name="input" string="Input">
                         <field name="title"/>
+                        <field name="br_fr_check" widget="boolean_toggle" readonly="state == 'done'"/>
                         <field name="partner_id"/>
                         <field name="facturx_file" filename="facturx_filename" readonly="state == 'done'"/>
                         <field name="facturx_filename" invisible="1"/>
@@ -119,6 +120,7 @@
             <field name="name"/>
             <field name="create_uid"/>
             <field name="title"/>
+            <field name="br_fr_check" string="France" optional="hide"/>
             <field name="facturx_filename"/>
             <field name="partner_id" optional="show"/>
             <field name="file_type" widget="badge" decoration-info="file_type == 'xml'"/>
