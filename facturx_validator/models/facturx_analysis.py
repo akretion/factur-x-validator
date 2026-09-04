@@ -215,9 +215,10 @@ class FacturxAnalysis(models.Model):
     br_fr_check = fields.Boolean(
         string='France', default=True, tracking=True,
         help="Enabled (default): the systematic French CTC rules (BR-FR "
-             "schematron, pass 2) are blocking -- a violation fails the "
-             "analysis. Disabled: the BR-FR schematron still runs and its "
-             "findings are still listed, but only as non-blocking warnings.")
+             "schematron, pass 2) run and are blocking -- a violation fails "
+             "the analysis. Disabled: the BR-FR schematron is not run at all, "
+             "it produces no findings and does not enter the schematron "
+             "verdict (only the Profile schematron is then considered).")
     date = fields.Datetime(string='Analysis Date', readonly=True, copy=False)
     facturx_file = fields.Binary(
         string='File', copy=False)
@@ -497,20 +498,19 @@ class FacturxAnalysis(models.Model):
         # entry; 'warning' and 'info' entries are reported but non-blocking.
         def _blocking(err_list):
             return [e for e in err_list if e.get('severity', 'error') == 'error']
-        # "France" toggle off: the systematic BR-FR schematron (pass 2) still
-        # ran and its findings are still listed, but every blocking entry is
-        # downgraded to a non-blocking 'warning' so it never fails the
-        # analysis (the BR-FR pass then reports as valid).
-        if not self.br_fr_check:
-            for err in errors['5_xml_schematron_br_fr']:
-                if err.get('severity', 'error') == 'error':
-                    err['severity'] = 'warning'
         if not _blocking(errors['4_xml_schematron_profile']):
             vals['xml_schematron_profile_valid'] = True
-        if not _blocking(errors['5_xml_schematron_br_fr']):
-            vals['xml_schematron_br_fr_valid'] = True
-        if vals.get('xml_schematron_profile_valid') and vals.get('xml_schematron_br_fr_valid'):
-            vals['xml_schematron_valid'] = True
+        # "France" toggle off: the systematic BR-FR schematron (pass 2) is not
+        # run at all (see analyse_xml_schematron_facturx / _cii / _ubl), so
+        # group 5 stays empty and BR-FR does not enter the overall schematron
+        # verdict -- xml_schematron_valid then only reflects the Profile pass.
+        if self.br_fr_check:
+            if not _blocking(errors['5_xml_schematron_br_fr']):
+                vals['xml_schematron_br_fr_valid'] = True
+            if vals.get('xml_schematron_profile_valid') and vals.get('xml_schematron_br_fr_valid'):
+                vals['xml_schematron_valid'] = True
+        else:
+            vals['xml_schematron_valid'] = vals.get('xml_schematron_profile_valid', False)
         logger.info(
             'vals after schematron: xml_valid=%s xml_schematron_valid=%s valid=%s sch_errors=%d',
             vals.get('xml_valid'), vals.get('xml_schematron_valid', False),
@@ -1045,7 +1045,9 @@ class FacturxAnalysis(models.Model):
         logger.info('Schematron pass 1 start (profile=%s)', vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
         logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron_profile', len(errors.get('4_xml_schematron_profile', [])))
-        if vals['xml_profile'] != 'facturx_minimum':
+        if not self.br_fr_check:
+            logger.info('Schematron pass 2 skipped ("France" toggle off)')
+        elif vals['xml_profile'] != 'facturx_minimum':
             logger.info('Schematron pass 2 start (profile=facturx_br_fr)')
             self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='facturx_br_fr', group='5_xml_schematron_br_fr')
             logger.info('Schematron pass 2 done: %d error(s) in 5_xml_schematron_br_fr', len(errors.get('5_xml_schematron_br_fr', [])))
@@ -1058,9 +1060,12 @@ class FacturxAnalysis(models.Model):
         logger.info('Schematron pass 1 start (profile=%s)', vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
         logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron_profile', len(errors.get('4_xml_schematron_profile', [])))
-        logger.info('Schematron pass 2 start (profile=cii_br_fr)')
-        self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='cii_br_fr', group='5_xml_schematron_br_fr')
-        logger.info('Schematron pass 2 done: %d error(s) in 5_xml_schematron_br_fr', len(errors.get('5_xml_schematron_br_fr', [])))
+        if not self.br_fr_check:
+            logger.info('Schematron pass 2 skipped ("France" toggle off)')
+        else:
+            logger.info('Schematron pass 2 start (profile=cii_br_fr)')
+            self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='cii_br_fr', group='5_xml_schematron_br_fr')
+            logger.info('Schematron pass 2 done: %d error(s) in 5_xml_schematron_br_fr', len(errors.get('5_xml_schematron_br_fr', [])))
         logger.info('End analyse_xml_schematron_cii: sch_errors=%d', len(errors.get('5_xml_schematron_br_fr', [])))
 
     def analyse_xml_schematron_ubl(self, vals, xml_bytes, errors, prefix=None):
@@ -1070,9 +1075,12 @@ class FacturxAnalysis(models.Model):
         logger.info('Schematron pass 1 start (profile=%s)', vals['xml_profile'])
         self._run_schematron_saxon(vals, xml_bytes, errors, prefix)
         logger.info('Schematron pass 1 done: %d error(s) in 4_xml_schematron_profile', len(errors.get('4_xml_schematron_profile', [])))
-        logger.info('Schematron pass 2 start (profile=ubl_br_fr)')
-        self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='ubl_br_fr', group='5_xml_schematron_br_fr')
-        logger.info('Schematron pass 2 done: %d error(s) in 5_xml_schematron_br_fr', len(errors.get('5_xml_schematron_br_fr', [])))
+        if not self.br_fr_check:
+            logger.info('Schematron pass 2 skipped ("France" toggle off)')
+        else:
+            logger.info('Schematron pass 2 start (profile=ubl_br_fr)')
+            self._run_schematron_saxon(vals, xml_bytes, errors, prefix, profile='ubl_br_fr', group='5_xml_schematron_br_fr')
+            logger.info('Schematron pass 2 done: %d error(s) in 5_xml_schematron_br_fr', len(errors.get('5_xml_schematron_br_fr', [])))
         logger.info('End analyse_xml_schematron_ubl: sch_errors=%d', len(errors.get('5_xml_schematron_br_fr', [])))
 
     def analyse_xml_schematron_cdar(self, vals, xml_bytes, errors, prefix=None):
