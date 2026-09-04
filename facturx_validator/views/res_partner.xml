@@ -8,7 +8,8 @@
 <record id="facturx_analysis_nofilter_action" model="ir.actions.act_window">
     <field name="name">Analysis</field>
     <field name="res_model">facturx.analysis</field>
-    <field name="view_mode">tree,form,pivot,graph</field>
+    <field name="view_mode">list,form,pivot,graph</field>
+    <field name="context">{'search_default_partner_id': active_id}</field>
 </record>
 
 <record id="view_partner_form" model="ir.ui.view">
@@ -18,7 +19,6 @@
         <div name="button_box" position="inside">
             <button class="oe_stat_button" type="action"
                     name="%(facturx_validator.facturx_analysis_nofilter_action)d"
-                    context="{'search_default_partner_id': active_id}"
                     icon="fa-binoculars">
                 <field string="Analysis" name="analysis_count" widget="statinfo"/>
             </button>
