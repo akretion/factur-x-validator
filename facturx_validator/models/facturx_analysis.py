@@ -93,17 +93,24 @@ UBL_PROFILE_MAP = [(p[2], p[0]) for p in _PROFILES_DEF if len(p) == 3]
 
 SCH_PATHS = {
     # Factur-X 1.08 (CII)
-    # 'facturx_minimum': dropped - the FNFE_RFE_INVOICE submodule no longer ships a MINIMUM profile
+    # MINIMUM / BASIC are the "legacy" Factur-X profiles: the FNFE_RFE_INVOICE
+    # submodule no longer ships them, they now come from the in-repo
+    # SCRDM-Doc-X/Factur-X/LEGACY/ tree instead.
+    'facturx_minimum': 'facturx_validator/SCRDM-Doc-X/Factur-X/LEGACY/MINIMUM/schematron/FACTUR-X_MINIMUM.sch',
     'facturx_basicwl': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/BASICWL/schematron/FACTUR-X_BASIC-WL.sch',
-    # 'facturx_basic': dropped - the FNFE_RFE_INVOICE submodule only ships BASICWL, not standalone BASIC
+    'facturx_basic': 'facturx_validator/SCRDM-Doc-X/Factur-X/LEGACY/BASIC/schematron/FACTUR-X_BASIC.sch',
     'facturx_en16931': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EN16931/schematron/FACTUR-X_EN16931.sch',
     'facturx_extended': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/schematron/FACTUR-X_EXTENDED.sch',
     # 'facturx_extended_ctc_fr': no dedicated EXTENDED-CTC-FR schematron for Factur-X in the submodule anymore;
     # CTC-FR obligations are now covered by the systematic BR-FR pass 2 (see XSL_PATHS['facturx_br_fr']),
     # so this reuses the plain EXTENDED schematron. TODO confirm with FNFE before merging.
     'facturx_extended_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/schematron/FACTUR-X_EXTENDED.sch',
-    # Order-X
-    # 'orderx_basic'/'orderx_comfort'/'orderx_extended': dropped - no Order-X schemas in the FNFE_RFE_INVOICE submodule
+    # Order-X: ISO-schematron validated via lxml (analyse_xml_schematron_orderx),
+    # so SCH_PATHS is the one that matters. Not in the FNFE_RFE_INVOICE
+    # submodule, shipped in-repo under SCRDM-Doc-X/Order-X/.
+    'orderx_basic':    'facturx_validator/SCRDM-Doc-X/Order-X/BASIC/schematron/SCRDMCCBDACIOMessageStructure_100pD20B_BASIC.sch',
+    'orderx_comfort':  'facturx_validator/SCRDM-Doc-X/Order-X/COMFORT/schematron/SCRDMCCBDACIOMessageStructure_100pD20B_COMFORT.sch',
+    'orderx_extended': 'facturx_validator/SCRDM-Doc-X/Order-X/EXTENDED/schematron/SCRDMCCBDACIOMessageStructure_100pD20B_EXTENDED.sch',
     # CII (standalone)
     'cii_en16931': 'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EN16931/schematron/EN16931-CII-validation-preprocessed.sch',
     # cii_extended: no dedicated schematron in the submodule, reuse Factur-X EXTENDED
@@ -122,9 +129,12 @@ SCH_PATHS = {
 # Separate from SCH_PATHS because the compiled XSL lives in a different folder.
 XSL_PATHS = {
     # Factur-X 1.08
-    # 'facturx_minimum': dropped - the FNFE_RFE_INVOICE submodule no longer ships a MINIMUM profile
+    # MINIMUM / BASIC legacy profiles: Saxon path (analyse_xml_schematron_facturx
+    # -> _run_schematron_saxon) reads XSL_PATHS. Compiled stylesheets ship
+    # in-repo under SCRDM-Doc-X/Factur-X/LEGACY/.
+    'facturx_minimum':         'facturx_validator/SCRDM-Doc-X/Factur-X/LEGACY/MINIMUM/2xslt/FACTUR-X_MINIMUM.xslt',
     'facturx_basicwl':         'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/BASICWL/2xslt/FACTUR-X_BASIC-WL.xslt',
-    # 'facturx_basic': dropped - the FNFE_RFE_INVOICE submodule only ships BASICWL, not standalone BASIC
+    'facturx_basic':           'facturx_validator/SCRDM-Doc-X/Factur-X/LEGACY/BASIC/2xslt/FACTUR-X_BASIC.xslt',
     'facturx_en16931':         'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EN16931/2xslt/FACTUR-X_EN16931.xslt',
     'facturx_extended':        'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/2xslt/FACTUR-X_EXTENDED.xslt',
     # 'facturx_extended_ctc_fr': see note in SCH_PATHS above - reuses the plain EXTENDED stylesheet, TODO confirm before merging
@@ -139,7 +149,12 @@ XSL_PATHS = {
     'cii_extended_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EXTENDED-CTC-FR/2xslt/EXTENDED-CTC-FR-CII.xslt',
     # CDAR
     'cdar_ctc_fr':         'facturx_validator/schemas/FNFE_RFE_INVOICE/CDAR/2xslt/BR-FR-CDV-Schematron-CDAR.xslt',
-    # Order-X: dropped - no Order-X schemas in the FNFE_RFE_INVOICE submodule at all
+    # Order-X: the live code path (analyse_xml_schematron_orderx) validates via
+    # lxml ISO-schematron and reads SCH_PATHS, not these compiled stylesheets;
+    # kept here for symmetry / future Saxon use. From SCRDM-Doc-X/Order-X/.
+    'orderx_basic':    'facturx_validator/SCRDM-Doc-X/Order-X/BASIC/2xslt/SCRDMCCBDACIOMessageStructure_100pD20B_BASIC-compiled.xslt',
+    'orderx_comfort':  'facturx_validator/SCRDM-Doc-X/Order-X/COMFORT/2xslt/SCRDMCCBDACIOMessageStructure_100pD20B_COMFORT-compiled.xslt',
+    'orderx_extended': 'facturx_validator/SCRDM-Doc-X/Order-X/EXTENDED/2xslt/SCRDMCCBDACIOMessageStructure_100pD20B_EXTENDED-compiled.xslt',
     # BR-FR systematic passage for all profiles, not executable on the MINIMUM profile
     'facturx_br_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/2xslt/BR-FR-Flux2-Schematron-CII.xslt',
     'cii_br_fr':     'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EXTENDED-CTC-FR/2xslt/BR-FR-Flux2-Schematron-CII.xslt',
@@ -174,7 +189,7 @@ ORDERX_xmp2level = {
 # and their section title already says so. 'info' is kept for safety even
 # though info-level messages are dropped in schematron_result_analysis.
 SEVERITY_REPORT_PREFIX = {
-    'error': '[ERROR] ',
+    'error': '[FATAL] ',
     'warning': '[WARNING] ',
     'info': '[INFO] ',
     }
@@ -1108,14 +1123,17 @@ class FacturxAnalysis(models.Model):
                     comment += '\nLocation of the error: %s' % location
                 if comment:
                     # The 'flag' attribute is un-namespaced in the SVRL output.
-                    # flag="warning" is a non-blocking warning; a plain
-                    # successful-report (Schematron <report> with no flag) is
-                    # purely informational; everything else (failed-assert with
-                    # no flag or flag="fatal") is a blocking error.
+                    # A plain successful-report (Schematron <report> with no
+                    # flag) is purely informational; everything else -- a
+                    # failed-assert, regardless of what its own 'flag' says
+                    # (no flag, flag="fatal", or even flag="warning") -- is a
+                    # blocking error. The schematron source occasionally marks
+                    # individual rules "warning" for its own reasons, but that
+                    # never downgrades severity here: whether a whole pass is
+                    # blocking is decided upstream by the "France" toggle
+                    # (br_fr_check), not rule-by-rule by this flag.
                     flag = (sch_error.attrib.get('flag') or '').strip().lower()
-                    if flag == 'warning':
-                        severity = 'warning'
-                    elif flag in ('info', 'information') or (
+                    if flag in ('info', 'information') or (
                             localname == 'successful-report' and not flag):
                         severity = 'info'
                     else:
@@ -1128,10 +1146,8 @@ class FacturxAnalysis(models.Model):
                     # Saxon output has an 'id' attrib (the rule id); the lxml
                     # path for Order-X has none.
                     rule_id = sch_error.attrib.get('id') or ''
-                    # svrl:text usually repeats the id as a "[BR-CO-09]-" prefix;
-                    # drop it, the report already shows the id as the title.
-                    if rule_id and comment.startswith('[%s]' % rule_id):
-                        comment = comment[len(rule_id) + 2:].lstrip(' -')
+                    # svrl:text always repeats the id as a "[BR-CO-09]-" prefix;
+                    # keep it as-is (the printed report renders it in bold).
                     # name = the assertion kind (failed-assert / successful-report),
                     # test_condition = its "when"/@test xpath (the condition that
                     # must hold for the assertion to pass).
@@ -1343,16 +1359,23 @@ class FacturxAnalysis(models.Model):
         group2label = dict(faeo.fields_get('error_group', 'selection')['error_group']['selection'])
         res = defaultdict(list)
         for err in self.error_ids:
+            comment = err.comment or ''
             if err.error_group in SCHEMATRON_GROUPS:
-                # PDF heading line: 1. severity  2. rule id  3. "when"/@test
+                # PDF heading (bold, see report/analysis.odt style "T20"):
+                # severity + rule id.
                 bits = [SEVERITY_REPORT_PREFIX.get(err.severity, '').strip(),
-                        err.rule_id or '', err.test_condition or '']
+                        err.rule_id or '']
                 name = '  '.join(b for b in bits if b)
+                # "When"/@test goes on its own line directly above the
+                # svrl:text content, which already carries the rule id at
+                # its own beginning (kept as-is, see schematron_result_analysis).
+                if err.test_condition:
+                    comment = 'When: %s\n%s' % (err.test_condition, comment)
             else:
                 name = err.name or ''
             res[group2label[err.error_group]].append({
                 'name': name,
-                'comment': err.comment,
+                'comment': comment,
                 'severity': err.severity,
                 'rule_id': err.rule_id,
                 'test_condition': err.test_condition,

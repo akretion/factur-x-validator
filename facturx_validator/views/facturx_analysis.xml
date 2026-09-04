@@ -92,7 +92,6 @@
                         <list create="false" delete="false" decoration-warning="severity == 'warning'" decoration-muted="severity == 'info'">
                             <field name="severity" widget="badge" decoration-danger="severity == 'error'" decoration-warning="severity == 'warning'" decoration-info="severity == 'info'"/>
                             <field name="rule_id" optional="show"/>
-                            <field name="name" string="failed-assert"/>
                             <field name="test_condition" string="When"/>
                             <field name="comment"/>
                         </list>
@@ -102,7 +101,6 @@
                         <list create="false" delete="false" decoration-warning="severity == 'warning'" decoration-muted="severity == 'info'">
                             <field name="severity" widget="badge" decoration-danger="severity == 'error'" decoration-warning="severity == 'warning'" decoration-info="severity == 'info'"/>
                             <field name="rule_id" optional="show"/>
-                            <field name="name" string="failed-assert"/>
                             <field name="test_condition" string="When"/>
                             <field name="comment"/>
                         </list>
