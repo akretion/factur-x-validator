@@ -314,6 +314,18 @@ class FacturxAnalysis(models.Model):
     xmp_orderx_type = fields.Selection(
         ORDERX_TYPES, string='XMP Order-X Type', readonly=True, copy=False)
     afrelationship = fields.Char(string='AFRelationship', readonly=True, copy=False)
+    # Per-verdict source file: which artifact each check actually validated.
+    # PDF/A-3 runs on the uploaded PDF; XMP on the extracted metadata (falling
+    # back to the PDF name when extraction failed); XSD and every Schematron
+    # pass on the extracted XML (falling back to the uploaded file for a direct
+    # XML upload). Shown next to each verdict so a non-developer running a
+    # pre-release check knows exactly which file produced which result.
+    pdfa3_source_filename = fields.Char(
+        string='PDF/A-3 Source File', compute='_compute_source_filenames')
+    xmp_source_filename = fields.Char(
+        string='XMP Source File', compute='_compute_source_filenames')
+    xml_source_filename = fields.Char(
+        string='XML Source File', compute='_compute_source_filenames')
     # Count of non-blocking schematron messages (severity 'warning' or 'info').
     # A document can be Fully Valid and still carry a non-zero count.
     # Stored so it can be used in search filters / list columns.
@@ -347,6 +359,15 @@ class FacturxAnalysis(models.Model):
         for rec in self:
             rec.nonblocking_count = len(rec.error_ids.filtered(
                 lambda e: e.severity != 'error'))
+
+    @api.depends('facturx_filename', 'xmp_filename', 'xml_filename')
+    def _compute_source_filenames(self):
+        for rec in self:
+            rec.pdfa3_source_filename = rec.facturx_filename or ''
+            rec.xmp_source_filename = (
+                rec.xmp_filename or rec.facturx_filename or '')
+            rec.xml_source_filename = (
+                rec.xml_filename or rec.facturx_filename or '')
 
     def back_to_draft(self):
         self.ensure_one()
