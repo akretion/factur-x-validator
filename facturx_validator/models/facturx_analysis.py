@@ -1183,25 +1183,25 @@ class FacturxAnalysis(models.Model):
                 if location:
                     comment += '\nLocation of the error: %s' % location
                 if comment:
-                    # The 'flag' attribute is un-namespaced in the SVRL output.
-                    # A plain successful-report (Schematron <report> with no
-                    # flag) is purely informational; everything else -- a
-                    # failed-assert, regardless of what its own 'flag' says
-                    # (no flag, flag="fatal", or even flag="warning") -- is a
-                    # blocking error. The schematron source occasionally marks
-                    # individual rules "warning" for its own reasons, but that
-                    # never downgrades severity here: whether a whole pass is
-                    # blocking is decided upstream by the "France" toggle
-                    # (br_fr_check), not rule-by-rule by this flag.
+                    # Severity mirrors the SVRL 'flag' attribute exactly (it is
+                    # un-namespaced in the output). The schematron source sets it
+                    # per rule and that is the single source of truth here:
+                    #   flag="warning"           -> 'warning' (non-blocking)
+                    #   flag="info"/"information" -> 'info'    (dropped below)
+                    #   flag="fatal", any other value, or no/empty flag
+                    #                            -> 'error'   (blocking, [FATAL])
+                    # Nothing else is consulted -- not the assertion kind, not
+                    # the "France" toggle: a rule is as blocking as the
+                    # schematron itself declares it.
                     flag = (sch_error.attrib.get('flag') or '').strip().lower()
-                    if flag in ('info', 'information') or (
-                            localname == 'successful-report' and not flag):
+                    if flag in ('info', 'information'):
                         severity = 'info'
+                    elif flag == 'warning':
+                        severity = 'warning'
                     else:
                         severity = 'error'
                     # Info-level Schematron messages are noise for the end user
-                    # and never affect validity: don't record them at all, so
-                    # the report focuses on warnings and fatal errors only.
+                    # and never affect validity: don't record them at all.
                     if severity == 'info':
                         continue
                     # Saxon output has an 'id' attrib (the rule id); the lxml
@@ -1440,6 +1440,10 @@ class FacturxAnalysis(models.Model):
                 'severity': err.severity,
                 'rule_id': err.rule_id,
                 'test_condition': err.test_condition,
+                # Only the schematron sections colour their heading by
+                # severity in the PDF (report/analysis.odt); the other
+                # sections are always 'error' and keep the plain style.
+                'is_schematron': err.error_group in SCHEMATRON_GROUPS,
             })
         return res
 
