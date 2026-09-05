@@ -97,14 +97,14 @@ SCH_PATHS = {
     # submodule no longer ships them, they now come from the in-repo
     # SCRDM-Doc-X/Factur-X/LEGACY/ tree instead.
     'facturx_minimum': 'facturx_validator/SCRDM-Doc-X/Factur-X/LEGACY/MINIMUM/schematron/FACTUR-X_MINIMUM.sch',
-    'facturx_basicwl': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/BASICWL/schematron/FACTUR-X_BASIC-WL.sch',
+    'facturx_basicwl': 'facturx_validator/France_RFE/FNFE_RFE_INVOICE/Factur-X/BASICWL/schematron/FACTUR-X_BASIC-WL.sch',
     'facturx_basic': 'facturx_validator/SCRDM-Doc-X/Factur-X/LEGACY/BASIC/schematron/FACTUR-X_BASIC.sch',
-    'facturx_en16931': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EN16931/schematron/FACTUR-X_EN16931.sch',
-    'facturx_extended': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/schematron/FACTUR-X_EXTENDED.sch',
+    'facturx_en16931': 'facturx_validator/France_RFE/FNFE_RFE_INVOICE/Factur-X/EN16931/schematron/FACTUR-X_EN16931.sch',
+    'facturx_extended': 'facturx_validator/France_RFE/FNFE_RFE_INVOICE/Factur-X/EXTENDED/schematron/FACTUR-X_EXTENDED.sch',
     # 'facturx_extended_ctc_fr': no dedicated EXTENDED-CTC-FR schematron for Factur-X in the submodule anymore;
     # CTC-FR obligations are now covered by the systematic BR-FR pass 2 (see XSL_PATHS['facturx_br_fr']),
     # so this reuses the plain EXTENDED schematron. TODO confirm with FNFE before merging.
-    'facturx_extended_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/schematron/FACTUR-X_EXTENDED.sch',
+    'facturx_extended_ctc_fr': 'facturx_validator/France_RFE/FNFE_RFE_INVOICE/Factur-X/EXTENDED/schematron/FACTUR-X_EXTENDED.sch',
     # Order-X: ISO-schematron validated via lxml (analyse_xml_schematron_orderx),
     # so SCH_PATHS is the one that matters. Not in the FNFE_RFE_INVOICE
     # submodule, shipped in-repo under SCRDM-Doc-X/Order-X/.
@@ -112,15 +112,15 @@ SCH_PATHS = {
     'orderx_comfort':  'facturx_validator/SCRDM-Doc-X/Order-X/COMFORT/schematron/SCRDMCCBDACIOMessageStructure_100pD20B_COMFORT.sch',
     'orderx_extended': 'facturx_validator/SCRDM-Doc-X/Order-X/EXTENDED/schematron/SCRDMCCBDACIOMessageStructure_100pD20B_EXTENDED.sch',
     # CII (standalone)
-    'cii_en16931': 'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EN16931/schematron/EN16931-CII-validation-preprocessed.sch',
+    'cii_en16931': 'facturx_validator/France_RFE/FNFE_RFE_INVOICE/CII/EN16931/schematron/EN16931-CII-validation-preprocessed.sch',
     # cii_extended: no dedicated schematron in the submodule, reuse Factur-X EXTENDED
-    'cii_extended': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/schematron/FACTUR-X_EXTENDED.sch',
-    'cii_extended_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EXTENDED-CTC-FR/schematron/EXTENDED-CTC-FR-CII.sch',
+    'cii_extended': 'facturx_validator/France_RFE/FNFE_RFE_INVOICE/Factur-X/EXTENDED/schematron/FACTUR-X_EXTENDED.sch',
+    'cii_extended_ctc_fr': 'facturx_validator/France_RFE/FNFE_RFE_INVOICE/CII/EXTENDED-CTC-FR/schematron/EXTENDED-CTC-FR-CII.sch',
     # UBL
-    'ubl_en16931': 'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/EN16931/schematron/EN16931-UBL-validation-preprocessed.sch',
-    'ubl_extended_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/EXTENDED-CTC-FR/schematron/EXTENDED-CTC-FR-UBL.sch',
+    'ubl_en16931': 'facturx_validator/France_RFE/FNFE_RFE_INVOICE/UBL/EN16931/schematron/EN16931-UBL-validation-preprocessed.sch',
+    'ubl_extended_ctc_fr': 'facturx_validator/France_RFE/FNFE_RFE_INVOICE/UBL/EXTENDED-CTC-FR/schematron/EXTENDED-CTC-FR-UBL.sch',
     # CDAR
-    'cdar_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/CDAR/schematron/BR-FR-CDV-Schematron-CDAR.sch',
+    'cdar_ctc_fr': 'facturx_validator/France_RFE/FNFE_RFE_INVOICE/CDAR/schematron/BR-FR-CDV-Schematron-CDAR.sch',
     # e-Reporting
     # expecting the specifications
     }
@@ -133,22 +133,22 @@ XSL_PATHS = {
     # -> _run_schematron_saxon) reads XSL_PATHS. Compiled stylesheets ship
     # in-repo under SCRDM-Doc-X/Factur-X/LEGACY/.
     'facturx_minimum':         'facturx_validator/SCRDM-Doc-X/Factur-X/LEGACY/MINIMUM/2xslt/FACTUR-X_MINIMUM.xslt',
-    'facturx_basicwl':         'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/BASICWL/2xslt/FACTUR-X_BASIC-WL.xslt',
+    'facturx_basicwl':         'facturx_validator/France_RFE/FNFE_RFE_INVOICE/Factur-X/BASICWL/2xslt/FACTUR-X_BASIC-WL.xslt',
     'facturx_basic':           'facturx_validator/SCRDM-Doc-X/Factur-X/LEGACY/BASIC/2xslt/FACTUR-X_BASIC.xslt',
-    'facturx_en16931':         'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EN16931/2xslt/FACTUR-X_EN16931.xslt',
-    'facturx_extended':        'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/2xslt/FACTUR-X_EXTENDED.xslt',
+    'facturx_en16931':         'facturx_validator/France_RFE/FNFE_RFE_INVOICE/Factur-X/EN16931/2xslt/FACTUR-X_EN16931.xslt',
+    'facturx_extended':        'facturx_validator/France_RFE/FNFE_RFE_INVOICE/Factur-X/EXTENDED/2xslt/FACTUR-X_EXTENDED.xslt',
     # 'facturx_extended_ctc_fr': see note in SCH_PATHS above - reuses the plain EXTENDED stylesheet, TODO confirm before merging
-    'facturx_extended_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/2xslt/FACTUR-X_EXTENDED.xslt',
+    'facturx_extended_ctc_fr': 'facturx_validator/France_RFE/FNFE_RFE_INVOICE/Factur-X/EXTENDED/2xslt/FACTUR-X_EXTENDED.xslt',
     # UBL
-    'ubl_en16931':         'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/EN16931/2xslt/EN16931-UBL-validation.xslt',
-    'ubl_extended_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/EXTENDED-CTC-FR/2xslt/EXTENDED-CTC-FR-UBL.xslt',
+    'ubl_en16931':         'facturx_validator/France_RFE/FNFE_RFE_INVOICE/UBL/EN16931/2xslt/EN16931-UBL-validation.xslt',
+    'ubl_extended_ctc_fr': 'facturx_validator/France_RFE/FNFE_RFE_INVOICE/UBL/EXTENDED-CTC-FR/2xslt/EXTENDED-CTC-FR-UBL.xslt',
     # CII
-    'cii_en16931':         'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EN16931/2xslt/EN16931-CII-validation.xslt',
+    'cii_en16931':         'facturx_validator/France_RFE/FNFE_RFE_INVOICE/CII/EN16931/2xslt/EN16931-CII-validation.xslt',
     # cii_extended: no dedicated stylesheet in the submodule, reuse Factur-X EXTENDED
-    'cii_extended':        'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/2xslt/FACTUR-X_EXTENDED.xslt',
-    'cii_extended_ctc_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EXTENDED-CTC-FR/2xslt/EXTENDED-CTC-FR-CII.xslt',
+    'cii_extended':        'facturx_validator/France_RFE/FNFE_RFE_INVOICE/Factur-X/EXTENDED/2xslt/FACTUR-X_EXTENDED.xslt',
+    'cii_extended_ctc_fr': 'facturx_validator/France_RFE/FNFE_RFE_INVOICE/CII/EXTENDED-CTC-FR/2xslt/EXTENDED-CTC-FR-CII.xslt',
     # CDAR
-    'cdar_ctc_fr':         'facturx_validator/schemas/FNFE_RFE_INVOICE/CDAR/2xslt/BR-FR-CDV-Schematron-CDAR.xslt',
+    'cdar_ctc_fr':         'facturx_validator/France_RFE/FNFE_RFE_INVOICE/CDAR/2xslt/BR-FR-CDV-Schematron-CDAR.xslt',
     # Order-X: the live code path (analyse_xml_schematron_orderx) validates via
     # lxml ISO-schematron and reads SCH_PATHS, not these compiled stylesheets;
     # kept here for symmetry / future Saxon use. From SCRDM-Doc-X/Order-X/.
@@ -156,9 +156,9 @@ XSL_PATHS = {
     'orderx_comfort':  'facturx_validator/SCRDM-Doc-X/Order-X/COMFORT/2xslt/SCRDMCCBDACIOMessageStructure_100pD20B_COMFORT-compiled.xslt',
     'orderx_extended': 'facturx_validator/SCRDM-Doc-X/Order-X/EXTENDED/2xslt/SCRDMCCBDACIOMessageStructure_100pD20B_EXTENDED-compiled.xslt',
     # BR-FR systematic passage for all profiles, not executable on the MINIMUM profile
-    'facturx_br_fr': 'facturx_validator/schemas/FNFE_RFE_INVOICE/Factur-X/EXTENDED/2xslt/BR-FR-Flux2-Schematron-CII.xslt',
-    'cii_br_fr':     'facturx_validator/schemas/FNFE_RFE_INVOICE/CII/EXTENDED-CTC-FR/2xslt/BR-FR-Flux2-Schematron-CII.xslt',
-    'ubl_br_fr':     'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/EXTENDED-CTC-FR/2xslt/BR-FR-Flux2-Schematron-UBL.xslt',
+    'facturx_br_fr': 'facturx_validator/France_RFE/FNFE_RFE_INVOICE/Factur-X/EXTENDED/2xslt/BR-FR-Flux2-Schematron-CII.xslt',
+    'cii_br_fr':     'facturx_validator/France_RFE/FNFE_RFE_INVOICE/CII/EXTENDED-CTC-FR/2xslt/BR-FR-Flux2-Schematron-CII.xslt',
+    'ubl_br_fr':     'facturx_validator/France_RFE/FNFE_RFE_INVOICE/UBL/EXTENDED-CTC-FR/2xslt/BR-FR-Flux2-Schematron-UBL.xslt',
     }
 
 ORDERX_TYPES = [
@@ -464,10 +464,24 @@ class FacturxAnalysis(models.Model):
                     'name': 'Not a valid XML file',
                     'comment': 'Technical error message:\n%s' % e,
                     })
+        xsd_ran = False
         if xml_root:
             self.analyse_xml_xsd(vals, xml_root, errors)
+            xsd_ran = True
         else:
             vals['doc_type'] = 'facturx'
+            if not errors['3_xml']:
+                # No XML could be extracted (e.g. a plain PDF with no embedded
+                # CII, or a broken PDF catalog). XSD and Schematron cannot run;
+                # record why so the report shows a reason instead of an empty
+                # XML section -- and so the verdicts below are not left to
+                # default to "valid" from the mere absence of errors.
+                errors['3_xml'].append({
+                    'name': 'No XML extracted from the file',
+                    'comment': 'No Factur-X/Order-X XML could be read from the '
+                               'PDF, so XSD and Schematron validation were not '
+                               'run.',
+                })
         # Starting from here, we have vals['doc_type'] and vals['xml_profile']
         if vals['file_type'] == 'pdf':
             if (vals.get('afrelationship') and vals['afrelationship'] != '/Data' and vals['xml_profile'
@@ -497,30 +511,44 @@ class FacturxAnalysis(models.Model):
                         })
                 # Rename xml_filename for easier download
                 vals['xml_filename'] = '%s-x_%s.xml' % (vals['doc_type'][:-1], self.name.replace('/', '_'))
+        schematron_ran = False
         if vals.get('xml_profile') and vals['xml_profile'].startswith('facturx_') and xml_bytes:
             self.analyse_xml_schematron_facturx(vals, xml_bytes, errors, prefix)
+            schematron_ran = True
         elif vals.get('xml_profile') and vals['xml_profile'].startswith('cii_') and xml_bytes:
             self.analyse_xml_schematron_cii(vals, xml_bytes, errors, prefix)
+            schematron_ran = True
         elif vals.get('xml_profile') and vals['xml_profile'].startswith('orderx_') and xml_root is not None:
             self.analyse_xml_schematron_orderx(vals, xml_root, errors, prefix)
+            schematron_ran = True
         elif vals.get('xml_profile') and vals['xml_profile'].startswith('ubl_') and xml_bytes:
             self.analyse_xml_schematron_ubl(vals, xml_bytes, errors, prefix)
+            schematron_ran = True
         elif vals.get('xml_profile') and vals['xml_profile'] == 'cdar_ctc_fr' and xml_bytes:
             self.analyse_xml_schematron_cdar(vals, xml_bytes, errors, prefix)
-        if not errors['3_xml']:
+            schematron_ran = True
+        # A verdict may only be set to valid when its stage actually ran. If no
+        # XML could be extracted, or the profile could not be read, XSD and
+        # Schematron never execute and their error groups stay empty -- that
+        # absence of errors must NOT be reported as a pass.
+        if xsd_ran and not errors['3_xml']:
             vals['xml_valid'] = True
         # A schematron pass is valid when it has no blocking (severity 'error')
         # entry; 'warning' and 'info' entries are reported but non-blocking.
         def _blocking(err_list):
             return [e for e in err_list if e.get('severity', 'error') == 'error']
-        if not _blocking(errors['4_xml_schematron_profile']):
+        if schematron_ran and not _blocking(errors['4_xml_schematron_profile']):
             vals['xml_schematron_profile_valid'] = True
         # "France" toggle off: the systematic BR-FR schematron (pass 2) is not
         # run at all (see analyse_xml_schematron_facturx / _cii / _ubl), so
         # group 5 stays empty and BR-FR does not enter the overall schematron
         # verdict -- xml_schematron_valid then only reflects the Profile pass.
+        # When pass 1 ran but pass 2 was skipped by design (facturx_minimum, or
+        # a flavour with no BR-FR pass), group 5 is legitimately empty and the
+        # BR-FR verdict is a vacuous pass -- hence gated on schematron_ran, the
+        # same flag as the Profile pass, not on a separate "br_fr ran" flag.
         if self.br_fr_check:
-            if not _blocking(errors['5_xml_schematron_br_fr']):
+            if schematron_ran and not _blocking(errors['5_xml_schematron_br_fr']):
                 vals['xml_schematron_br_fr_valid'] = True
             if vals.get('xml_schematron_profile_valid') and vals.get('xml_schematron_br_fr_valid'):
                 vals['xml_schematron_valid'] = True
@@ -892,9 +920,9 @@ class FacturxAnalysis(models.Model):
                 return
             vals['xml_profile'] = ubl_profile
             xsd_rel = (
-                'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/1xsd_UBL2.1/maindoc/UBL-CreditNote-2.1.xsd'
+                'facturx_validator/France_RFE/FNFE_RFE_INVOICE/UBL/1xsd_UBL2.1/maindoc/UBL-CreditNote-2.1.xsd'
                 if 'CreditNote' in xml_root.tag else
-                'facturx_validator/schemas/FNFE_RFE_INVOICE/UBL/1xsd_UBL2.1/maindoc/UBL-Invoice-2.1.xsd'
+                'facturx_validator/France_RFE/FNFE_RFE_INVOICE/UBL/1xsd_UBL2.1/maindoc/UBL-Invoice-2.1.xsd'
             )
             try:
                 xsd_doc = etree.parse(file_path(xsd_rel))
@@ -908,7 +936,7 @@ class FacturxAnalysis(models.Model):
         elif flavor == 'cdar':
             vals['doc_type'] = 'cdar'
             vals['xml_profile'] = 'cdar_ctc_fr'
-            xsd_rel = 'facturx_validator/schemas/FNFE_RFE_INVOICE/CDAR/1xsd-CDAR_D22B_uncoupled/CrossDomainAcknowledgementAndResponse_100pD22B.xsd'
+            xsd_rel = 'facturx_validator/France_RFE/FNFE_RFE_INVOICE/CDAR/1xsd-CDAR_D22B_uncoupled/CrossDomainAcknowledgementAndResponse_100pD22B.xsd'
             try:
                 xsd_doc = etree.parse(file_path(xsd_rel))
                 etree.XMLSchema(xsd_doc).assertValid(xml_root)
@@ -978,8 +1006,20 @@ class FacturxAnalysis(models.Model):
         logger.info('analyse_xml_xsd: profile=%s', xml_profile)
         # check XSD
         try:
-            xml_check_xsd(
-                xml_root, flavor=flavor, level=xml_profile.split('_')[1])
+            if vals['doc_type'] == 'cii':
+                # Standalone CII (not embedded in a PDF as Factur-X): always
+                # validate against the full, unrestricted CII D22B XSD.
+                # get_flavor() cannot distinguish a native CII file from a
+                # Factur-X one (same root namespace), so flavor stays
+                # 'factur-x' here; but the Factur-X profile XSDs (en16931,
+                # extended, etc) are restricted subsets of CII and reject
+                # valid CII-only elements (e.g. ram:DescriptionCode). The
+                # business profile still drives which schematron runs
+                # (see SCH_PATHS), just not which XSD is used.
+                xml_check_xsd(xml_root, flavor='factur-x', level='extended-ctc-fr')
+            else:
+                xml_check_xsd(
+                    xml_root, flavor=flavor, level=xml_profile.split('_')[1])
         except Exception as e:
             errors['3_xml'].append({
                 'name': 'XML file invalid against XSD',
