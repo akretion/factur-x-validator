@@ -2,8 +2,8 @@
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 
 {
-    'name': 'Factur-X Validator 18.0.1.4.0',
-    'version': '18.0.1.4.0',
+    'name': 'Factur-X Validator 18.0.1.5.0',
+    'version': '18.0.1.5.0',
     'category': 'Tools',
     'license': 'AGPL-3',
     'summary': 'Analyse and validate Factur-X invoices',

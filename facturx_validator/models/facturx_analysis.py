@@ -1465,13 +1465,13 @@ class FacturxAnalysis(models.Model):
         for err in self.error_ids:
             comment = err.comment or ''
             if err.error_group in SCHEMATRON_GROUPS:
-                # PDF heading (bold, see report/analysis.odt style "T20"):
-                # the SVRL flag in brackets + rule id, e.g. "[fatal]  BR-FR-05".
-                bits = ['[%s]' % err.severity, err.rule_id or '']
-                name = '  '.join(b for b in bits if b)
+                # PDF heading = the [fatal]/[warning] token + rule id. The token
+                # is a coloured literal in the py3o template (report/analysis.odt,
+                # styles Tsevfatal / Tsevwarn); only the rule id comes from here.
+                name = err.rule_id or ''
                 # test_condition ("When"/@test) is passed through untouched and
                 # printed as its own italic line above the comment by the py3o
-                # template (report/analysis.odt), so it is NOT prepended here.
+                # template, so it is NOT prepended here.
             else:
                 name = err.name or ''
             res[group2label[err.error_group]].append({
