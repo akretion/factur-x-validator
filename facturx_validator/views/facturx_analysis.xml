@@ -49,37 +49,29 @@
                         <label for="pdfa3_valid" invisible="file_type != 'pdf'"/>
                         <div class="o_row" invisible="file_type != 'pdf'">
                             <field name="pdfa3_valid" nolabel="1"/>
-                            <field name="pdfa3_source_filename" nolabel="1" class="text-muted"/>
+                            <field name="pdfa3_engine" nolabel="1" class="text-muted"/>
                         </div>
 
-                        <label for="xmp_valid" invisible="file_type != 'pdf'"/>
-                        <div class="o_row" invisible="file_type != 'pdf'">
-                            <field name="xmp_valid" nolabel="1"/>
-                            <field name="xmp_source_filename" nolabel="1" class="text-muted"/>
-                        </div>
+                        <field name="xmp_valid" invisible="file_type != 'pdf'"/>
 
                         <label for="xml_valid"/>
                         <div class="o_row">
                             <field name="xml_valid" nolabel="1"/>
-                            <field name="xml_source_filename" nolabel="1" class="text-muted"/>
+                            <field name="xsd_ruleset" nolabel="1" class="text-muted"/>
                         </div>
 
-                        <label for="xml_schematron_valid" invisible="xml_profile not in ('facturx_minimum', 'facturx_basicwl', 'facturx_basic', 'facturx_en16931', 'facturx_extended', 'facturx_extended_ctc_fr', 'facturx_107_minimum', 'facturx_107_basicwl', 'facturx_107_basic', 'facturx_107_en16931', 'facturx_107_extended', 'orderx_basic', 'orderx_comfort', 'orderx_extended', 'ubl_en16931', 'ubl_extended_ctc_fr', 'ubl_extended', 'cdar_ctc_fr', 'cii_en16931', 'cii_extended_ctc_fr', 'cii_extended')"/>
-                        <div class="o_row" invisible="xml_profile not in ('facturx_minimum', 'facturx_basicwl', 'facturx_basic', 'facturx_en16931', 'facturx_extended', 'facturx_extended_ctc_fr', 'facturx_107_minimum', 'facturx_107_basicwl', 'facturx_107_basic', 'facturx_107_en16931', 'facturx_107_extended', 'orderx_basic', 'orderx_comfort', 'orderx_extended', 'ubl_en16931', 'ubl_extended_ctc_fr', 'ubl_extended', 'cdar_ctc_fr', 'cii_en16931', 'cii_extended_ctc_fr', 'cii_extended')">
-                            <field name="xml_schematron_valid" nolabel="1"/>
-                            <field name="xml_source_filename" nolabel="1" class="text-muted"/>
-                        </div>
+                        <field name="xml_schematron_valid" invisible="xml_profile not in ('facturx_minimum', 'facturx_basicwl', 'facturx_basic', 'facturx_en16931', 'facturx_extended', 'facturx_extended_ctc_fr', 'facturx_107_minimum', 'facturx_107_basicwl', 'facturx_107_basic', 'facturx_107_en16931', 'facturx_107_extended', 'orderx_basic', 'orderx_comfort', 'orderx_extended', 'ubl_en16931', 'ubl_extended_ctc_fr', 'ubl_extended', 'cdar_ctc_fr', 'cii_en16931', 'cii_extended_ctc_fr', 'cii_extended')"/>
 
                         <label for="xml_schematron_profile_valid" string="Schematron Profile valid" invisible="xml_profile not in ('facturx_minimum', 'facturx_basicwl', 'facturx_basic', 'facturx_en16931', 'facturx_extended', 'facturx_extended_ctc_fr', 'facturx_107_minimum', 'facturx_107_basicwl', 'facturx_107_basic', 'facturx_107_en16931', 'facturx_107_extended', 'orderx_basic', 'orderx_comfort', 'orderx_extended', 'ubl_en16931', 'ubl_extended_ctc_fr', 'ubl_extended', 'cdar_ctc_fr', 'cii_en16931', 'cii_extended_ctc_fr', 'cii_extended')"/>
                         <div class="o_row" invisible="xml_profile not in ('facturx_minimum', 'facturx_basicwl', 'facturx_basic', 'facturx_en16931', 'facturx_extended', 'facturx_extended_ctc_fr', 'facturx_107_minimum', 'facturx_107_basicwl', 'facturx_107_basic', 'facturx_107_en16931', 'facturx_107_extended', 'orderx_basic', 'orderx_comfort', 'orderx_extended', 'ubl_en16931', 'ubl_extended_ctc_fr', 'ubl_extended', 'cdar_ctc_fr', 'cii_en16931', 'cii_extended_ctc_fr', 'cii_extended')">
                             <field name="xml_schematron_profile_valid" nolabel="1"/>
-                            <field name="xml_source_filename" nolabel="1" class="text-muted"/>
+                            <field name="schematron_profile_ruleset" nolabel="1" class="text-muted"/>
                         </div>
 
                         <label for="xml_schematron_br_fr_valid" string="Schematron BR-FR valid" invisible="not br_fr_check or xml_profile not in ('facturx_basicwl', 'facturx_basic', 'facturx_en16931', 'facturx_extended', 'facturx_extended_ctc_fr', 'facturx_107_basicwl', 'facturx_107_basic', 'facturx_107_en16931', 'facturx_107_extended', 'ubl_en16931', 'ubl_extended_ctc_fr', 'ubl_extended', 'cii_en16931', 'cii_extended_ctc_fr', 'cii_extended')"/>
                         <div class="o_row" invisible="not br_fr_check or xml_profile not in ('facturx_basicwl', 'facturx_basic', 'facturx_en16931', 'facturx_extended', 'facturx_extended_ctc_fr', 'facturx_107_basicwl', 'facturx_107_basic', 'facturx_107_en16931', 'facturx_107_extended', 'ubl_en16931', 'ubl_extended_ctc_fr', 'ubl_extended', 'cii_en16931', 'cii_extended_ctc_fr', 'cii_extended')">
                             <field name="xml_schematron_br_fr_valid" nolabel="1"/>
-                            <field name="xml_source_filename" nolabel="1" class="text-muted"/>
+                            <field name="schematron_br_fr_ruleset" nolabel="1" class="text-muted"/>
                         </div>
                         <field name="nonblocking_count" string="Schematron Warnings" invisible="not nonblocking_count"/>
                         <field name="xmp_profile" invisible="file_type != 'pdf'"/>

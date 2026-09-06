@@ -371,18 +371,20 @@ class FacturxAnalysis(models.Model):
     xmp_orderx_type = fields.Selection(
         ORDERX_TYPES, string='XMP Order-X Type', readonly=True, copy=False)
     afrelationship = fields.Char(string='AFRelationship', readonly=True, copy=False)
-    # Per-verdict source file: which artifact each check actually validated.
-    # PDF/A-3 runs on the uploaded PDF; XMP on the extracted metadata (falling
-    # back to the PDF name when extraction failed); XSD and every Schematron
-    # pass on the extracted XML (falling back to the uploaded file for a direct
-    # XML upload). Shown next to each verdict so a non-developer running a
-    # pre-release check knows exactly which file produced which result.
-    pdfa3_source_filename = fields.Char(
-        string='PDF/A-3 Source File', compute='_compute_source_filenames')
-    xmp_source_filename = fields.Char(
-        string='XMP Source File', compute='_compute_source_filenames')
-    xml_source_filename = fields.Char(
-        string='XML Source File', compute='_compute_source_filenames')
+    # Per-verdict "which artefact judged it", filled during analyse() and shown
+    # next to each verdict so a non-developer running a pre-release check can
+    # see exactly what pronounced pass/fail.
+    pdfa3_engine = fields.Char(
+        string='PDF/A-3 Engine', readonly=True, copy=False,
+        help="Which veraPDF path ran the PDF/A-3 check.")
+    xsd_ruleset = fields.Char(
+        string='XSD', readonly=True, copy=False,
+        help="Schema the XML was validated against (entry-point file; its "
+             "xs:import siblings sit in the same folder).")
+    schematron_profile_ruleset = fields.Char(
+        string='Profile Schematron', readonly=True, copy=False)
+    schematron_br_fr_ruleset = fields.Char(
+        string='BR-FR Schematron', readonly=True, copy=False)
     # Count of non-blocking schematron messages (severity 'warning' or 'info').
     # A document can be Fully Valid and still carry a non-zero count.
     # Stored so it can be used in search filters / list columns.
@@ -417,15 +419,6 @@ class FacturxAnalysis(models.Model):
             rec.nonblocking_count = len(rec.error_ids.filtered(
                 lambda e: e.severity != 'error'))
 
-    @api.depends('facturx_filename', 'xmp_filename', 'xml_filename')
-    def _compute_source_filenames(self):
-        for rec in self:
-            rec.pdfa3_source_filename = rec.facturx_filename or ''
-            rec.xmp_source_filename = (
-                rec.xmp_filename or rec.facturx_filename or '')
-            rec.xml_source_filename = (
-                rec.xml_filename or rec.facturx_filename or '')
-
     def back_to_draft(self):
         self.ensure_one()
         self.write({
@@ -452,6 +445,10 @@ class FacturxAnalysis(models.Model):
             'xml_orderx_type': False,
             'xmp_orderx_type': False,
             'afrelationship': False,
+            'pdfa3_engine': False,
+            'xsd_ruleset': False,
+            'schematron_profile_ruleset': False,
+            'schematron_br_fr_ruleset': False,
         })
 
     @api.model
@@ -509,6 +506,7 @@ class FacturxAnalysis(models.Model):
                     'Failed to connect to veraPDF via Rest. Error: %s'
                     'Fallback to subprocess method' % e)
                 vera_xml_root = self.run_verapdf_subprocess(vals, f)
+            vals['pdfa3_engine'] = 'verapdfREST' if rest else 'verapdf subprocess'
             if vera_xml_root:
                 # veraPDF-rest 1.31.x REST response now has the same
                 # <report>/<jobs>/<job>/<validationReport> shape as the CLI
@@ -605,6 +603,15 @@ class FacturxAnalysis(models.Model):
         elif vals.get('xml_profile') and vals['xml_profile'] == 'cdar_ctc_fr' and xml_bytes:
             self.analyse_xml_schematron_cdar(vals, xml_bytes, errors, prefix)
             schematron_ran = True
+        # Record which schematron files judged this analysis (report / GUI).
+        _sch_rules = PROFILE_RULES.get(vals.get('xml_profile') or '', {})
+        if schematron_ran and _sch_rules.get('schematron'):
+            vals['schematron_profile_ruleset'] = os.path.basename(
+                _sch_rules['schematron'])
+        if (schematron_ran and self.br_fr_check
+                and _sch_rules.get('br_fr_schematron')):
+            vals['schematron_br_fr_ruleset'] = os.path.basename(
+                _sch_rules['br_fr_schematron'])
         # A verdict may only be set to valid when its stage actually ran. If no
         # XML could be extracted, or the profile could not be read, XSD and
         # Schematron never execute and their error groups stay empty -- that
@@ -1002,6 +1009,7 @@ class FacturxAnalysis(models.Model):
                 if 'CreditNote' in xml_root.tag else
                 'facturx_validator/France_RFE/FNFE_RFE_INVOICE/UBL/1xsd_UBL2.1/maindoc/UBL-Invoice-2.1.xsd'
             )
+            vals['xsd_ruleset'] = os.path.basename(xsd_rel)
             try:
                 xsd_doc = etree.parse(file_path(xsd_rel))
                 etree.XMLSchema(xsd_doc).assertValid(xml_root)
@@ -1015,6 +1023,7 @@ class FacturxAnalysis(models.Model):
             vals['doc_type'] = 'cdar'
             vals['xml_profile'] = 'cdar_ctc_fr'
             xsd_rel = 'facturx_validator/France_RFE/FNFE_RFE_INVOICE/CDAR/1xsd-CDAR_D22B_uncoupled/CrossDomainAcknowledgementAndResponse_100pD22B.xsd'
+            vals['xsd_ruleset'] = os.path.basename(xsd_rel)
             try:
                 xsd_doc = etree.parse(file_path(xsd_rel))
                 etree.XMLSchema(xsd_doc).assertValid(xml_root)
@@ -1092,9 +1101,11 @@ class FacturxAnalysis(models.Model):
         xsd_rel = PROFILE_RULES.get(xml_profile, {}).get('xsd')
         try:
             if xsd_rel:
+                vals['xsd_ruleset'] = os.path.basename(xsd_rel)
                 xsd_doc = etree.parse(file_path(xsd_rel))
                 etree.XMLSchema(xsd_doc).assertValid(xml_root)
             else:
+                vals['xsd_ruleset'] = 'facturx library'
                 xml_check_xsd(
                     xml_root, flavor=flavor, level=xml_profile.split('_')[1])
         except Exception as e:
