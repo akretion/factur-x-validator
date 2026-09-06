@@ -239,17 +239,6 @@ ORDERX_xmp2level = {
     'EXTENDED': 'orderx_extended',
     }
 
-# Prefix prepended to a schematron message name in the printed report, so the
-# severity is visible there the way the GUI shows it as a badge column (the
-# py3o template renders 'name' as-is). Only applied to the schematron groups,
-# whose sections mix 'error' and 'warning'; the other groups are all 'error'
-# and their section title already says so. 'info' is kept for safety even
-# though info-level messages are dropped in schematron_result_analysis.
-SEVERITY_REPORT_PREFIX = {
-    'error': '[FATAL] ',
-    'warning': '[WARNING] ',
-    'info': '[INFO] ',
-    }
 SCHEMATRON_GROUPS = ('4_xml_schematron_profile', '5_xml_schematron_br_fr')
 
 
@@ -417,7 +406,7 @@ class FacturxAnalysis(models.Model):
     def _compute_nonblocking_count(self):
         for rec in self:
             rec.nonblocking_count = len(rec.error_ids.filtered(
-                lambda e: e.severity != 'error'))
+                lambda e: e.severity != 'fatal'))
 
     def back_to_draft(self):
         self.ensure_one()
@@ -618,10 +607,10 @@ class FacturxAnalysis(models.Model):
         # absence of errors must NOT be reported as a pass.
         if xsd_ran and not errors['3_xml']:
             vals['xml_valid'] = True
-        # A schematron pass is valid when it has no blocking (severity 'error')
-        # entry; 'warning' and 'info' entries are reported but non-blocking.
+        # A schematron pass is valid when it has no blocking (severity 'fatal')
+        # entry; 'warning' entries are reported but non-blocking.
         def _blocking(err_list):
-            return [e for e in err_list if e.get('severity', 'error') == 'error']
+            return [e for e in err_list if e.get('severity', 'fatal') == 'fatal']
         if schematron_ran and not _blocking(errors['4_xml_schematron_profile']):
             vals['xml_schematron_profile_valid'] = True
         # "France" toggle off: the systematic BR-FR schematron (pass 2) is not
@@ -1246,27 +1235,18 @@ class FacturxAnalysis(models.Model):
                 if location:
                     comment += '\nLocation of the error: %s' % location
                 if comment:
-                    # Severity mirrors the SVRL 'flag' attribute exactly (it is
-                    # un-namespaced in the output). The schematron source sets it
-                    # per rule and that is the single source of truth here:
-                    #   flag="warning"           -> 'warning' (non-blocking)
-                    #   flag="info"/"information" -> 'info'    (dropped below)
-                    #   flag="fatal", any other value, or no/empty flag
-                    #                            -> 'error'   (blocking, [FATAL])
-                    # Nothing else is consulted -- not the assertion kind, not
-                    # the "France" toggle: a rule is as blocking as the
-                    # schematron itself declares it.
+                    # severity is the SVRL @flag verbatim (lowercased) -- the
+                    # schematron declares it per rule and that is the only
+                    # source of truth. A missing/empty flag means 'fatal';
+                    # 'info'/'information' rows are dropped (noise, never affect
+                    # validity). In practice the profile pass emits 'fatal' +
+                    # 'warning', the BR-FR pass only 'fatal'. Nothing else is
+                    # consulted -- not the assertion kind, not the "France"
+                    # toggle.
                     flag = (sch_error.attrib.get('flag') or '').strip().lower()
                     if flag in ('info', 'information'):
-                        severity = 'info'
-                    elif flag == 'warning':
-                        severity = 'warning'
-                    else:
-                        severity = 'error'
-                    # Info-level Schematron messages are noise for the end user
-                    # and never affect validity: don't record them at all.
-                    if severity == 'info':
                         continue
+                    severity = 'warning' if flag == 'warning' else 'fatal'
                     # Saxon output has an 'id' attrib (the rule id); the lxml
                     # path for Order-X has none.
                     rule_id = sch_error.attrib.get('id') or ''
@@ -1486,15 +1466,12 @@ class FacturxAnalysis(models.Model):
             comment = err.comment or ''
             if err.error_group in SCHEMATRON_GROUPS:
                 # PDF heading (bold, see report/analysis.odt style "T20"):
-                # severity + rule id.
-                bits = [SEVERITY_REPORT_PREFIX.get(err.severity, '').strip(),
-                        err.rule_id or '']
+                # the SVRL flag in brackets + rule id, e.g. "[fatal]  BR-FR-05".
+                bits = ['[%s]' % err.severity, err.rule_id or '']
                 name = '  '.join(b for b in bits if b)
-                # "When"/@test goes on its own line directly above the
-                # svrl:text content, which already carries the rule id at
-                # its own beginning (kept as-is, see schematron_result_analysis).
-                if err.test_condition:
-                    comment = 'When: %s\n%s' % (err.test_condition, comment)
+                # test_condition ("When"/@test) is passed through untouched and
+                # printed as its own italic line above the comment by the py3o
+                # template (report/analysis.odt), so it is NOT prepended here.
             else:
                 name = err.name or ''
             res[group2label[err.error_group]].append({
@@ -1505,7 +1482,7 @@ class FacturxAnalysis(models.Model):
                 'test_condition': err.test_condition,
                 # Only the schematron sections colour their heading by
                 # severity in the PDF (report/analysis.odt); the other
-                # sections are always 'error' and keep the plain style.
+                # sections are always 'fatal' and keep the plain style.
                 'is_schematron': err.error_group in SCHEMATRON_GROUPS,
             })
         return res
@@ -1513,7 +1490,7 @@ class FacturxAnalysis(models.Model):
 class FacturxAnalysisError(models.Model):
     _name = 'facturx.analysis.error'
     _description = 'Factur-X Analysis Errors'
-    # 'error' < 'info' < 'warning' alphabetically, so blocking rows list first
+    # 'fatal' sorts before 'warning', so blocking rows list first
     _order = 'parent_id, error_group, severity, id'
     parent_id = fields.Many2one('facturx.analysis', ondelete='cascade')
     # It's/odoo/external-src/France_RFE to name that field 'group' because
@@ -1532,14 +1509,14 @@ class FacturxAnalysisError(models.Model):
     ], string='Group', required=True)
     name = fields.Char(required=True)
     comment = fields.Text()
-    # Schematron assertions can be non-blocking: a failed-assert with
-    # flag="warning" and any successful-report (Schematron <report>) must not
-    # invalidate the document. Everything else stays 'error' (blocking).
+    # The SVRL @flag verbatim. The profile schematron emits 'fatal' + 'warning',
+    # the systematic BR-FR schematron only 'fatal'; 'info'/'information' rows
+    # are dropped before storage. Displayed as [fatal] / [warning] in the GUI
+    # badge and the PDF heading. Only 'fatal' is blocking.
     severity = fields.Selection([
-        ('error', 'Error'),
-        ('warning', 'Warning'),
-        ('info', 'Info'),
-    ], string='Severity', required=True, default='error', index=True)
+        ('fatal', '[fatal]'),
+        ('warning', '[warning]'),
+    ], string='Severity', required=True, default='fatal', index=True)
     rule_id = fields.Char(
         string='Rule ID',
         help="Schematron rule id (svrl @id), e.g. BR-FXEXT-AE-08ini, "

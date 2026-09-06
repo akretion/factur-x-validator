@@ -85,7 +85,7 @@
                     <separator string="PDF/A-3 Errors" invisible="not error_pdfa3_ids"/>
                     <field name="error_pdfa3_ids" nolabel="1" invisible="not error_pdfa3_ids">
                         <list create="false" delete="false" decoration-warning="severity == 'warning'" decoration-muted="severity == 'info'">
-                            <field name="severity" widget="badge" decoration-danger="severity == 'error'" decoration-warning="severity == 'warning'" decoration-info="severity == 'info'"/>
+                            <field name="severity" widget="badge" decoration-danger="severity == 'fatal'" decoration-warning="severity == 'warning'" decoration-info="severity == 'info'"/>
                             <field name="rule_id" optional="hide"/>
                             <field name="name"/>
                             <field name="comment"/>
@@ -94,7 +94,7 @@
                     <separator string="XMP Errors" invisible="not error_xmp_ids"/>
                     <field name="error_xmp_ids" nolabel="1" invisible="not error_xmp_ids">
                         <list create="false" delete="false" decoration-warning="severity == 'warning'" decoration-muted="severity == 'info'">
-                            <field name="severity" widget="badge" decoration-danger="severity == 'error'" decoration-warning="severity == 'warning'" decoration-info="severity == 'info'"/>
+                            <field name="severity" widget="badge" decoration-danger="severity == 'fatal'" decoration-warning="severity == 'warning'" decoration-info="severity == 'info'"/>
                             <field name="rule_id" optional="hide"/>
                             <field name="name"/>
                             <field name="comment"/>
@@ -103,7 +103,7 @@
                     <separator string="XML XSD Errors" invisible="not error_xml_ids"/>
                     <field name="error_xml_ids" nolabel="1" invisible="not error_xml_ids">
                         <list create="false" delete="false" decoration-warning="severity == 'warning'" decoration-muted="severity == 'info'">
-                            <field name="severity" widget="badge" decoration-danger="severity == 'error'" decoration-warning="severity == 'warning'" decoration-info="severity == 'info'"/>
+                            <field name="severity" widget="badge" decoration-danger="severity == 'fatal'" decoration-warning="severity == 'warning'" decoration-info="severity == 'info'"/>
                             <field name="rule_id" optional="hide"/>
                             <field name="name"/>
                             <field name="comment"/>
@@ -112,7 +112,7 @@
                     <separator string="XML Schematron Profile Messages" invisible="not error_schematron_profile_ids"/>
                     <field name="error_schematron_profile_ids" nolabel="1" invisible="not error_schematron_profile_ids">
                         <list create="false" delete="false" decoration-warning="severity == 'warning'" decoration-muted="severity == 'info'">
-                            <field name="severity" widget="badge" decoration-danger="severity == 'error'" decoration-warning="severity == 'warning'" decoration-info="severity == 'info'"/>
+                            <field name="severity" widget="badge" decoration-danger="severity == 'fatal'" decoration-warning="severity == 'warning'" decoration-info="severity == 'info'"/>
                             <field name="rule_id" optional="show"/>
                             <field name="test_condition" string="When"/>
                             <field name="comment"/>
@@ -121,7 +121,7 @@
                     <separator string="XML Schematron BR-FR Messages" invisible="not error_schematron_br_fr_ids"/>
                     <field name="error_schematron_br_fr_ids" nolabel="1" invisible="not error_schematron_br_fr_ids">
                         <list create="false" delete="false" decoration-warning="severity == 'warning'" decoration-muted="severity == 'info'">
-                            <field name="severity" widget="badge" decoration-danger="severity == 'error'" decoration-warning="severity == 'warning'" decoration-info="severity == 'info'"/>
+                            <field name="severity" widget="badge" decoration-danger="severity == 'fatal'" decoration-warning="severity == 'warning'" decoration-info="severity == 'info'"/>
                             <field name="rule_id" optional="show"/>
                             <field name="test_condition" string="When"/>
                             <field name="comment"/>
