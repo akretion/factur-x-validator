@@ -67,19 +67,29 @@ CDAR_XML_NAMESPACES = {
 
 #------------------END NAMESPACES MODIFICTION-------------------
 
+# 3rd element = the context URN that identifies this profile:
+#  - Factur-X / CII rows: the GuidelineSpecifiedDocumentContextParameter/ram:ID.
+#    Only listed where it is UNAMBIGUOUS between Factur-X and native CII (i.e.
+#    it carries an explicit "factur-x.eu" or "cpro.gouv.fr" marker). The bare
+#    'urn:cen.eu:en16931:2017' is shared by facturx_en16931 AND cii_en16931,
+#    so it is deliberately NOT listed -- those stay disambiguated by file_type
+#    (pdf -> Factur-X, standalone xml -> CII). Values verified against
+#    France_RFE/FNFE_RFE_INVOICE/Z.example/TEST; minimum/basic are the
+#    canonical Factur-X 1.0 URNs (no example ships for them).
+#  - UBL rows: the cbc:CustomizationID.
 _PROFILES_DEF = [
-    ('facturx_minimum',         'Minimum'),
-    ('facturx_basicwl',         'Basic WL'),
-    ('facturx_basic',           'Basic'),
+    ('facturx_minimum',         'Minimum',                'urn:factur-x.eu:1p0:minimum'),
+    ('facturx_basicwl',         'Basic WL',               'urn:factur-x.eu:1p0:basicwl'),
+    ('facturx_basic',           'Basic',                  'urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:basic'),
     ('facturx_en16931',         'EN 16931 (Comfort)'),
-    ('facturx_extended',        'Extended'),
+    ('facturx_extended',        'Extended',               'urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:extended'),
     ('facturx_extended_ctc_fr', 'Extended-CTC-FR'),
     ('orderx_basic',            'Basic (Order-X)'),
     ('orderx_comfort',          'Comfort (Order-X)'),
     ('orderx_extended',         'Extended (Order-X)'),
     ('cii_en16931',             'EN 16931 (CII)'),
     ('cii_extended',            'Extended (CII)'),
-    ('cii_extended_ctc_fr',     'Extended-CTC-FR (CII)'),
+    ('cii_extended_ctc_fr',     'Extended-CTC-FR (CII)',  'urn:cen.eu:en16931:2017#conformant#urn.cpro.gouv.fr:1p0:extended-ctc-fr'),
     ('ubl_en16931',             'EN 16931 (UBL)',         'urn:cen.eu:en16931:2017'),
     ('ubl_extended_ctc_fr',     'Extended-CTC-FR (UBL)', 'urn:cen.eu:en16931:2017#conformant#urn.cpro.gouv.fr:1p0:extended-ctc-fr'),
     ('ubl_extended',            'Extended (UBL)'),
@@ -88,7 +98,13 @@ _PROFILES_DEF = [
     ]
 
 PROFILES = [(p[0], p[1]) for p in _PROFILES_DEF]
-UBL_PROFILE_MAP = [(p[2], p[0]) for p in _PROFILES_DEF if len(p) == 3]
+# CustomizationID -> profile, UBL only (the CII CTC-FR URN is the same string,
+# hence the ubl_ guard so the two maps never cross).
+UBL_PROFILE_MAP = [(p[2], p[0]) for p in _PROFILES_DEF
+                   if len(p) == 3 and p[0].startswith('ubl_')]
+# Guideline context URN -> profile, for the CII-syntax formats (Factur-X, CII).
+GUIDELINE_PROFILE_MAP = {p[2]: p[0] for p in _PROFILES_DEF
+                         if len(p) == 3 and not p[0].startswith('ubl_')}
 
 
 # --- one place per business profile for every ruleset the analysis loads ---
@@ -1065,19 +1081,29 @@ class FacturxAnalysis(models.Model):
                 "therefore we cannot test against the XSD.",
                 })
             return
-        doc_id_split = doc_id.split(':')
-        xml_profile = '%s_%s' % (vals['doc_type'], doc_id_split[-1])
-        PROFILES_LIST = [x[0] for x in PROFILES]
-        if xml_profile not in PROFILES_LIST and len(doc_id_split) > 1:
-            xml_profile = '%s_%s' % (vals['doc_type'], doc_id.split(':')[-2])
-        if xml_profile not in PROFILES_LIST:
-            errors['3_xml'].append({
-                'name': "Invalid URN",
-                'comment': "Invalid URN '%s' in the XML tag "
-                           "ExchangedDocumentContext/"
-                           "GuidelineSpecifiedDocumentContextParameter/ID" % doc_id,
-                })
-            return
+        # An explicit factur-x.eu / cpro.gouv.fr marker in the guideline URN
+        # tells Factur-X from native CII even for a standalone XML upload --
+        # get_flavor() can't, they share the root namespace. Only the bare
+        # 'urn:cen.eu:en16931:2017' is not in the map and keeps the file_type
+        # guess made above (pdf -> facturx, xml -> cii).
+        mapped_profile = GUIDELINE_PROFILE_MAP.get((doc_id or '').strip())
+        if mapped_profile:
+            xml_profile = mapped_profile
+            vals['doc_type'] = xml_profile.split('_')[0]
+        else:
+            doc_id_split = doc_id.split(':')
+            xml_profile = '%s_%s' % (vals['doc_type'], doc_id_split[-1])
+            PROFILES_LIST = [x[0] for x in PROFILES]
+            if xml_profile not in PROFILES_LIST and len(doc_id_split) > 1:
+                xml_profile = '%s_%s' % (vals['doc_type'], doc_id.split(':')[-2])
+            if xml_profile not in PROFILES_LIST:
+                errors['3_xml'].append({
+                    'name': "Invalid URN",
+                    'comment': "Invalid URN '%s' in the XML tag "
+                               "ExchangedDocumentContext/"
+                               "GuidelineSpecifiedDocumentContextParameter/ID" % doc_id,
+                    })
+                return
         vals['xml_profile'] = xml_profile
         logger.info('analyse_xml_xsd: profile=%s', xml_profile)
         # Validate against the FNFE France_RFE schema when the profile ships one
