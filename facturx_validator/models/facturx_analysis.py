@@ -1500,7 +1500,10 @@ class FacturxAnalysis(models.Model):
                 # template, so it is NOT prepended here.
             else:
                 name = err.name or ''
-            res[group2label[err.error_group]].append({
+            # A legacy / not-yet-remapped error_group (e.g. 14.0's single
+            # '4_xml_schematron', now split into _profile / _br_fr) must
+            # degrade to a plain heading, never KeyError the whole report.
+            res[group2label.get(err.error_group, err.error_group)].append({
                 'name': name,
                 'comment': comment,
                 'severity': err.severity,
