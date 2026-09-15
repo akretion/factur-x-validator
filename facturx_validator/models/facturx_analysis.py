@@ -1553,4 +1553,5 @@ class FacturxAnalysisError(models.Model):
     test_condition = fields.Char(
         string='When',
         help="The assertion's 'when'/@test condition: the xpath that must "
-             "hold true for the schematron rule to pass.")
+             "hold true for the schematron rule to pass. "
+             "In the PDF report value When replace by Test.")
