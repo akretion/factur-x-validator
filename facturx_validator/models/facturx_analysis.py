@@ -81,16 +81,17 @@ _PROFILES_DEF = [
     ('facturx_minimum',         'Minimum',                'urn:factur-x.eu:1p0:minimum'),
     ('facturx_basicwl',         'Basic WL',               'urn:factur-x.eu:1p0:basicwl'),
     ('facturx_basic',           'Basic',                  'urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:basic'),
-    ('facturx_en16931',         'EN 16931 (Comfort)'),
+    ('facturx_en16931',         'EN16931 (Comfort)'),
     ('facturx_extended',        'Extended (Factur-X)',    'urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:extended'),
     ('facturx_extended_ctc_fr', 'Extended-CTC-FR (Factur-X)'),
     ('orderx_basic',            'Basic (Order-X)'),
     ('orderx_comfort',          'Comfort (Order-X)'),
     ('orderx_extended',         'Extended (Order-X)'),
-    ('cii_en16931',             'EN 16931 (CII)'),
+    ('cii_en16931',             'EN16931 (CII)'),
     ('cii_extended',            'Extended (CII)'),
     ('cii_extended_ctc_fr',     'Extended-CTC-FR (CII)',  'urn:cen.eu:en16931:2017#conformant#urn.cpro.gouv.fr:1p0:extended-ctc-fr'),
-    ('ubl_en16931',             'EN 16931 (UBL)',         'urn:cen.eu:en16931:2017'),
+    ('ubl_en16931',             'EN16931 (UBL)',         'urn:cen.eu:en16931:2017'),
+    ('ubl_en16931_peppol',      'EN16931 (UBL-PEPPOL)',    'urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0'),
     ('ubl_extended_ctc_fr',     'Extended-CTC-FR (UBL)', 'urn:cen.eu:en16931:2017#conformant#urn.cpro.gouv.fr:1p0:extended-ctc-fr'),
     ('ubl_extended',            'Extended (UBL)'),
     ('cdar_ctc_fr',             'CDAR CTC-FR'),
@@ -195,6 +196,17 @@ PROFILE_RULES = {
         'br_fr_schematron_xslt': _FR + '/UBL/EN16931/2xslt/BR-FR-Flux2-Schematron-UBL.xslt',
         # UBL XSD (UBL-Invoice-2.1 vs UBL-CreditNote-2.1) is picked at runtime
         # in analyse_xml_xsd; the folder is fixed here for the report.
+        'xsd_dir':               _FR + '/UBL/1xsd_UBL2.1/maindoc',
+    },
+    # Peppol BIS Billing 3.0 is not (yet) a dedicated FNFE ruleset: it's an
+    # EN16931-UBL invoice with an extra Peppol marker in the CustomizationID.
+    # Detected as its own profile (see _PROFILES_DEF) so it's reported
+    # distinctly, but validated with the same EN16931-UBL schematron/XSD.
+    'ubl_en16931_peppol': {
+        'schematron':            _FR + '/UBL/EN16931/schematron/EN16931-UBL-validation-preprocessed.sch',
+        'schematron_xslt':       _FR + '/UBL/EN16931/2xslt/EN16931-UBL-validation.xslt',
+        'br_fr_schematron':      _FR + '/UBL/EN16931/schematron/BR-FR-Flux2-Schematron-UBL.sch',
+        'br_fr_schematron_xslt': _FR + '/UBL/EN16931/2xslt/BR-FR-Flux2-Schematron-UBL.xslt',
         'xsd_dir':               _FR + '/UBL/1xsd_UBL2.1/maindoc',
     },
     'ubl_extended_ctc_fr': {
